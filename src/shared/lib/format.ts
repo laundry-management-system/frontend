@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 
-const currency = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+const number = new Intl.NumberFormat('vi-VN')
 
-export const formatMoney = (value: number) => currency.format(value)
+// DS: 185.000đ (không khoảng trắng, không ký hiệu ₫)
+export const formatMoney = (value: number) => `${number.format(value)}đ`
 
 export const formatDateTime = (value: string | Date) => dayjs(value).format('DD/MM/YYYY HH:mm:ss')

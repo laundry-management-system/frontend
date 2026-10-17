@@ -1,0 +1,189 @@
+/* Laundry DS tokens — nguồn: laundry-ds-figma-plugin/src/tokens/*.
+ * Palette gốc (--color-<hue>-<step>) lấy nguyên từ Tailwind, không khai báo lại. */
+
+:root {
+  /* Semantic */
+  --ds-background: var(--color-white);
+  --ds-foreground: var(--color-slate-900);
+  --ds-surface: var(--color-slate-50);
+  --ds-card: var(--color-white);
+  --ds-card-foreground: var(--color-slate-900);
+  --ds-popover: var(--color-white);
+  --ds-popover-foreground: var(--color-slate-900);
+  --ds-muted: var(--color-slate-100);
+  --ds-muted-foreground: var(--color-slate-600);
+  --ds-border: var(--color-slate-200);
+  --ds-input: var(--color-slate-300);
+  --ds-ring: var(--color-teal-600);
+  --ds-primary: var(--color-teal-700);
+  --ds-primary-hover: var(--color-teal-800);
+  --ds-primary-foreground: var(--color-white);
+  --ds-secondary: var(--color-slate-100);
+  --ds-secondary-hover: var(--color-slate-200);
+  --ds-secondary-foreground: var(--color-slate-900);
+  --ds-accent: var(--color-teal-50);
+  --ds-accent-foreground: var(--color-teal-800);
+  --ds-destructive: var(--color-red-600);
+  --ds-destructive-hover: var(--color-red-700);
+  --ds-destructive-foreground: var(--color-white);
+  --ds-success: var(--color-green-700);
+  --ds-success-foreground: var(--color-white);
+  --ds-warning: var(--color-amber-500);
+  --ds-warning-foreground: var(--color-amber-950);
+  --ds-info: var(--color-blue-600);
+  --ds-info-foreground: var(--color-white);
+  --ds-overlay: #0f172a80;
+  /* Tone: bg · fg · border · solid · solid-fg */
+  --tone-neutral-bg: var(--color-slate-100);
+  --tone-neutral-fg: var(--color-slate-700);
+  --tone-neutral-border: var(--color-slate-200);
+  --tone-neutral-solid: var(--color-slate-600);
+  --tone-neutral-solid-fg: var(--color-white);
+  --tone-primary-bg: var(--color-teal-50);
+  --tone-primary-fg: var(--color-teal-800);
+  --tone-primary-border: var(--color-teal-200);
+  --tone-primary-solid: var(--color-teal-700);
+  --tone-primary-solid-fg: var(--color-white);
+  --tone-info-bg: var(--color-blue-50);
+  --tone-info-fg: var(--color-blue-800);
+  --tone-info-border: var(--color-blue-200);
+  --tone-info-solid: var(--color-blue-600);
+  --tone-info-solid-fg: var(--color-white);
+  --tone-success-bg: var(--color-green-50);
+  --tone-success-fg: var(--color-green-800);
+  --tone-success-border: var(--color-green-200);
+  --tone-success-solid: var(--color-green-700);
+  --tone-success-solid-fg: var(--color-white);
+  --tone-warning-bg: var(--color-amber-50);
+  --tone-warning-fg: var(--color-amber-800);
+  --tone-warning-border: var(--color-amber-200);
+  --tone-warning-solid: var(--color-amber-500);
+  --tone-warning-solid-fg: var(--color-amber-950);
+  --tone-express-bg: var(--color-orange-50);
+  --tone-express-fg: var(--color-orange-800);
+  --tone-express-border: var(--color-orange-200);
+  --tone-express-solid: var(--color-orange-700);
+  --tone-express-solid-fg: var(--color-white);
+  --tone-danger-bg: var(--color-red-50);
+  --tone-danger-fg: var(--color-red-800);
+  --tone-danger-border: var(--color-red-200);
+  --tone-danger-solid: var(--color-red-600);
+  --tone-danger-solid-fg: var(--color-white);
+  --tone-vip-bg: var(--color-violet-50);
+  --tone-vip-fg: var(--color-violet-800);
+  --tone-vip-border: var(--color-violet-200);
+  --tone-vip-solid: var(--color-violet-600);
+  --tone-vip-solid-fg: var(--color-white);
+
+  /* Radius */
+  --radius-control: var(--radius-lg);
+  --radius-card: var(--radius-xl);
+  --radius-pill: 9999px;
+
+  /* Density: Counter (quầy, cảm ứng) — mặc định */
+  --ds-control-height-sm: 40px;
+  --ds-control-height-md: 48px;
+  --ds-control-height-lg: 56px;
+  --ds-control-padding-x-sm: 12px;
+  --ds-control-padding-x-md: 16px;
+  --ds-control-padding-x-lg: 20px;
+  --ds-control-gap: 8px;
+  --ds-table-row-height: 64px;
+  --ds-table-header-height: 44px;
+  --ds-table-cell-padding-x: 16px;
+  --ds-card-padding: 20px;
+  --ds-page-padding: 24px;
+  --ds-section-gap: 24px;
+}
+
+/* Density: Admin (báo cáo, mật độ cao) */
+[data-density='admin'] {
+  --ds-control-height-sm: 32px;
+  --ds-control-height-md: 40px;
+  --ds-control-height-lg: 48px;
+  --ds-control-padding-x-sm: 10px;
+  --ds-control-padding-x-md: 14px;
+  --ds-control-padding-x-lg: 18px;
+  --ds-control-gap: 6px;
+  --ds-table-row-height: 48px;
+  --ds-table-header-height: 40px;
+  --ds-table-cell-padding-x: 12px;
+  --ds-card-padding: 16px;
+  --ds-page-padding: 20px;
+  --ds-section-gap: 16px;
+}
+
+[data-mantine-color-scheme='dark'] {
+  /* Semantic */
+  --ds-background: var(--color-slate-950);
+  --ds-foreground: var(--color-slate-50);
+  --ds-surface: var(--color-slate-950);
+  --ds-card: var(--color-slate-900);
+  --ds-card-foreground: var(--color-slate-50);
+  --ds-popover: var(--color-slate-900);
+  --ds-popover-foreground: var(--color-slate-50);
+  --ds-muted: var(--color-slate-800);
+  --ds-muted-foreground: var(--color-slate-400);
+  --ds-border: var(--color-slate-800);
+  --ds-input: var(--color-slate-700);
+  --ds-ring: var(--color-teal-400);
+  --ds-primary: var(--color-teal-400);
+  --ds-primary-hover: var(--color-teal-300);
+  --ds-primary-foreground: var(--color-teal-950);
+  --ds-secondary: var(--color-slate-800);
+  --ds-secondary-hover: var(--color-slate-700);
+  --ds-secondary-foreground: var(--color-slate-50);
+  --ds-accent: var(--color-teal-950);
+  --ds-accent-foreground: var(--color-teal-200);
+  --ds-destructive: var(--color-red-400);
+  --ds-destructive-hover: var(--color-red-300);
+  --ds-destructive-foreground: var(--color-red-950);
+  --ds-success: var(--color-green-400);
+  --ds-success-foreground: var(--color-green-950);
+  --ds-warning: var(--color-amber-400);
+  --ds-warning-foreground: var(--color-amber-950);
+  --ds-info: var(--color-blue-400);
+  --ds-info-foreground: var(--color-blue-950);
+  --ds-overlay: #000000b3;
+  /* Tone: bg · fg · border · solid · solid-fg */
+  --tone-neutral-bg: var(--color-slate-800);
+  --tone-neutral-fg: var(--color-slate-200);
+  --tone-neutral-border: var(--color-slate-700);
+  --tone-neutral-solid: var(--color-slate-300);
+  --tone-neutral-solid-fg: var(--color-slate-950);
+  --tone-primary-bg: var(--color-teal-950);
+  --tone-primary-fg: var(--color-teal-300);
+  --tone-primary-border: var(--color-teal-800);
+  --tone-primary-solid: var(--color-teal-400);
+  --tone-primary-solid-fg: var(--color-teal-950);
+  --tone-info-bg: var(--color-blue-950);
+  --tone-info-fg: var(--color-blue-300);
+  --tone-info-border: var(--color-blue-800);
+  --tone-info-solid: var(--color-blue-400);
+  --tone-info-solid-fg: var(--color-blue-950);
+  --tone-success-bg: var(--color-green-950);
+  --tone-success-fg: var(--color-green-300);
+  --tone-success-border: var(--color-green-800);
+  --tone-success-solid: var(--color-green-400);
+  --tone-success-solid-fg: var(--color-green-950);
+  --tone-warning-bg: var(--color-amber-950);
+  --tone-warning-fg: var(--color-amber-300);
+  --tone-warning-border: var(--color-amber-800);
+  --tone-warning-solid: var(--color-amber-400);
+  --tone-warning-solid-fg: var(--color-amber-950);
+  --tone-express-bg: var(--color-orange-950);
+  --tone-express-fg: var(--color-orange-300);
+  --tone-express-border: var(--color-orange-800);
+  --tone-express-solid: var(--color-orange-400);
+  --tone-express-solid-fg: var(--color-orange-950);
+  --tone-danger-bg: var(--color-red-950);
+  --tone-danger-fg: var(--color-red-300);
+  --tone-danger-border: var(--color-red-800);
+  --tone-danger-solid: var(--color-red-400);
+  --tone-danger-solid-fg: var(--color-red-950);
+  --tone-vip-bg: var(--color-violet-950);
+  --tone-vip-fg: var(--color-violet-300);
+  --tone-vip-border: var(--color-violet-800);
+  --tone-vip-solid: var(--color-violet-400);
+  --tone-vip-solid-fg: var(--color-violet-950);
+}

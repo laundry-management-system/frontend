@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout } from '../layouts/MainLayout'
 
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
+const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
 
 const fallback = (
   <Center h="60vh">
@@ -24,6 +25,19 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      // Trang demo Laundry DS, chỉ có ở dev
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: '/dev/design-system',
+              element: (
+                <Suspense fallback={fallback}>
+                  <DesignSystemPage />
+                </Suspense>
+              ),
+            },
+          ]
+        : []),
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
