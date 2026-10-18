@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
     server: {
+      port: 5200,
+      strictPort: true,
       proxy: {
         '/api': {
           target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080',
