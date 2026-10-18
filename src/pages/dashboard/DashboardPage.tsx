@@ -1,4 +1,4 @@
-import { PageHeader } from '@/shared/ui/PageHeader'
+import { PageHeader } from '@/shared/ui'
 import { DashboardHealth } from './components/DashboardHealth'
 import { DashboardToolbar } from './components/DashboardToolbar'
 import { DashboardPageProvider } from './DashboardPageContext'

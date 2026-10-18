@@ -1,5 +1,6 @@
-import { Button, Group, Modal, Stack, Textarea } from '@mantine/core'
+import { Button, Modal, Stack, Textarea } from '@mantine/core'
 import { useState, type ReactNode } from 'react'
+import { ModalFooter } from './ModalFooter'
 
 interface ConfirmModalProps {
   opened: boolean
@@ -46,7 +47,7 @@ export function ConfirmModal({
             onChange={(e) => setReason(e.currentTarget.value)}
           />
         )}
-        <Group justify="flex-end">
+        <ModalFooter>
           <Button variant="secondary" onClick={close}>
             Quay lại
           </Button>
@@ -58,7 +59,7 @@ export function ConfirmModal({
           >
             {confirmLabel}
           </Button>
-        </Group>
+        </ModalFooter>
       </Stack>
     </Modal>
   )

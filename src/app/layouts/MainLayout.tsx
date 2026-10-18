@@ -4,7 +4,7 @@ import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
 import { APP_NAME } from '@/shared/config/constants'
 import { useUiStore } from '@/shared/store/uiStore'
-import { IconButton } from '@/shared/ui/IconButton'
+import { IconButton } from '@/shared/ui'
 import { queryClient } from '../providers/queryClient'
 
 const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; roles: Role[] }[] = [
