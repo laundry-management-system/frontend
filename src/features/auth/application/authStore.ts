@@ -1,31 +1,43 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { decodeAccessToken } from '../data/jwt'
+import type { AuthUser, Role } from '../domain/types'
 
-export interface AuthUser {
-  username: string
-  roles: string[]
-}
+export type { AuthUser }
+
+type AuthStatus = 'unknown' | 'authenticated' | 'anonymous'
 
 interface AuthState {
+  status: AuthStatus
   token: string | null
   user: AuthUser | null
-  login: (token: string, user: AuthUser) => void
-  logout: () => void
+  setSession: (token: string) => void
+  clear: () => void
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      token: null,
-      user: null,
-      login: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
-    }),
-    { name: 'laundry-auth' },
-  ),
-)
+// Token chỉ giữ trong bộ nhớ; tải lại trang thì khôi phục bằng refresh cookie (restoreSession)
+export const useAuthStore = create<AuthState>()((set) => ({
+  status: 'unknown',
+  token: null,
+  user: null,
+  setSession: (token) => {
+    const user = decodeAccessToken(token)
+    set(
+      user
+        ? { status: 'authenticated', token, user }
+        : { status: 'anonymous', token: null, user: null },
+    )
+  },
+  clear: () => set({ status: 'anonymous', token: null, user: null }),
+}))
 
-export const selectIsAuthenticated = (s: AuthState) => s.token !== null
+// Dọn dữ liệu bản cũ để lại: token (persist) và tên tài khoản ghi nhớ (tính năng đã bỏ)
+try {
+  localStorage.removeItem('laundry-auth')
+  localStorage.removeItem('laundry-remember-username')
+} catch {
+  // storage bị chặn: không có gì để xóa
+}
 
-export const selectHasRole = (role: string) => (s: AuthState) =>
-  s.user?.roles.includes(role) ?? false
+export const selectIsAuthenticated = (s: AuthState) => s.status === 'authenticated'
+
+export const selectHasRole = (role: Role) => (s: AuthState) => s.user?.roles.includes(role) ?? false

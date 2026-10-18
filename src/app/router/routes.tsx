@@ -1,10 +1,16 @@
 import { Center, Loader } from '@mantine/core'
-import { lazy, Suspense } from 'react'
+import { lazy, type ReactNode, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { AuthLayout } from '../layouts/AuthLayout'
 import { MainLayout } from '../layouts/MainLayout'
+import { GuestRoute } from './GuestRoute'
+import { ProtectedRoute } from './ProtectedRoute'
+import { RoleGuard } from './RoleGuard'
 
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
+const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
+const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 
 const fallback = (
   <Center h="60vh">
@@ -12,32 +18,32 @@ const fallback = (
   </Center>
 )
 
-// Khi có module auth: thêm route /login trong AuthLayout và bọc MainLayout bằng <ProtectedRoute />
+const page = (node: ReactNode) => <Suspense fallback={fallback}>{node}</Suspense>
+
 export const router = createBrowserRouter([
   {
-    element: <MainLayout />,
+    element: <GuestRoute />,
+    children: [
+      { element: <AuthLayout />, children: [{ path: '/login', element: page(<LoginPage />) }] },
+    ],
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
       {
-        path: '/',
-        element: (
-          <Suspense fallback={fallback}>
-            <DashboardPage />
-          </Suspense>
-        ),
+        element: <MainLayout />,
+        children: [
+          {
+            element: <RoleGuard roles={['ADMIN']} />,
+            children: [{ path: '/', element: page(<DashboardPage />) }],
+          },
+          { path: '/work-list', element: page(<WorkListPage />) },
+          // Trang demo Laundry DS, chỉ có ở dev
+          ...(import.meta.env.DEV
+            ? [{ path: '/dev/design-system', element: page(<DesignSystemPage />) }]
+            : []),
+        ],
       },
-      // Trang demo Laundry DS, chỉ có ở dev
-      ...(import.meta.env.DEV
-        ? [
-            {
-              path: '/dev/design-system',
-              element: (
-                <Suspense fallback={fallback}>
-                  <DesignSystemPage />
-                </Suspense>
-              ),
-            },
-          ]
-        : []),
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
