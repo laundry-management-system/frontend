@@ -7,6 +7,7 @@ import {
   createTheme,
   defaultVariantColorsResolver,
   Input,
+  InputWrapper,
   Modal,
   NavLink,
   Radio,
@@ -177,6 +178,12 @@ export const theme = createTheme({
     Input: Input.extend({
       defaultProps: { size: 'md' },
       vars: (_, props) => ({ wrapper: { '--input-height': densityVar(props.size, 'height') } }),
+    }),
+    // DS: label cách ô nhập --ds-control-gap (8px / 6px khi density admin); Mantine đã chừa sẵn xs/2 phía trên input
+    InputWrapper: InputWrapper.extend({
+      styles: {
+        label: { marginBottom: 'calc(var(--ds-control-gap) - var(--mantine-spacing-xs) / 2)' },
+      },
     }),
     SegmentedControl: SegmentedControl.extend({
       styles: {
