@@ -1,6 +1,5 @@
 import { LuListTodo } from 'react-icons/lu'
-import { EmptyState } from '@/shared/ui/EmptyState'
-import { PageHeader } from '@/shared/ui/PageHeader'
+import { EmptyState, PageHeader } from '@/shared/ui'
 
 // Trang tạm – trang chủ của Nhân viên cho tới khi làm feature Danh sách công việc (WF-B02)
 export default function WorkListPage() {
