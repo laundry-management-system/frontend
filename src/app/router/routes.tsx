@@ -11,6 +11,7 @@ const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
+const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
 
 const fallback = (
   <Center h="60vh">
@@ -35,7 +36,10 @@ export const router = createBrowserRouter([
         children: [
           {
             element: <RoleGuard roles={['ADMIN']} />,
-            children: [{ path: '/', element: page(<DashboardPage />) }],
+            children: [
+              { path: '/', element: page(<DashboardPage />) },
+              { path: '/users', element: page(<UsersPage />) },
+            ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },
           // Trang demo Laundry DS, chỉ có ở dev
