@@ -30,7 +30,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       cssVariablesResolver={cssVariablesResolver}
       defaultColorScheme="light"
     >
-      <Notifications position="bottom-right" autoClose={4000} />
+      <Notifications position="top-center" autoClose={4000} />
       <QueryClientProvider client={queryClient}>
         {children}
         <ReactQueryDevtools initialIsOpen={false} />

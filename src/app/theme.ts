@@ -10,6 +10,7 @@ import {
   InputWrapper,
   Modal,
   NavLink,
+  Notification,
   Radio,
   SegmentedControl,
   Switch,
@@ -21,13 +22,11 @@ import {
   type VariantColorsResolver,
 } from '@mantine/core'
 
-// Bảng màu Mantine trỏ thẳng vào palette Tailwind (không lặp hex)
 const palette = (hue: string, steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]) =>
   steps.map((s) => `var(--color-${hue}-${s})`) as unknown as MantineColorsTuple
 
 const TONES = ['primary', 'neutral', 'info', 'success', 'warning', 'express', 'danger', 'vip']
 
-// Kích thước theo density (Counter/Admin); size ngoài sm/md/lg giữ mặc định của Mantine
 const DENSITY_SIZES = ['sm', 'md', 'lg']
 const densityVar = (size: unknown, token: string) => {
   const s = size ?? 'md'
@@ -126,7 +125,6 @@ export const theme = createTheme({
     violet: palette('violet'),
     gray: palette('slate'),
     yellow: palette('amber'),
-    // Mantine dùng dark-0 (sáng) → dark-9 (tối) cho Dark mode
     dark: palette('slate', [200, 300, 400, 500, 700, 800, 900, 950, 950, 950]),
   },
   primaryColor: 'teal',
@@ -179,7 +177,6 @@ export const theme = createTheme({
       defaultProps: { size: 'md' },
       vars: (_, props) => ({ wrapper: { '--input-height': densityVar(props.size, 'height') } }),
     }),
-    // DS: label cách ô nhập --ds-control-gap (8px / 6px khi density admin); Mantine đã chừa sẵn xs/2 phía trên input
     InputWrapper: InputWrapper.extend({
       styles: {
         label: { marginBottom: 'calc(var(--ds-control-gap) - var(--mantine-spacing-xs) / 2)' },
@@ -207,7 +204,16 @@ export const theme = createTheme({
     Table: Table.extend({
       vars: () => ({ table: { '--table-horizontal-spacing': 'var(--ds-table-cell-padding-x)' } }),
       styles: {
-        th: { height: 'var(--ds-table-header-height)' },
+        th: {
+          height: 'var(--ds-table-header-height)',
+          backgroundColor: 'var(--ds-muted)',
+          color: 'var(--ds-muted-foreground)',
+          fontSize: 11,
+          fontWeight: 600,
+          lineHeight: '16px',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+        },
         td: { height: 'var(--ds-table-row-height)' },
       },
     }),
@@ -236,11 +242,31 @@ export const theme = createTheme({
       defaultProps: {
         radius: 'lg',
         shadow: 'xl',
+        padding: 24,
         overlayProps: { color: 'var(--ds-overlay)', backgroundOpacity: 1 },
       },
+      styles: {
+        header: { borderBottom: '1px solid var(--ds-border)' },
+        body: { paddingTop: 'var(--mb-padding)' },
+        title: { fontSize: 20, fontWeight: 600, lineHeight: '25px', letterSpacing: '-0.005em' },
+      },
     }),
-    // tone primary (light) = accent của DS: nền teal-50, chữ teal-800
     NavLink: NavLink.extend({ defaultProps: { color: 'primary', variant: 'light' } }),
+    // DS Toast: nền popover, viền, shadow lg; icon tô màu tone/<tone>/solid, bỏ nền tròn mặc định
+    Notification: Notification.extend({
+      defaultProps: { radius: 'lg', withBorder: true },
+      styles: (_theme, props) => ({
+        root: { padding: 16, boxShadow: 'var(--mantine-shadow-lg)', width: 380, maxWidth: '100%' },
+        icon: {
+          backgroundColor: 'transparent',
+          color: `var(--tone-${props.color}-solid)`,
+          width: 20,
+          height: 20,
+        },
+        title: { fontWeight: 600 },
+        description: { color: 'var(--ds-muted-foreground)' },
+      }),
+    }),
   },
 })
 
