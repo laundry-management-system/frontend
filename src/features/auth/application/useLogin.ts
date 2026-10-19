@@ -5,6 +5,9 @@ import { authApi } from '../data/authApi'
 import { classifyLoginError, LOCK_DURATION_MS } from '../domain/rules'
 import { useAuthStore } from './authStore'
 
+// Tham chiếu cố định: fieldErrors nằm trong deps useEffect của LoginCard
+const NO_FIELD_ERRORS: Record<string, string> = {}
+
 interface LoginInput {
   username: string
   password: string
@@ -51,7 +54,7 @@ export function useLogin() {
     login: mutation.mutate,
     isPending: mutation.isPending,
     failure: apiError ? classifyLoginError(apiError) : null,
-    fieldErrors: apiError?.fieldErrors ?? {},
+    fieldErrors: apiError?.fieldErrors ?? NO_FIELD_ERRORS,
     isLockedFor: (username: string) => lock !== null && lock.username === username.trim(),
     remainingMs: lock ? lock.until - now : 0,
   }
