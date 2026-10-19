@@ -235,7 +235,11 @@ export const theme = createTheme({
           '--badge-fz': '12px',
         },
       }),
-      styles: { root: { textTransform: 'none', fontWeight: 500 } },
+      styles: {
+        root: { textTransform: 'none', fontWeight: 500 },
+        // Nhãn trạng thái phải đọc trọn: không cắt "…", để cột/bảng nới theo badge
+        label: { overflow: 'visible', textOverflow: 'clip' },
+      },
     }),
     Tooltip: Tooltip.extend({ defaultProps: { withArrow: true } }),
     Modal: Modal.extend({
