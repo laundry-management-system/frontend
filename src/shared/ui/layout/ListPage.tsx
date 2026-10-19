@@ -1,6 +1,6 @@
 import { Button, Card, Group } from '@mantine/core'
 import type { ReactNode } from 'react'
-import { LuPlus } from 'react-icons/lu'
+import { LuCloudOff, LuPlus } from 'react-icons/lu'
 import { DataTable, type DataTableProps } from '../data-display/DataTable'
 import { EmptyState } from '../feedback/EmptyState'
 import { PageHeader } from './PageHeader'
@@ -56,6 +56,7 @@ export function ListPage<T>({
         empty={
           error ? (
             <EmptyState
+              icon={<LuCloudOff size={32} />}
               title="Không tải được dữ liệu"
               description="Vui lòng kiểm tra kết nối rồi thử lại."
               action={
