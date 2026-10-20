@@ -1,6 +1,7 @@
 import { Button, Group, Input, Modal, SegmentedControl, Stack, TextInput } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
 import { useForm } from '@mantine/form'
+import dayjs from 'dayjs'
 import { useEffect } from 'react'
 import { toApiError } from '@/shared/api/apiError'
 import { notify } from '@/shared/lib/notify'
@@ -29,7 +30,8 @@ const ROLE_OPTIONS = [
   { label: ROLE_LABEL.ADMIN, value: 'ADMIN' },
 ]
 
-const today = () => new Date().toISOString().slice(0, 10)
+// Ngày theo giờ máy (VN, UTC+7); toISOString() là UTC nên 0h–7h sẽ ra ngày hôm trước
+const today = () => dayjs().format('YYYY-MM-DD')
 
 export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProps) {
   const createUser = useCreateUser()
