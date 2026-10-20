@@ -35,14 +35,18 @@ httpClient.interceptors.response.use(
     const apiError = toApiError(error)
     const config = isAxiosError(error) ? (error.config as RetryConfig | undefined) : undefined
     // /auth/* tự xử lý 401 (sai mật khẩu, refresh hết hạn) nên không refresh lại
-    if (apiError.status === 401 && config && !config._retry && !config.url?.startsWith('/auth/')) {
-      config._retry = true
-      const token = await auth.refresh()
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-        return httpClient(config)
+    if (apiError.status === 401 && config && !config.url?.startsWith('/auth/')) {
+      if (!config._retry) {
+        config._retry = true
+        const token = await auth.refresh()
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+          return httpClient(config)
+        }
       }
-      auth.onUnauthorized()
+      // Refresh thất bại, hoặc request đã retry vẫn 401. Chỉ xoá phiên nếu request này dùng
+      // đúng token hiện tại (tránh xoá phiên của người vừa đăng nhập lại trong lúc chờ)
+      if (config.headers.Authorization === `Bearer ${auth.getToken()}`) auth.onUnauthorized()
     }
     return Promise.reject(apiError)
   },
