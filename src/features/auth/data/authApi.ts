@@ -14,4 +14,8 @@ export const authApi = {
   logout: async () => {
     await httpClient.post('/auth/logout', null, withCookie)
   },
+  // Endpoint công khai nằm dưới /users (BE đặt vậy); token lấy từ link trong email
+  setupPassword: async (token: string, password: string) => {
+    await httpClient.post('/users/setup-password', { password }, { params: { token } })
+  },
 }

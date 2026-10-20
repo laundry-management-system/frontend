@@ -10,6 +10,7 @@ import { RoleGuard } from './RoleGuard'
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
+const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
 
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
     children: [
       { element: <AuthLayout />, children: [{ path: '/login', element: page(<LoginPage />) }] },
     ],
+  },
+  {
+    element: <AuthLayout />,
+    children: [{ path: '/setup-password', element: page(<SetupPasswordPage />) }],
   },
   {
     element: <ProtectedRoute />,

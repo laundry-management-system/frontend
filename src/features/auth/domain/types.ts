@@ -8,3 +8,5 @@ export interface AuthUser {
 export const ROLE_LABEL: Record<Role, string> = { ADMIN: 'Chủ tiệm', STAFF: 'Nhân viên' }
 
 export type LoginFailureKind = 'invalid' | 'locked' | 'disabled' | 'validation' | 'network'
+
+export type SetupPasswordFailure = 'invalid-link' | 'already-active' | 'network' | 'unknown'

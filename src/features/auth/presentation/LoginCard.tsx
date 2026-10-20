@@ -1,9 +1,9 @@
-import { Alert, Box, Button, Paper, PasswordInput, Stack, Text, TextInput } from '@mantine/core'
+import { Alert, Button, PasswordInput, Stack, TextInput } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useEffect, useState } from 'react'
-import { MdLocalLaundryService } from 'react-icons/md'
 import { useLogin } from '../application/useLogin'
 import { formatCountdown } from '../domain/rules'
+import { AuthCard } from './AuthCard'
 import type { LoginFailureKind } from '../domain/types'
 
 const FAILURE_ALERT: Record<Exclude<LoginFailureKind, 'validation'>, [string, string]> = {
@@ -52,25 +52,9 @@ export function LoginCard() {
   )
 
   return (
-    <Paper withBorder radius="lg" shadow="lg" p={40} w="100%" maw={440}>
+    <AuthCard subtitle="Đăng nhập dành cho Chủ tiệm và Nhân viên">
       <form onSubmit={submit} noValidate>
         <Stack gap={20}>
-          <Stack gap={8} align="center">
-            <Box
-              w={56}
-              h={56}
-              bg="var(--mantine-primary-color-filled)"
-              c="var(--ds-primary-foreground)"
-              className="flex items-center justify-center rounded-lg"
-            >
-              <MdLocalLaundryService size={30} />
-            </Box>
-            <Text fz={22} fw={700}>
-              Tiệm Giặt Ủi
-            </Text>
-            <Text c="dimmed">Đăng nhập dành cho Chủ tiệm và Nhân viên</Text>
-          </Stack>
-
           {alert && (
             <Alert color="danger" title={alert[0]}>
               {alert[1]}
@@ -103,6 +87,6 @@ export function LoginCard() {
           </Button>
         </Stack>
       </form>
-    </Paper>
+    </AuthCard>
   )
 }
