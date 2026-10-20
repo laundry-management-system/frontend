@@ -1,4 +1,4 @@
-import { Button, Card, Group } from '@mantine/core'
+import { Alert, Button, Card, Group } from '@mantine/core'
 import type { ReactNode } from 'react'
 import { LuPlus } from 'react-icons/lu'
 import { DataTable, type DataTableProps } from '../data-display/DataTable'
@@ -50,6 +50,19 @@ export function ListPage<T>({
         <Card mb="md">
           <Group>{filters}</Group>
         </Card>
+      )}
+      {/* Tải lại lỗi nhưng vẫn còn dữ liệu cũ: DataTable không hiện `empty`, nên báo lỗi riêng */}
+      {error && table.data.length > 0 && (
+        <Alert color="danger" title="Không tải được dữ liệu mới" mb="md">
+          <Group justify="space-between">
+            Đang hiển thị dữ liệu cũ. Vui lòng kiểm tra kết nối rồi thử lại.
+            {onRetry && (
+              <Button variant="secondary" size="xs" onClick={onRetry}>
+                Thử lại
+              </Button>
+            )}
+          </Group>
+        </Alert>
       )}
       <DataTable
         {...table}
