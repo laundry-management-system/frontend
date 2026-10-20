@@ -5,6 +5,7 @@ export interface UserResponseDto {
   employeeCode: string
   fullName: string
   phone: string
+  email: string
   username: string
   role: Role
   status: UserStatus
@@ -14,8 +15,9 @@ export interface UserResponseDto {
 export interface CreateUserRequestDto {
   fullName: string
   phone: string
-  username: string
-  password: string
+  email: string
+  hiredDate: string | null
+  role: Role
 }
 
 export interface UpdateUserRequestDto {

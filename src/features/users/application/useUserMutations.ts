@@ -34,3 +34,7 @@ export function useEnableUser() {
   const invalidate = useInvalidateUsers()
   return useMutation({ mutationFn: (id: number) => usersApi.enable(id), onSuccess: invalidate })
 }
+
+export function useResendSetupMail() {
+  return useMutation({ mutationFn: (id: number) => usersApi.resendSetupMail(id) })
+}

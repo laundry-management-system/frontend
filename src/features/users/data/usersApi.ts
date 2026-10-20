@@ -22,7 +22,8 @@ interface SpringPageDto<T> {
 export const usersApi = {
   list: async (params: ListUsersParams): Promise<PageResult<User>> => {
     const { data } = await httpClient.get<SpringPageDto<UserResponseDto>>('/users', {
-      params: { ...params, sort: 'fullName' },
+      // shortcut: BE nhánh AuthModule gọi keyword.trim() không kiểm null → luôn gửi keyword, bỏ khi BE sửa (backend-tasks mục 5)
+      params: { ...params, keyword: params.keyword ?? '', sort: 'fullName' },
     })
     return {
       content: data.content.map(toUser),
@@ -34,6 +35,7 @@ export const usersApi = {
       },
     }
   },
+  me: async () => toUser((await httpClient.get<UserResponseDto>('/users/me')).data),
   create: async (dto: CreateUserRequestDto) =>
     toUser((await httpClient.post<UserResponseDto>('/users', dto)).data),
   update: async (id: number, dto: UpdateUserRequestDto) =>
@@ -43,5 +45,8 @@ export const usersApi = {
   },
   enable: async (id: number) => {
     await httpClient.post(`/users/${id}/enable`)
+  },
+  resendSetupMail: async (id: number) => {
+    await httpClient.post(`/users/${id}/resend-setup-mail`)
   },
 }

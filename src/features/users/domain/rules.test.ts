@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { validateFullName, validatePassword, validatePhone, validateUsername } from './rules.ts'
+import { validateEmail, validateFullName, validatePhone } from './rules.ts'
 
 test('validateFullName', () => {
   assert.equal(validateFullName('Nguyễn Văn A'), null)
@@ -16,15 +16,11 @@ test('validatePhone', () => {
   assert.equal(validatePhone('0912'), 'Số điện thoại gồm 10 số, bắt đầu bằng 0')
 })
 
-test('validateUsername: tối thiểu 10 ký tự', () => {
-  assert.equal(validateUsername('nhanvien01'), null) // 10 ký tự
-  assert.equal(validateUsername('nhanvien0'), 'Tên đăng nhập tối thiểu 10 ký tự') // 9
-  assert.equal(validateUsername(''), 'Vui lòng nhập tài khoản')
-  assert.equal(validateUsername('a'.repeat(51)), 'Tên đăng nhập tối đa 50 ký tự')
-})
-
-test('validatePassword: tối thiểu 8 ký tự', () => {
-  assert.equal(validatePassword('matkhau1'), null) // 8
-  assert.equal(validatePassword('1234567'), 'Mật khẩu tối thiểu 8 ký tự') // 7
-  assert.equal(validatePassword(''), 'Vui lòng nhập mật khẩu tạm')
+test('validateEmail', () => {
+  assert.equal(validateEmail('ngoc@example.com'), null)
+  assert.equal(validateEmail('  ngoc@example.com  '), null)
+  assert.equal(validateEmail(''), 'Vui lòng nhập email')
+  assert.equal(validateEmail('abc'), 'Email không đúng định dạng')
+  assert.equal(validateEmail('a@b'), 'Email không đúng định dạng')
+  assert.equal(validateEmail('a b@c.d'), 'Email không đúng định dạng')
 })

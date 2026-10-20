@@ -1,13 +1,4 @@
-import {
-  Button,
-  Group,
-  Input,
-  Modal,
-  PasswordInput,
-  SegmentedControl,
-  Stack,
-  TextInput,
-} from '@mantine/core'
+import { Button, Group, Input, Modal, SegmentedControl, Stack, TextInput } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
 import { useForm } from '@mantine/form'
 import { useEffect } from 'react'
@@ -15,13 +6,8 @@ import { toApiError } from '@/shared/api/apiError'
 import { notify } from '@/shared/lib/notify'
 import { ModalFooter } from '@/shared/ui'
 import { useCreateUser, useUpdateUser } from '../application/useUserMutations'
-import { ROLE_LABEL, type User } from '../domain/types'
-import {
-  validateFullName,
-  validatePassword,
-  validatePhone,
-  validateUsername,
-} from '../domain/rules'
+import { ROLE_LABEL, type Role, type User } from '../domain/types'
+import { validateEmail, validateFullName, validatePhone } from '../domain/rules'
 
 interface UserFormModalProps {
   opened: boolean
@@ -33,11 +19,15 @@ interface UserFormModalProps {
 interface FormValues {
   fullName: string
   phone: string
-  username: string
-  password: string
-  role: 'Nhân viên' | 'Admin'
+  email: string
+  role: Role
   hiredDate: string | null
 }
+
+const ROLE_OPTIONS = [
+  { label: ROLE_LABEL.STAFF, value: 'STAFF' },
+  { label: ROLE_LABEL.ADMIN, value: 'ADMIN' },
+]
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -47,19 +37,12 @@ export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProp
   const isEdit = mode === 'edit'
 
   const form = useForm<FormValues>({
-    initialValues: {
-      fullName: '',
-      phone: '',
-      username: '',
-      password: '',
-      role: 'Nhân viên',
-      hiredDate: today(),
-    },
+    initialValues: { fullName: '', phone: '', email: '', role: 'STAFF', hiredDate: today() },
     validate: {
       fullName: validateFullName,
       phone: validatePhone,
-      username: (v) => (isEdit ? null : validateUsername(v)),
-      password: (v) => (isEdit ? null : validatePassword(v)),
+      // Email không sửa được ở chế độ sửa (API sửa chưa nhận email)
+      email: (v) => (isEdit ? null : validateEmail(v)),
     },
   })
   const { getInputProps } = form
@@ -70,9 +53,8 @@ export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProp
       form.setValues({
         fullName: user.fullName,
         phone: user.phone,
-        username: user.username,
-        password: '',
-        role: user.role === 'ADMIN' ? 'Admin' : 'Nhân viên',
+        email: user.email,
+        role: user.role,
         hiredDate: user.hiredDate,
       })
     } else {
@@ -87,7 +69,7 @@ export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProp
       form.setErrors(err.fieldErrors)
       return
     }
-    if (err.message.includes('Tên đăng nhập')) form.setFieldError('username', err.message)
+    if (err.message.includes('Email')) form.setFieldError('email', err.message)
     else if (err.message.includes('Số điện thoại')) form.setFieldError('phone', err.message)
     else notify.error(err.message)
   }
@@ -109,12 +91,15 @@ export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProp
         {
           fullName: values.fullName.trim(),
           phone: values.phone.trim(),
-          username: values.username.trim(),
-          password: values.password,
+          email: values.email.trim(),
+          hiredDate: values.hiredDate,
+          role: values.role,
         },
         {
-          onSuccess: () => {
-            notify.success('Đã thêm nhân viên')
+          onSuccess: (created) => {
+            notify.success(
+              `Đã gửi email kích hoạt tới ${created.email}. Tên đăng nhập: ${created.username}`,
+            )
             onClose()
           },
           onError: handleApiError,
@@ -137,38 +122,47 @@ export function UserFormModal({ opened, onClose, mode, user }: UserFormModalProp
         <Stack>
           <Group grow align="flex-start">
             <TextInput label="Họ tên" required {...getInputProps('fullName')} />
-            <TextInput label="Số điện thoại" placeholder="0988666777" {...getInputProps('phone')} />
+            <TextInput
+              label="Số điện thoại"
+              placeholder="0988666777"
+              required
+              {...getInputProps('phone')}
+            />
           </Group>
           <Group grow align="flex-start">
             <TextInput
-              label="Tài khoản"
+              label="Email"
+              type="email"
+              placeholder="nhanvien@gmail.com"
               required={!isEdit}
               disabled={isEdit}
-              {...getInputProps('username')}
+              {...getInputProps('email')}
             />
             {isEdit ? (
-              <TextInput label="Vai trò" disabled value={ROLE_LABEL[user?.role ?? 'STAFF']} />
+              <TextInput label="Tài khoản" disabled value={user?.username ?? ''} />
             ) : (
-              <PasswordInput label="Mật khẩu tạm" required {...getInputProps('password')} />
+              <DatePickerInput
+                label="Ngày vào làm"
+                valueFormat="DD/MM/YYYY"
+                {...getInputProps('hiredDate')}
+              />
             )}
           </Group>
-          <Group grow align="flex-start">
-            <DatePickerInput
-              label="Ngày vào làm"
-              valueFormat="DD/MM/YYYY"
-              disabled={isEdit}
-              {...getInputProps('hiredDate')}
-            />
-            {!isEdit && (
-              <Input.Wrapper label="Vai trò">
-                <SegmentedControl
-                  fullWidth
-                  data={['Nhân viên', 'Admin']}
-                  {...getInputProps('role')}
-                />
-              </Input.Wrapper>
-            )}
-          </Group>
+          {isEdit ? (
+            <Group grow align="flex-start">
+              <DatePickerInput
+                label="Ngày vào làm"
+                valueFormat="DD/MM/YYYY"
+                disabled
+                {...getInputProps('hiredDate')}
+              />
+              <TextInput label="Vai trò" disabled value={ROLE_LABEL[user?.role ?? 'STAFF']} />
+            </Group>
+          ) : (
+            <Input.Wrapper label="Vai trò">
+              <SegmentedControl fullWidth data={ROLE_OPTIONS} {...getInputProps('role')} />
+            </Input.Wrapper>
+          )}
           <ModalFooter>
             <Button variant="secondary" onClick={onClose}>
               Hủy

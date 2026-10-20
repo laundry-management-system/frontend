@@ -2,6 +2,7 @@ import { AppShell, Burger, Group, NavLink, Text, Title, useMantineColorScheme } 
 import { LuLayoutDashboard, LuListTodo, LuLogOut, LuMoon, LuSun, LuUsers } from 'react-icons/lu'
 import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
+import { useMe } from '@/features/users'
 import { APP_NAME } from '@/shared/config/constants'
 import { useUiStore } from '@/shared/store/uiStore'
 import { IconButton } from '@/shared/ui'
@@ -18,6 +19,7 @@ export function MainLayout() {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const user = useAuthStore((s) => s.user)
+  const { data: me } = useMe()
   const navigate = useNavigate()
   const roles = user?.roles ?? []
 
@@ -51,7 +53,7 @@ export function MainLayout() {
           <Group gap="xs">
             {user && (
               <Text size="sm">
-                {user.username} ·{' '}
+                {me?.fullName ?? user.username} ·{' '}
                 <Text span c="dimmed">
                   {ROLE_LABEL[roles[0]]}
                 </Text>

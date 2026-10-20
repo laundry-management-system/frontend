@@ -1,9 +1,11 @@
+export { useMe } from './application/useMe'
 export { useUsers } from './application/useUsers'
 export {
   useCreateUser,
   useUpdateUser,
   useDisableUser,
   useEnableUser,
+  useResendSetupMail,
 } from './application/useUserMutations'
 export { UserFormModal } from './presentation/UserFormModal'
 export { ROLE_LABEL, STATUS_LABEL } from './domain/types'

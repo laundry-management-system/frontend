@@ -14,17 +14,12 @@ export function validatePhone(value: string): string | null {
   return null
 }
 
-export function validateUsername(value: string): string | null {
-  const v = value.trim()
-  if (!v) return 'Vui lòng nhập tài khoản'
-  if (v.length < 10) return 'Tên đăng nhập tối thiểu 10 ký tự'
-  if (v.length > 50) return 'Tên đăng nhập tối đa 50 ký tự'
-  return null
-}
+// Email khớp ràng buộc @Email của BE ở mức cơ bản; BE vẫn kiểm lần cuối
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function validatePassword(value: string): string | null {
-  if (!value) return 'Vui lòng nhập mật khẩu tạm'
-  if (value.length < 8) return 'Mật khẩu tối thiểu 8 ký tự'
-  if (value.length > 255) return 'Mật khẩu tối đa 255 ký tự'
+export function validateEmail(value: string): string | null {
+  const v = value.trim()
+  if (!v) return 'Vui lòng nhập email'
+  if (!EMAIL_RE.test(v)) return 'Email không đúng định dạng'
   return null
 }
