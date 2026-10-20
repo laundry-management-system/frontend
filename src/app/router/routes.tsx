@@ -12,6 +12,7 @@ const CustomersPage = lazy(() => import('@/pages/customers/CustomersPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
+const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 
 const fallback = (
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
           { path: '/work-list', element: page(<WorkListPage />) },
           { path: '/customers', element: page(<CustomersPage />) },
           { path: '/customers/:id', element: page(<CustomerDetailPage />) },
+          { path: '/services', element: page(<ServicesPage />) },
           // Trang demo Laundry DS, chỉ có ở dev
           ...(import.meta.env.DEV
             ? [{ path: '/dev/design-system', element: page(<DesignSystemPage />) }]
