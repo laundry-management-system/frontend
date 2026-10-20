@@ -26,15 +26,18 @@ import { useState, type ReactNode } from 'react'
 import { LuEllipsis, LuInbox, LuMessageCircle, LuPrinter } from 'react-icons/lu'
 import { DOMAIN_STATUSES, GROUP_LABEL, type StatusGroup } from '@/shared/config/domainStatuses'
 import { notify } from '@/shared/lib/notify'
-import { ConfirmModal } from '@/shared/ui/ConfirmModal'
-import { EmptyState } from '@/shared/ui/EmptyState'
-import { IconButton } from '@/shared/ui/IconButton'
-import { Money } from '@/shared/ui/Money'
-import { MoneyInput, WeightInput } from '@/shared/ui/MoneyInput'
-import { OrderCode } from '@/shared/ui/OrderCode'
-import { PageHeader } from '@/shared/ui/PageHeader'
-import { StatTile } from '@/shared/ui/StatTile'
-import { StatusBadge } from '@/shared/ui/StatusBadge'
+import {
+  ConfirmModal,
+  EmptyState,
+  IconButton,
+  Money,
+  MoneyInput,
+  WeightInput,
+  OrderCode,
+  PageHeader,
+  StatTile,
+  StatusBadge,
+} from '@/shared/ui'
 
 const SEMANTIC = [
   'background',
