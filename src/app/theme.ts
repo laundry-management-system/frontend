@@ -100,7 +100,7 @@ const dsVariables = {
   '--mantine-color-body': 'var(--ds-background)',
   '--mantine-color-text': 'var(--ds-foreground)',
   '--mantine-color-dimmed': 'var(--ds-muted-foreground)',
-  '--mantine-color-placeholder': 'var(--ds-muted-foreground)',
+  '--mantine-color-placeholder': 'var(--ds-placeholder)',
   '--mantine-color-error': 'var(--ds-destructive)',
   '--mantine-color-default': 'var(--ds-card)',
   '--mantine-color-default-hover': 'var(--ds-muted)',

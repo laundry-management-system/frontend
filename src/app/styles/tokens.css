@@ -12,6 +12,8 @@
   --ds-popover-foreground: var(--color-slate-900);
   --ds-muted: var(--color-slate-100);
   --ds-muted-foreground: var(--color-slate-600);
+  /* Nhạt hơn chữ đã nhập (slate-900) để phân biệt, vẫn đạt AA ~4.8:1 trên nền trắng */
+  --ds-placeholder: var(--color-slate-500);
   --ds-border: var(--color-slate-200);
   --ds-input: var(--color-slate-300);
   --ds-ring: var(--color-teal-600);
@@ -124,6 +126,7 @@
   --ds-popover-foreground: var(--color-slate-50);
   --ds-muted: var(--color-slate-800);
   --ds-muted-foreground: var(--color-slate-400);
+  --ds-placeholder: var(--color-slate-400);
   --ds-border: var(--color-slate-800);
   --ds-input: var(--color-slate-700);
   --ds-ring: var(--color-teal-400);
