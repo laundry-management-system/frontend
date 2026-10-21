@@ -7,9 +7,11 @@ import {
   LuMoon,
   LuSun,
   LuTags,
+  LuUsers,
 } from 'react-icons/lu'
 import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
+import { useMe } from '@/features/users'
 import { APP_NAME } from '@/shared/config/constants'
 import { useUiStore } from '@/shared/store/uiStore'
 import { IconButton } from '@/shared/ui'
@@ -20,6 +22,7 @@ const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; rol
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
   { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
   { to: '/services', label: 'Bảng giá dịch vụ', icon: LuTags, roles: ['ADMIN', 'STAFF'] },
+  { to: '/users', label: 'Nhân viên', icon: LuUsers, roles: ['ADMIN'] },
 ]
 
 export function MainLayout() {
@@ -27,6 +30,7 @@ export function MainLayout() {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const user = useAuthStore((s) => s.user)
+  const { data: me } = useMe()
   const navigate = useNavigate()
   const roles = user?.roles ?? []
 
@@ -60,7 +64,7 @@ export function MainLayout() {
           <Group gap="xs">
             {user && (
               <Text size="sm">
-                {user.username} ·{' '}
+                {me?.fullName ?? user.username} ·{' '}
                 <Text span c="dimmed">
                   {ROLE_LABEL[roles[0]]}
                 </Text>

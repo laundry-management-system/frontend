@@ -49,28 +49,31 @@ export function DataTable<T>({
   ) : data.length === 0 ? (
     (empty ?? <EmptyState title="Không có dữ liệu" />)
   ) : (
-    <Table highlightOnHover stickyHeaderOffset={60}>
-      <Table.Thead>
-        <Table.Tr>
-          {columns.map((col) => (
-            <Table.Th key={col.name} w={col.width} ta={col.align}>
-              {col.label}
-            </Table.Th>
-          ))}
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>
-        {data.map((row, i) => (
-          <Table.Tr key={rowKey(row)} {...rowProps?.(row, i)}>
+    // Card ẩn phần tràn: cho cuộn ngang khi tổng độ rộng cột vượt màn hình (cột tự co tính tạm 160px)
+    <Table.ScrollContainer minWidth={columns.reduce((sum, c) => sum + (c.width ?? 160), 0)}>
+      <Table highlightOnHover stickyHeaderOffset={60}>
+        <Table.Thead>
+          <Table.Tr>
             {columns.map((col) => (
-              <Table.Td key={col.name} ta={col.align}>
-                {col.render ? col.render(row, i) : (row as Record<string, ReactNode>)[col.name]}
-              </Table.Td>
+              <Table.Th key={col.name} w={col.width} ta={col.align}>
+                {col.label}
+              </Table.Th>
             ))}
           </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
+        </Table.Thead>
+        <Table.Tbody>
+          {data.map((row, i) => (
+            <Table.Tr key={rowKey(row)} {...rowProps?.(row, i)}>
+              {columns.map((col) => (
+                <Table.Td key={col.name} ta={col.align}>
+                  {col.render ? col.render(row, i) : (row as Record<string, ReactNode>)[col.name]}
+                </Table.Td>
+              ))}
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
+    </Table.ScrollContainer>
   )
 
   return (

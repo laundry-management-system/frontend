@@ -14,9 +14,12 @@ let pending: Promise<string | null> | null = null
 
 /** Refresh token chỉ dùng được một lần, nên mọi request 401 cùng lúc dùng chung một lần refresh. */
 export function refreshOnce() {
+  // Phiên bắt đầu refresh; nếu trong lúc chờ đã đăng xuất/đăng nhập người khác thì bỏ kết quả cũ
+  const origin = useAuthStore.getState().token
   pending ??= authApi
     .refresh()
     .then((token) => {
+      if (useAuthStore.getState().token !== origin) return null
       useAuthStore.getState().setSession(token)
       return useAuthStore.getState().token
     })
