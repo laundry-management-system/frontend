@@ -1,7 +1,7 @@
 import { Button, SegmentedControl, Text, TextInput } from '@mantine/core'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LuChevronRight, LuSearch, LuSearchX, LuUserPlus, LuUsers } from 'react-icons/lu'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   type Customer,
   CUSTOMER_STATUS_LABEL,
@@ -13,39 +13,15 @@ import {
   looksLikePhone,
   useCustomers,
 } from '@/features/customers'
-import { useDebounce } from '@/shared/hooks/useDebounce'
+import { useListParams } from '@/shared/hooks/useListParams'
 import { EmptyState, EntityCode, IconButton, ListPage } from '@/shared/ui'
 
-type StatusFilter = 'ALL' | CustomerStatus
-
-const toStatusFilter = (v: string | null): StatusFilter =>
-  v === 'ACTIVE' || v === 'INACTIVE' ? v : 'ALL'
+const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly CustomerStatus[]
 
 export default function CustomersPage() {
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
-  const [q, setQ] = useState(params.get('q') ?? '')
-  const page = Math.max(Number(params.get('page')) || 1, 1)
-  const status = toStatusFilter(params.get('status'))
-  const search = useDebounce(q, 300)
+  const { q, setQ, search, status, setStatus, page, setPage } = useListParams(STATUSES)
   const [modal, setModal] = useState<{ phone?: string; fullName?: string } | null>(null)
-
-  // Từ khóa, trạng thái và trang nằm trên URL để F5 không mất (FR-005)
-  const setUrl = (query: string, p: number, st: StatusFilter = status) =>
-    setParams(
-      {
-        ...(query && { q: query }),
-        ...(st !== 'ALL' && { status: st }),
-        ...(p > 1 && { page: String(p) }),
-      },
-      { replace: true },
-    )
-
-  const urlQ = params.get('q') ?? ''
-  useEffect(() => {
-    if (search !== urlQ) setUrl(search, 1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy khi từ khóa đổi
-  }, [search])
 
   const { data, isLoading, isError, refetch } = useCustomers({
     search,
@@ -80,7 +56,7 @@ export default function CustomersPage() {
             />
             <SegmentedControl
               value={status}
-              onChange={(v) => setUrl(search, 1, v as StatusFilter)}
+              onChange={(v) => setStatus(v as CustomerStatus | 'ALL')}
               data={[
                 { label: 'Tất cả', value: 'ALL' },
                 { label: CUSTOMER_STATUS_LABEL.ACTIVE, value: 'ACTIVE' },
@@ -152,7 +128,7 @@ export default function CustomersPage() {
               icon={<LuSearchX size={32} />}
               title={`Không có khách ${CUSTOMER_STATUS_LABEL[status].toLowerCase()}`}
               action={
-                <Button variant="secondary" onClick={() => setUrl(search, 1, 'ALL')}>
+                <Button variant="secondary" onClick={() => setStatus('ALL')}>
                   Xem tất cả khách
                 </Button>
               }
@@ -167,7 +143,7 @@ export default function CustomersPage() {
         }
         page={page}
         totalPages={data?.page.totalPages}
-        onPageChange={(p) => setUrl(search, p)}
+        onPageChange={setPage}
       >
         {total > 0 && (
           <Text size="sm" c="dimmed" mt="xs">
