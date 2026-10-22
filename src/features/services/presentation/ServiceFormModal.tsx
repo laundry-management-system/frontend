@@ -85,7 +85,11 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
 
   const handleError = (err: unknown) => {
     const error = toApiError(err)
-    if (Object.keys(error.fieldErrors).length) form.setErrors(error.fieldErrors)
+    // BE đặt tên field đơn giá là `currentPrice`, form là `price`
+    const { currentPrice, ...rest } = error.fieldErrors
+    const errors = currentPrice ? { price: currentPrice, ...rest } : rest
+    // Lỗi không thuộc ô nào trên form thì báo toast, tránh lưu thất bại mà không có phản hồi
+    if (Object.keys(errors).some((key) => key in form.values)) form.setErrors(errors)
     else notify.error(error.message)
   }
 
@@ -139,7 +143,8 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
               <InfoLabel
                 info={
                   mode === 'edit' &&
-                  'Đổi giá phải nhập lý do và được ghi vào nhật ký (giá cũ, giá mới, người sửa, thời gian).'
+                  // Không hứa ghi nhật ký: BE chưa lưu lịch sử giá (BE-S1)
+                  'Đổi giá phải nhập lý do.'
                 }
               >
                 Đơn giá

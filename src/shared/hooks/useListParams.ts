@@ -12,7 +12,8 @@ export function useListParams<S extends string>(statuses: readonly S[]) {
   const search = params.get('q') ?? ''
   const rawStatus = params.get('status')
   const status: S | 'ALL' = statuses.includes(rawStatus as S) ? (rawStatus as S) : 'ALL'
-  const page = Math.max(Number(params.get('page')) || 1, 1)
+  const rawPage = Number(params.get('page'))
+  const page = Number.isInteger(rawPage) && rawPage > 1 ? rawPage : 1
 
   const [q, setQ] = useState(search)
   // URL đổi từ ngoài → đồng bộ ô gõ (chỉnh state ngay trong render, không dùng effect)
