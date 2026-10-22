@@ -1,13 +1,11 @@
-import { Center, Paper } from '@mantine/core'
+import { Center } from '@mantine/core'
 import { Outlet } from 'react-router-dom'
 
-/** Khung cho các trang chưa đăng nhập (login, quên mật khẩu). */
+/** Khung cho các trang chưa đăng nhập; thẻ nội dung do từng trang tự vẽ. */
 export function AuthLayout() {
   return (
-    <Center mih="100vh" bg="var(--mantine-color-body)">
-      <Paper withBorder shadow="sm" p="xl" w={380}>
-        <Outlet />
-      </Paper>
+    <Center mih="100vh" p={16} bg="var(--ds-surface)">
+      <Outlet />
     </Center>
   )
 }

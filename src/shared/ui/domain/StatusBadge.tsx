@@ -6,7 +6,7 @@ import {
   type DomainStatus,
   type StatusGroup,
   type StatusIcon,
-} from '../config/domainStatuses'
+} from '@/shared/config/domainStatuses'
 
 const ICONS: Record<StatusIcon, IconType> = {
   wallet: LuWallet,

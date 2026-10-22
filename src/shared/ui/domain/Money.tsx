@@ -1,4 +1,4 @@
-import { formatMoney } from '../lib/format'
+import { formatMoney } from '@/shared/lib/format'
 
 interface MoneyProps {
   value: number

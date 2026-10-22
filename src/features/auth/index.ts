@@ -1,2 +1,7 @@
 export { useAuthStore, selectIsAuthenticated, selectHasRole } from './application/authStore'
-export type { AuthUser } from './application/authStore'
+export { restoreSession, refreshOnce, logout } from './application/session'
+export { homePathFor } from './domain/rules'
+export { ROLE_LABEL } from './domain/types'
+export type { AuthUser, Role } from './domain/types'
+export { LoginCard } from './presentation/LoginCard'
+export { SetupPasswordCard } from './presentation/SetupPasswordCard'
