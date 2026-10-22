@@ -13,18 +13,13 @@ interface CustomerInfoCardProps {
   statusLoading?: boolean
 }
 
-function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Stack gap={2}>
       <Text size="sm" c="dimmed">
         {label}
       </Text>
       <div>{children}</div>
-      {hint && (
-        <Text size="xs" c="dimmed">
-          {hint}
-        </Text>
-      )}
     </Stack>
   )
 }
