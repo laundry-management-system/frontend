@@ -1,5 +1,14 @@
 import { AppShell, Burger, Group, NavLink, Text, Title, useMantineColorScheme } from '@mantine/core'
-import { LuLayoutDashboard, LuListTodo, LuLogOut, LuMoon, LuSun, LuUsers } from 'react-icons/lu'
+import {
+  LuContact,
+  LuLayoutDashboard,
+  LuListTodo,
+  LuLogOut,
+  LuMoon,
+  LuSun,
+  LuTags,
+  LuUsers,
+} from 'react-icons/lu'
 import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
 import { useMe } from '@/features/users'
@@ -11,6 +20,8 @@ import { queryClient } from '../providers/queryClient'
 const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; roles: Role[] }[] = [
   { to: '/', label: 'Tổng quan', icon: LuLayoutDashboard, roles: ['ADMIN'] },
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
+  { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
+  { to: '/services', label: 'Bảng giá dịch vụ', icon: LuTags, roles: ['ADMIN', 'STAFF'] },
   { to: '/users', label: 'Nhân viên', icon: LuUsers, roles: ['ADMIN'] },
 ]
 

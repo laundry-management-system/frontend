@@ -1,6 +1,6 @@
-import { ActionIcon, Badge, Menu, SegmentedControl, Text, TextInput } from '@mantine/core'
+import { Badge, Button, SegmentedControl, Text, TextInput } from '@mantine/core'
 import { useState } from 'react'
-import { LuEllipsisVertical, LuSearch } from 'react-icons/lu'
+import { LuSearch, LuSearchX, LuUsers } from 'react-icons/lu'
 import {
   ROLE_LABEL,
   STATUS_LABEL,
@@ -13,30 +13,22 @@ import {
   useUsers,
 } from '@/features/users'
 import { DEFAULT_PAGE_SIZE } from '@/shared/config/constants'
-import { useDebounce } from '@/shared/hooks/useDebounce'
+import { useListParams } from '@/shared/hooks/useListParams'
 import { formatDate } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
-import { ConfirmModal, type DataTableColumn, EmptyState, ListPage } from '@/shared/ui'
+import { ConfirmModal, type DataTableColumn, EmptyState, ListPage, RowActions } from '@/shared/ui'
 
-type StatusFilter = 'ALL' | UserStatus
+const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly UserStatus[]
+
+type ModalState =
+  { kind: 'create' } | { kind: 'edit' | 'disable' | 'activate' | 'resend'; user: User } | null
 
 export default function UsersPage() {
-  const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<StatusFilter>('ALL')
-  const [page, setPage] = useState(1)
-  const debounced = useDebounce(keyword, 300)
-
-  const onKeyword = (v: string) => {
-    setKeyword(v)
-    setPage(1)
-  }
-  const onStatus = (v: string) => {
-    setStatus(v as StatusFilter)
-    setPage(1)
-  }
+  const { q, setQ, search, status, setStatus, page, setPage, filtered, reset } =
+    useListParams(STATUSES)
 
   const { data, isLoading, isError, refetch } = useUsers({
-    keyword: debounced.trim() || undefined,
+    keyword: search.trim() || undefined,
     status: status === 'ALL' ? undefined : status,
     page: page - 1,
     size: DEFAULT_PAGE_SIZE,
@@ -46,52 +38,18 @@ export default function UsersPage() {
   const enableUser = useEnableUser()
   const resendSetupMail = useResendSetupMail()
 
-  const [formOpened, setFormOpened] = useState(false)
-  const [editing, setEditing] = useState<User | undefined>()
-  const [toDisable, setToDisable] = useState<User | undefined>()
-  const [toActivate, setToActivate] = useState<User | undefined>()
-  const [toResend, setToResend] = useState<User | undefined>()
+  const [modal, setModal] = useState<ModalState>(null)
+  const close = () => setModal(null)
+  const target = modal && modal.kind !== 'create' ? modal.user : undefined
 
-  const openCreate = () => {
-    setEditing(undefined)
-    setFormOpened(true)
-  }
-  const openEdit = (user: User) => {
-    setEditing(user)
-    setFormOpened(true)
-  }
-
-  const confirmDisable = () => {
-    if (!toDisable) return
-    disableUser.mutate(toDisable.id, {
+  const run = (mutation: { mutate: (id: number, opts: object) => void }, success: string) => {
+    if (!target) return
+    mutation.mutate(target.id, {
       onSuccess: () => {
-        notify.success('Đã vô hiệu hóa nhân viên')
-        setToDisable(undefined)
+        notify.success(success)
+        close()
       },
-      onError: (e) => notify.error(e.message),
-    })
-  }
-
-  const confirmActivate = () => {
-    if (!toActivate) return
-    enableUser.mutate(toActivate.id, {
-      onSuccess: () => {
-        notify.success('Đã kích hoạt lại nhân viên')
-        setToActivate(undefined)
-      },
-      onError: (e) => notify.error(e.message),
-    })
-  }
-
-  const confirmResend = () => {
-    if (!toResend) return
-    const { email } = toResend
-    resendSetupMail.mutate(toResend.id, {
-      onSuccess: () => {
-        notify.success(`Đã gửi lại link tới ${email}`)
-        setToResend(undefined)
-      },
-      onError: (e) => notify.error(e.message),
+      onError: (e: Error) => notify.error(e.message),
     })
   }
 
@@ -105,13 +63,13 @@ export default function UsersPage() {
         leftSection={<LuSearch size={16} />}
         placeholder="Tìm theo mã / họ tên / SĐT / email"
         aria-label="Tìm theo mã / họ tên / SĐT / email"
-        value={keyword}
-        onChange={(e) => onKeyword(e.currentTarget.value)}
+        value={q}
+        onChange={(e) => setQ(e.currentTarget.value)}
         w={320}
       />
       <SegmentedControl
         value={status}
-        onChange={onStatus}
+        onChange={(v) => setStatus(v as UserStatus | 'ALL')}
         data={[
           { label: 'Tất cả', value: 'ALL' },
           { label: 'Đang làm', value: 'ACTIVE' },
@@ -162,27 +120,27 @@ export default function UsersPage() {
       width: 40,
       align: 'right',
       render: (u) => (
-        <Menu position="bottom-end" withArrow>
-          <Menu.Target>
-            <ActionIcon variant="subtle" color="neutral" aria-label="Thao tác">
-              <LuEllipsisVertical size={18} />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item onClick={() => openEdit(u)}>Sửa</Menu.Item>
-            {u.status === 'ACTIVE' && u.role !== 'ADMIN' && (
-              <Menu.Item color="red" onClick={() => setToDisable(u)}>
-                Vô hiệu hóa
-              </Menu.Item>
-            )}
-            {u.status === 'INACTIVE' && (
-              <>
-                <Menu.Item onClick={() => setToResend(u)}>Gửi lại link kích hoạt</Menu.Item>
-                <Menu.Item onClick={() => setToActivate(u)}>Kích hoạt lại</Menu.Item>
-              </>
-            )}
-          </Menu.Dropdown>
-        </Menu>
+        <RowActions
+          items={[
+            { label: 'Sửa', onClick: () => setModal({ kind: 'edit', user: u }) },
+            {
+              label: 'Vô hiệu hóa',
+              danger: true,
+              hidden: !(u.status === 'ACTIVE' && u.role !== 'ADMIN'),
+              onClick: () => setModal({ kind: 'disable', user: u }),
+            },
+            {
+              label: 'Gửi lại link kích hoạt',
+              hidden: u.status !== 'INACTIVE',
+              onClick: () => setModal({ kind: 'resend', user: u }),
+            },
+            {
+              label: 'Kích hoạt lại',
+              hidden: u.status !== 'INACTIVE',
+              onClick: () => setModal({ kind: 'activate', user: u }),
+            },
+          ]}
+        />
       ),
     },
   ]
@@ -191,7 +149,7 @@ export default function UsersPage() {
     <ListPage
       title="Nhân viên"
       description={`${total} tài khoản`}
-      primaryAction={{ label: 'Thêm nhân viên', onClick: openCreate }}
+      primaryAction={{ label: 'Thêm nhân viên', onClick: () => setModal({ kind: 'create' }) }}
       filters={filters}
       columns={columns}
       data={users}
@@ -200,7 +158,27 @@ export default function UsersPage() {
       error={isError}
       onRetry={() => void refetch()}
       empty={
-        <EmptyState title="Chưa có nhân viên" description="Bấm Thêm nhân viên để tạo tài khoản." />
+        filtered ? (
+          <EmptyState
+            icon={<LuSearchX size={32} />}
+            title="Không tìm thấy nhân viên"
+            description={
+              search.trim() ? `Không có nhân viên nào khớp "${search.trim()}".` : undefined
+            }
+            action={
+              <Button variant="secondary" onClick={reset}>
+                Xóa bộ lọc
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={<LuUsers size={32} />}
+            title="Chưa có nhân viên"
+            description="Nhân viên mới thêm sẽ hiện ở đây."
+            action={<Button onClick={() => setModal({ kind: 'create' })}>Thêm nhân viên</Button>}
+          />
+        )
       }
       rowProps={(u) => ({ opacity: u.status === 'INACTIVE' ? 0.55 : 1 })}
       page={page}
@@ -208,38 +186,38 @@ export default function UsersPage() {
       onPageChange={setPage}
     >
       <UserFormModal
-        opened={formOpened}
-        onClose={() => setFormOpened(false)}
-        mode={editing ? 'edit' : 'create'}
-        user={editing}
+        opened={modal?.kind === 'create' || modal?.kind === 'edit'}
+        onClose={close}
+        mode={modal?.kind === 'edit' ? 'edit' : 'create'}
+        user={modal?.kind === 'edit' ? modal.user : undefined}
       />
       <ConfirmModal
-        opened={!!toDisable}
-        onClose={() => setToDisable(undefined)}
-        onConfirm={confirmDisable}
+        opened={modal?.kind === 'disable'}
+        onClose={close}
+        onConfirm={() => run(disableUser, 'Đã vô hiệu hóa nhân viên')}
         kind="destructive"
         title="Vô hiệu hóa nhân viên"
         confirmLabel="Vô hiệu hóa"
         loading={disableUser.isPending}
       >
-        {toDisable &&
-          `Tài khoản "${toDisable.fullName}" sẽ chuyển sang Ngừng hoạt động. Có thể kích hoạt lại sau.`}
+        {target &&
+          `Tài khoản "${target.fullName}" sẽ chuyển sang Ngừng hoạt động. Có thể kích hoạt lại sau.`}
       </ConfirmModal>
       <ConfirmModal
-        opened={!!toResend}
-        onClose={() => setToResend(undefined)}
-        onConfirm={confirmResend}
+        opened={modal?.kind === 'resend'}
+        onClose={close}
+        onConfirm={() => run(resendSetupMail, `Đã gửi lại link tới ${target?.email}`)}
         kind="confirm"
         title="Gửi lại link kích hoạt"
         confirmLabel="Gửi"
         loading={resendSetupMail.isPending}
       >
-        {toResend && `Gửi link mới tới ${toResend.email}? Link cũ sẽ hết hiệu lực.`}
+        {target && `Gửi link mới tới ${target.email}? Link cũ sẽ hết hiệu lực.`}
       </ConfirmModal>
       <ConfirmModal
-        opened={!!toActivate}
-        onClose={() => setToActivate(undefined)}
-        onConfirm={confirmActivate}
+        opened={modal?.kind === 'activate'}
+        onClose={close}
+        onConfirm={() => run(enableUser, 'Đã kích hoạt lại nhân viên')}
         kind="confirm"
         title="Kích hoạt lại nhân viên"
         confirmLabel="Kích hoạt lại"
