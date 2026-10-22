@@ -5,8 +5,8 @@ import { InfoLabel } from '@/shared/ui'
 import { priceDelta } from '../domain/rules'
 
 const DIRECTION = {
-  up: { color: 'warning', icon: LuTrendingUp },
-  down: { color: 'success', icon: LuTrendingDown },
+  up: { color: 'success', icon: LuTrendingUp },
+  down: { color: 'warning', icon: LuTrendingDown },
   same: { color: 'neutral', icon: LuMinus },
 } as const
 
