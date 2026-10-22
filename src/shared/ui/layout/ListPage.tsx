@@ -8,6 +8,7 @@ import { PageHeader } from './PageHeader'
 export interface ListPageProps<T> extends DataTableProps<T> {
   title: string
   description?: string
+  info?: ReactNode
   primaryAction?: { label: string; onClick: () => void; icon?: ReactNode }
   actions?: ReactNode
   filters?: ReactNode
@@ -19,6 +20,7 @@ export interface ListPageProps<T> extends DataTableProps<T> {
 export function ListPage<T>({
   title,
   description,
+  info,
   primaryAction,
   actions,
   filters,
@@ -45,7 +47,7 @@ export function ListPage<T>({
 
   return (
     <>
-      <PageHeader title={title} description={description} actions={headerActions} />
+      <PageHeader title={title} description={description} info={info} actions={headerActions} />
       {filters && (
         <Card mb="md">
           <Group>{filters}</Group>
