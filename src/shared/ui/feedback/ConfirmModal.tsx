@@ -39,7 +39,6 @@ export function ConfirmModal({
         {kind === 'reason' && (
           <Textarea
             label="Lý do"
-            description="Bắt buộc – ghi vào nhật ký hệ thống"
             required
             autosize
             minRows={3}

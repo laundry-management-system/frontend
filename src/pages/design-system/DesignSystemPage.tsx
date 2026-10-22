@@ -251,7 +251,7 @@ export default function DesignSystemPage() {
             <MoneyInput label="Đơn giá" defaultValue={185000} />
             <WeightInput label="Khối lượng" defaultValue={3.5} />
           </SimpleGrid>
-          <Textarea label="Lý do" description="Bắt buộc – ghi vào nhật ký hệ thống" />
+          <Textarea label="Lý do" />
           <Group>
             <Checkbox label="Chưa chọn" />
             <Checkbox label="Đã chọn" defaultChecked />

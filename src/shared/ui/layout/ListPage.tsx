@@ -1,6 +1,6 @@
 import { Alert, Button, Card, Group } from '@mantine/core'
 import type { ReactNode } from 'react'
-import { LuPlus } from 'react-icons/lu'
+import { LuCloudOff, LuPlus } from 'react-icons/lu'
 import { DataTable, type DataTableProps } from '../data-display/DataTable'
 import { EmptyState } from '../feedback/EmptyState'
 import { PageHeader } from './PageHeader'
@@ -8,6 +8,7 @@ import { PageHeader } from './PageHeader'
 export interface ListPageProps<T> extends DataTableProps<T> {
   title: string
   description?: string
+  info?: ReactNode
   primaryAction?: { label: string; onClick: () => void; icon?: ReactNode }
   actions?: ReactNode
   filters?: ReactNode
@@ -19,6 +20,7 @@ export interface ListPageProps<T> extends DataTableProps<T> {
 export function ListPage<T>({
   title,
   description,
+  info,
   primaryAction,
   actions,
   filters,
@@ -45,7 +47,7 @@ export function ListPage<T>({
 
   return (
     <>
-      <PageHeader title={title} description={description} actions={headerActions} />
+      <PageHeader title={title} description={description} info={info} actions={headerActions} />
       {filters && (
         <Card mb="md">
           <Group>{filters}</Group>
@@ -69,6 +71,7 @@ export function ListPage<T>({
         empty={
           error ? (
             <EmptyState
+              icon={<LuCloudOff size={32} />}
               title="Không tải được dữ liệu"
               description="Vui lòng kiểm tra kết nối rồi thử lại."
               action={

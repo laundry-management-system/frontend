@@ -7,9 +7,12 @@ import { GuestRoute } from './GuestRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleGuard } from './RoleGuard'
 
+const CustomerDetailPage = lazy(() => import('@/pages/customers/CustomerDetailPage'))
+const CustomersPage = lazy(() => import('@/pages/customers/CustomersPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
+const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
 const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
@@ -47,6 +50,9 @@ export const router = createBrowserRouter([
             ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },
+          { path: '/customers', element: page(<CustomersPage />) },
+          { path: '/customers/:id', element: page(<CustomerDetailPage />) },
+          { path: '/services', element: page(<ServicesPage />) },
           // Trang demo Laundry DS, chỉ có ở dev
           ...(import.meta.env.DEV
             ? [{ path: '/dev/design-system', element: page(<DesignSystemPage />) }]
