@@ -4,6 +4,7 @@ export interface ServiceResponseDto {
   id: number
   serviceCode: string
   name: string
+  unit: ServiceUnit
   unitDisplayName: string | null
   currentPrice: number | string
   standardHours: number
@@ -26,5 +27,7 @@ export interface CreateServiceRequestDto {
 }
 
 export type UpdateServiceRequestDto = CreateServiceRequestDto & {
+  // BE chưa đọc trường này (BE-S1, tính năng nhật ký giá chưa làm); Spring bỏ qua trường lạ
   priceChangeReason?: string
+  status: ServiceStatus
 }

@@ -1,33 +1,24 @@
 import {
   Button,
-  Group,
+  Input,
   Modal,
   NumberInput,
   SegmentedControl,
   Select,
+  SimpleGrid,
   Stack,
   Switch,
-  Text,
   TextInput,
 } from '@mantine/core'
-import { useForm } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { useState } from 'react'
 import { toApiError } from '@/shared/api/apiError'
-import { formatMoney } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
-import { ConfirmModal, EntityCode, ModalFooter, MoneyInput } from '@/shared/ui'
-import {
-  StatusChangeError,
-  useCreateService,
-  useUpdateService,
-} from '../application/useServiceMutations'
-import {
-  isPriceChanged,
-  SERVICE_NAME_MAX,
-  toFormValues,
-  toServicePayload,
-  validateServiceForm,
-} from '../domain/rules'
+import { ConfirmModal, EntityCode, InfoLabel, ModalFooter, MoneyInput } from '@/shared/ui'
+import { serviceFormSchema } from '../application/schemas'
+import { useCreateService } from '../application/useCreateService'
+import { useUpdateService } from '../application/useUpdateService'
+import { isPriceChanged, SERVICE_NAME_MAX, toFormValues, toServicePayload } from '../domain/rules'
 import {
   SERVICE_STATUS_LABEL,
   type Service,
@@ -36,6 +27,7 @@ import {
   type ServiceUnit,
   UNIT_LABEL,
 } from '../domain/types'
+import { PriceChange } from './PriceChange'
 
 interface ServiceFormModalProps {
   opened: boolean
@@ -86,18 +78,12 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
 
   const form = useForm<ServiceFormValues>({
     initialValues: toFormValues(initial),
-    validate: validateServiceForm,
+    validate: schemaResolver(serviceFormSchema, { sync: true }),
   })
   const v = form.values
   const unitLabel = v.unit ? UNIT_LABEL[v.unit] : 'đơn vị'
 
   const handleError = (err: unknown) => {
-    if (err instanceof StatusChangeError) {
-      notify.error(
-        `Đã lưu thông tin nhưng chưa đổi được trạng thái: ${toApiError(err.original).message}`,
-      )
-      return
-    }
     const error = toApiError(err)
     if (Object.keys(error.fieldErrors).length) form.setErrors(error.fieldErrors)
     else notify.error(error.message)
@@ -116,9 +102,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
     update.mutate(
       {
         id: initial!.id,
-        dto: priceChangeReason ? { ...payload, priceChangeReason } : payload,
-        status: values.status,
-        previousStatus: initial!.status,
+        dto: { ...payload, status: values.status, ...(priceChangeReason && { priceChangeReason }) },
       },
       { onSuccess: done, onError: handleError },
     )
@@ -133,12 +117,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
   return (
     <form onSubmit={submit} noValidate>
       <Stack>
-        {mode === 'edit' && (
-          <Text size="sm" c="dimmed">
-            Thay đổi giá được ghi vào nhật ký (giá cũ, giá mới, người sửa, thời gian).
-          </Text>
-        )}
-        <Group grow align="flex-start">
+        <SimpleGrid cols={2}>
           <TextInput
             label="Tên dịch vụ"
             required
@@ -149,14 +128,26 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
           <Select
             label="Đơn vị tính"
             required
-            maw={160}
             data={UNIT_OPTIONS}
             allowDeselect={false}
             {...form.getInputProps('unit')}
           />
-        </Group>
-        <Group grow align="flex-start">
-          <MoneyInput label="Đơn giá" required {...form.getInputProps('price')} />
+        </SimpleGrid>
+        <SimpleGrid cols={2}>
+          <MoneyInput
+            label={
+              <InfoLabel
+                info={
+                  mode === 'edit' &&
+                  'Đổi giá phải nhập lý do và được ghi vào nhật ký (giá cũ, giá mới, người sửa, thời gian).'
+                }
+              >
+                Đơn giá
+              </InfoLabel>
+            }
+            required
+            {...form.getInputProps('price')}
+          />
           <NumberInput
             label="Thời gian xử lý chuẩn"
             required
@@ -167,23 +158,21 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
             rightSectionWidth={44}
             {...form.getInputProps('standardHours')}
           />
-        </Group>
+        </SimpleGrid>
         <Switch
           label="Hỗ trợ giặt nhanh"
           {...form.getInputProps('expressSupported', { type: 'checkbox' })}
         />
         {v.expressSupported && (
-          <Group grow align="flex-start">
+          <SimpleGrid cols={2}>
             <MoneyInput
-              label="Phụ phí giặt nhanh"
+              label={`Phụ phí giặt nhanh (mỗi ${unitLabel})`}
               required
-              description={`Mỗi ${unitLabel}`}
               {...form.getInputProps('expressSurcharge')}
             />
             <NumberInput
               label="Thời gian giặt nhanh"
               required
-              description="Ngắn hơn thời gian chuẩn"
               min={1}
               allowDecimal={false}
               allowNegative={false}
@@ -191,28 +180,28 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
               rightSectionWidth={44}
               {...form.getInputProps('expressHours')}
             />
-          </Group>
+          </SimpleGrid>
         )}
         {mode === 'edit' && (
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>
-              Trạng thái
-            </Text>
-            <SegmentedControl
-              value={v.status}
-              onChange={(s) => form.setFieldValue('status', s as ServiceStatus)}
-              data={(['ACTIVE', 'INACTIVE'] as ServiceStatus[]).map((s) => ({
-                value: s,
-                label: SERVICE_STATUS_LABEL[s],
-              }))}
-              style={{ alignSelf: 'flex-start' }}
-            />
-            {v.status === 'INACTIVE' && (
-              <Text size="xs" c="dimmed">
-                Dịch vụ sẽ không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.
-              </Text>
-            )}
-          </Stack>
+          <SimpleGrid cols={2}>
+            <Input.Wrapper
+              label={
+                <InfoLabel info="Dịch vụ ngừng hoạt động không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.">
+                  Trạng thái
+                </InfoLabel>
+              }
+            >
+              <SegmentedControl
+                fullWidth
+                value={v.status}
+                onChange={(s) => form.setFieldValue('status', s as ServiceStatus)}
+                data={(['ACTIVE', 'INACTIVE'] as ServiceStatus[]).map((s) => ({
+                  value: s,
+                  label: SERVICE_STATUS_LABEL[s],
+                }))}
+              />
+            </Input.Wrapper>
+          </SimpleGrid>
         )}
         <ModalFooter>
           <Button variant="secondary" onClick={close} disabled={pending}>
@@ -245,8 +234,9 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
         title={`Đổi giá ${initial?.name ?? ''}`}
         confirmLabel="Lưu giá mới"
       >
-        {formatMoney(initial?.price ?? 0)} → {formatMoney(Number(pricePending?.price ?? 0))}. Đơn đã
-        tạo vẫn giữ giá cũ.
+        {pricePending && initial && (
+          <PriceChange oldPrice={initial.price} newPrice={Number(pricePending.price)} />
+        )}
       </ConfirmModal>
     </form>
   )

@@ -2,11 +2,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
-  expressLabel,
+  expressParts,
   isPriceChanged,
+  priceDelta,
   toFormValues,
   toServicePayload,
-  validateServiceForm,
 } from './rules.ts'
 import type { Service, ServiceFormValues } from './types'
 
@@ -28,50 +28,10 @@ const form = (patch: Partial<ServiceFormValues> = {}): ServiceFormValues => ({
   ...patch,
 })
 
-test('expressLabel', () => {
-  assert.equal(expressLabel(service), 'Có · +12.500đ/kg · 6 giờ')
-  assert.equal(expressLabel({ ...service, expressSupported: false }), 'Không')
-  assert.equal(expressLabel({ ...service, unit: null }), 'Có · +12.500đ/đơn vị · 6 giờ')
-})
-
-test('validateServiceForm: form hợp lệ', () => {
-  assert.deepEqual(validateServiceForm(form()), {})
-  assert.deepEqual(
-    validateServiceForm(form({ expressSupported: false, expressSurcharge: '', expressHours: '' })),
-    {},
-  )
-})
-
-test('validateServiceForm: trường bắt buộc và giới hạn', () => {
-  assert.equal(validateServiceForm(form({ name: '  ' })).name, 'Vui lòng nhập tên dịch vụ')
-  assert.equal(
-    validateServiceForm(form({ name: 'a'.repeat(101) })).name,
-    'Tên dịch vụ tối đa 100 ký tự',
-  )
-  assert.equal(validateServiceForm(form({ unit: null })).unit, 'Vui lòng chọn đơn vị tính')
-  assert.equal(validateServiceForm(form({ price: '' })).price, 'Vui lòng nhập đơn giá')
-  assert.equal(validateServiceForm(form({ price: -1 })).price, 'Đơn giá không được âm')
-  assert.equal(validateServiceForm(form({ price: 0 })).price, undefined)
-  assert.equal(
-    validateServiceForm(form({ standardHours: 0 })).standardHours,
-    'Thời gian phải lớn hơn 0 giờ',
-  )
-})
-
-test('validateServiceForm: giặt nhanh', () => {
-  assert.equal(
-    validateServiceForm(form({ expressSurcharge: '' })).expressSurcharge,
-    'Vui lòng nhập phụ phí giặt nhanh',
-  )
-  assert.equal(
-    validateServiceForm(form({ expressHours: '' })).expressHours,
-    'Vui lòng nhập thời gian giặt nhanh',
-  )
-  // BR-C06
-  assert.equal(
-    validateServiceForm(form({ expressHours: 24 })).expressHours,
-    'Thời gian giặt nhanh phải ngắn hơn thời gian chuẩn',
-  )
+test('expressParts', () => {
+  assert.deepEqual(expressParts(service), { surcharge: '+12.500đ/kg', hours: '6 giờ' })
+  assert.equal(expressParts({ ...service, expressSupported: false }), null)
+  assert.equal(expressParts({ ...service, unit: null })?.surcharge, '+12.500đ/đơn vị')
 })
 
 test('toServicePayload: tắt giặt nhanh thì xóa phụ phí và thời gian', () => {
@@ -86,4 +46,10 @@ test('isPriceChanged', () => {
   assert.equal(isPriceChanged(service, form()), false)
   assert.equal(isPriceChanged(service, form({ price: 28000 })), true)
   assert.equal(isPriceChanged(undefined, form({ price: 28000 })), false)
+})
+
+test('priceDelta: tăng, giảm, giá cũ 0', () => {
+  assert.deepEqual(priceDelta(28000, 34000), { direction: 'up', label: '+6.000đ · +21,4%' })
+  assert.deepEqual(priceDelta(25000, 20000), { direction: 'down', label: '−5.000đ · −20%' })
+  assert.deepEqual(priceDelta(0, 15000), { direction: 'up', label: '+15.000đ' })
 })

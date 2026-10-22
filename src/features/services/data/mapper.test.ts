@@ -8,6 +8,7 @@ const dto = (patch: Partial<ServiceResponseDto> = {}): ServiceResponseDto => ({
   id: 1,
   serviceCode: 'DV01',
   name: 'Giặt sấy',
+  unit: 'KG',
   unitDisplayName: 'kg',
   currentPrice: 25000,
   standardHours: 24,
@@ -20,13 +21,9 @@ const dto = (patch: Partial<ServiceResponseDto> = {}): ServiceResponseDto => ({
   ...patch,
 })
 
-test('toService: map tên hiển thị đơn vị về enum', () => {
-  assert.equal(toService(dto({ unitDisplayName: 'kg' })).unit, 'KG')
-  assert.equal(toService(dto({ unitDisplayName: 'piece' })).unit, 'PIECE')
-  assert.equal(toService(dto({ unitDisplayName: 'set' })).unit, 'SET')
-  assert.equal(toService(dto({ unitDisplayName: 'Product' })).unit, 'PRODUCT')
-  assert.equal(toService(dto({ unitDisplayName: 'abc' })).unit, null)
-  assert.equal(toService(dto({ unitDisplayName: null })).unit, null)
+test('toService: lấy mã đơn vị BE trả về, không dựa vào tên hiển thị', () => {
+  assert.equal(toService(dto({ unit: 'PIECE', unitDisplayName: 'piece' })).unit, 'PIECE')
+  assert.equal(toService(dto({ unit: 'PRODUCT', unitDisplayName: 'whatever' })).unit, 'PRODUCT')
 })
 
 test('toService: tiền dạng chuỗi → số, expressSupported null → false', () => {

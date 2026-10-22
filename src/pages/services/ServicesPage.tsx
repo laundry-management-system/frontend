@@ -1,24 +1,41 @@
-import { Alert, Button, Text } from '@mantine/core'
+import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import { useState } from 'react'
-import { LuInfo, LuPencil, LuPlus, LuTags } from 'react-icons/lu'
+import { LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
 import { selectHasRole, useAuthStore } from '@/features/auth'
 import {
-  expressLabel,
+  expressParts,
+  SERVICE_STATUS_LABEL,
   type Service,
+  type ServiceStatus,
   ServiceFormModal,
   ServiceStatusBadge,
   UNIT_LABEL,
   useServices,
 } from '@/features/services'
-import { type DataTableColumn, EmptyState, EntityCode, ListPage, Money } from '@/shared/ui'
+import { useListParams } from '@/shared/hooks/useListParams'
+import {
+  type DataTableColumn,
+  EmptyState,
+  EntityCode,
+  ListPage,
+  Money,
+  RowActions,
+} from '@/shared/ui'
 
 type ModalState = { mode: 'create' } | { mode: 'edit'; service: Service } | null
 
+const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly ServiceStatus[]
+
 export default function ServicesPage() {
   const canManage = useAuthStore(selectHasRole('ADMIN'))
-  const { data = [], isLoading, isError, refetch } = useServices()
+  const { q, setQ, search, status, setStatus, page, setPage, filtered, reset } =
+    useListParams(STATUSES)
+  const { data, isLoading, isError, refetch } = useServices({
+    search,
+    status: status === 'ALL' ? undefined : status,
+    page: page - 1,
+  })
   const [modal, setModal] = useState<ModalState>(null)
-  const activeCount = data.filter((s) => s.status === 'ACTIVE').length
   const openCreate = () => setModal({ mode: 'create' })
 
   const columns: DataTableColumn<Service>[] = [
@@ -40,10 +57,28 @@ export default function ServicesPage() {
     {
       name: 'standardHours',
       label: 'Xử lý chuẩn',
-      width: 110,
+      width: 140,
       render: (s) => `${s.standardHours} giờ`,
     },
-    { name: 'express', label: 'Giặt nhanh', width: 200, render: (s) => expressLabel(s) },
+    {
+      name: 'express',
+      label: 'Giặt nhanh',
+      width: 200,
+      render: (s) => {
+        const e = expressParts(s)
+        if (!e) return 'Không'
+        return (
+          <Stack gap={0} style={{ whiteSpace: 'nowrap' }}>
+            <span>
+              <b>Phụ phí:</b> {e.surcharge}
+            </span>
+            <span>
+              <b>Thời gian:</b> {e.hours}
+            </span>
+          </Stack>
+        )
+      },
+    },
     {
       name: 'status',
       label: 'Trạng thái',
@@ -53,19 +88,14 @@ export default function ServicesPage() {
     ...(canManage
       ? [
           {
-            name: 'edit',
+            name: 'actions',
             label: '',
-            width: 80,
+            width: 40,
             align: 'right' as const,
             render: (s: Service) => (
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<LuPencil size={14} />}
-                onClick={() => setModal({ mode: 'edit', service: s })}
-              >
-                Sửa
-              </Button>
+              <RowActions
+                items={[{ label: 'Sửa', onClick: () => setModal({ mode: 'edit', service: s }) }]}
+              />
             ),
           },
         ]
@@ -76,41 +106,69 @@ export default function ServicesPage() {
     <>
       <ListPage<Service>
         title="Bảng giá dịch vụ"
-        description={`${data.length} dịch vụ · ${activeCount} đang hoạt động`}
+        description={`${data?.page.totalElements ?? 0} dịch vụ`}
         primaryAction={canManage ? { label: 'Thêm dịch vụ', onClick: openCreate } : undefined}
+        info="Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn."
         filters={
-          <Alert color="info" icon={<LuInfo size={18} />} w="100%" p="xs">
-            Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn.
-          </Alert>
+          <>
+            <TextInput
+              w={320}
+              placeholder="Mã hoặc tên dịch vụ"
+              aria-label="Tìm theo mã hoặc tên dịch vụ"
+              leftSection={<LuSearch size={16} />}
+              value={q}
+              onChange={(e) => setQ(e.currentTarget.value)}
+            />
+            <SegmentedControl
+              value={status}
+              onChange={(v) => setStatus(v as ServiceStatus | 'ALL')}
+              data={[
+                { label: 'Tất cả', value: 'ALL' },
+                ...STATUSES.map((st) => ({ label: SERVICE_STATUS_LABEL[st], value: st })),
+              ]}
+            />
+          </>
         }
         columns={columns}
-        data={data}
+        data={data?.content ?? []}
+        page={page}
+        totalPages={data?.page.totalPages}
+        onPageChange={setPage}
         rowKey={(s) => s.id}
         loading={isLoading}
         error={isError}
         onRetry={() => refetch()}
         rowProps={(s) => ({ style: { opacity: s.status === 'INACTIVE' ? 0.6 : undefined } })}
         empty={
-          <EmptyState
-            icon={<LuTags size={32} />}
-            title="Chưa có dịch vụ nào"
-            description="Dịch vụ sẽ hiện ở đây sau khi Admin thêm."
-            action={
-              canManage && (
-                <Button leftSection={<LuPlus size={16} />} onClick={openCreate}>
-                  Thêm dịch vụ
+          filtered ? (
+            <EmptyState
+              icon={<LuSearchX size={32} />}
+              title="Không tìm thấy dịch vụ"
+              description={
+                search.trim() ? `Không có dịch vụ nào khớp "${search.trim()}".` : undefined
+              }
+              action={
+                <Button variant="secondary" onClick={reset}>
+                  Xóa bộ lọc
                 </Button>
-              )
-            }
-          />
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={<LuTags size={32} />}
+              title="Chưa có dịch vụ nào"
+              description="Dịch vụ sẽ hiện ở đây sau khi Admin thêm."
+              action={
+                canManage && (
+                  <Button leftSection={<LuPlus size={16} />} onClick={openCreate}>
+                    Thêm dịch vụ
+                  </Button>
+                )
+              }
+            />
+          )
         }
-      >
-        <Text size="xs" c="dimmed" mt="xs">
-          {canManage
-            ? 'Dịch vụ đã dùng trong đơn không xóa được – chỉ Ngừng hoạt động.'
-            : 'Bảng giá chỉ xem.'}
-        </Text>
-      </ListPage>
+      />
 
       <ServiceFormModal
         opened={!!modal}
