@@ -1,13 +1,10 @@
 import { Switch } from '@mantine/core'
+import type { ChangeEvent } from 'react'
 import { useDashboardPage } from '../DashboardPageContext'
 
 export function DashboardToolbar() {
   const { autoRefresh, setAutoRefresh } = useDashboardPage()
-  return (
-    <Switch
-      label="Tự làm mới mỗi 5 giây"
-      checked={autoRefresh}
-      onChange={(e) => setAutoRefresh(e.currentTarget.checked)}
-    />
-  )
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => setAutoRefresh(e.currentTarget.checked)
+
+  return <Switch label="Tự làm mới mỗi 5 giây" checked={autoRefresh} onChange={handleChange} />
 }

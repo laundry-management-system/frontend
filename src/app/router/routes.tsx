@@ -7,10 +7,15 @@ import { GuestRoute } from './GuestRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleGuard } from './RoleGuard'
 
+const ClassifyPage = lazy(() => import('@/pages/classify/ClassifyPage'))
 const CustomerDetailPage = lazy(() => import('@/pages/customers/CustomerDetailPage'))
 const CustomersPage = lazy(() => import('@/pages/customers/CustomersPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
+const IntakeDonePage = lazy(() => import('@/pages/intake/IntakeDonePage'))
+const IntakePage = lazy(() => import('@/pages/intake/IntakePage'))
+const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'))
+const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
 const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
@@ -50,6 +55,11 @@ export const router = createBrowserRouter([
             ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },
+          { path: '/orders', element: page(<OrdersPage />) },
+          { path: '/orders/:id', element: page(<OrderDetailPage />) },
+          { path: '/intake', element: page(<IntakePage />) },
+          { path: '/intake/:orderId/done', element: page(<IntakeDonePage />) },
+          { path: '/classify', element: page(<ClassifyPage />) },
           { path: '/customers', element: page(<CustomersPage />) },
           { path: '/customers/:id', element: page(<CustomerDetailPage />) },
           { path: '/services', element: page(<ServicesPage />) },
