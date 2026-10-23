@@ -10,9 +10,10 @@ export interface Service {
   price: number
   standardHours: number
   expressSupported: boolean
-  /** Phụ phí giặt nhanh trên mỗi đơn vị (đồng) */
   expressSurcharge: number | null
   expressHours: number | null
+  minQuantity: number
+  whitesApplicable: boolean
   status: ServiceStatus
 }
 
@@ -25,6 +26,8 @@ export interface ServiceFormValues {
   expressSupported: boolean
   expressSurcharge: number | ''
   expressHours: number | ''
+  minQuantity: number | ''
+  whitesApplicable: boolean
   status: ServiceStatus
 }
 

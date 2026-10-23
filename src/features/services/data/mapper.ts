@@ -11,5 +11,7 @@ export const toService = (dto: ServiceResponseDto): Service => ({
   expressSupported: dto.expressSupported ?? false,
   expressSurcharge: dto.expressSurcharge == null ? null : Number(dto.expressSurcharge),
   expressHours: dto.expressHours,
+  minQuantity: Number(dto.minQuantity ?? 0),
+  whitesApplicable: dto.whitesApplicable ?? false,
   status: dto.status,
 })
