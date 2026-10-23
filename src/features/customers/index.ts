@@ -1,5 +1,6 @@
 export { useCustomers } from './application/useCustomers'
 export { useCustomer } from './application/useCustomer'
+export { useCustomerByPhone } from './application/useCustomerByPhone'
 export { useCustomerOrders, useCustomerStats } from './application/useCustomerOrders'
 export {
   countOpenOrders,

@@ -11,7 +11,8 @@ Kiến trúc gốc: `architecture-2.html` (FE: `app → pages → features → s
 Mọi mã định danh do hệ thống cấp (mã đơn `LD-…`, mã khách `KH…`, mã nhân viên `NV…`, mã dịch vụ `DV…`, mã voucher, mã phiếu sự cố…) **phải dùng cùng một font mono** của Design System, ở mọi nơi hiển thị: cột bảng, breadcrumb, tiêu đề, dòng phụ, toast, modal.
 
 - Dùng component `EntityCode` từ `@/shared/ui` (`size="md"` mặc định, `size="sm"` cho chỗ chữ nhỏ như breadcrumb). Riêng mã đơn có thể dùng `OrderCode` (bọc `EntityCode`).
-- Không render mã bằng chuỗi trần (`{customer.code}`, `` `${code} · …` ``) và không tự gắn class `text-code-*` lẻ. Cột `DataTable` chứa mã phải có `render` trả về `EntityCode`.
+- Cột mã trong bảng listing dùng `CopyableCode` (mã kèm nút sao chép, tự chặn click lan ra dòng); nơi khác dùng `EntityCode` / `OrderCode`.
+- Không render mã bằng chuỗi trần (`{customer.code}`, `` `${code} · …` ``) và không tự gắn class `text-code-*` lẻ. Cột `DataTable` chứa mã phải có `render` trả về `CopyableCode` (hoặc `EntityCode` ngoài trang listing).
 - Khi prop chỉ nhận `string` mà cần chèn mã (VD `description` của `PageHeader`), đổi prop đó sang `ReactNode` thay vì nối chuỗi.
 
 ## Empty state
@@ -30,8 +31,9 @@ Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiế
 
 ## Thao tác trên từng dòng bảng
 
-Mọi màn danh sách dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.
+Mọi màn danh sách dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.
 
+- Cột cố định khi bảng cuộn ngang (`DataTableColumn.fixed`): cột **Mã** và cột **Tên** `fixed: 'left'`, cột thao tác / mở chi tiết `fixed: 'right'`. Các cột cố định liền kề phải có `width` để tính vị trí (riêng cột cố định trong cùng có thể bỏ trống).
 - Không đặt nút chữ/icon rời ("Sửa", bút chì…) trực tiếp trong dòng, kể cả khi chỉ có một thao tác.
 - Thao tác hủy / vô hiệu hóa / ngừng hoạt động: `danger: true`. Thao tác không áp dụng cho dòng đó: `hidden: true` (không disable).
 - Cột chỉ hiện với vai trò có quyền thao tác (VD `canManage`); thao tác nguy hiểm vẫn qua `ConfirmModal`.
@@ -61,6 +63,20 @@ Thứ tự ưu tiên:
 - Không tự viết lại hành vi Mantine đã có: focus trap, portal, phím tắt, aria của Menu / Modal / Tooltip / Select.
 - Đặt trong `src/shared/ui/<nhóm>/` (`buttons`, `feedback`, `layout`, `data-display`, `domain`) và export qua `src/shared/ui/index.ts`.
 
+## Tổ chức file trong một layer
+
+- Một layer của feature (`presentation`, `application`, `domain`, `data`) có **quá 8 file** → gom vào thư mục con theo nhóm, file dùng chung cho nhiều nhóm để ở gốc layer.
+- `presentation/`: nhóm theo luồng màn hình. VD `orders`: `intake/` (Tiếp nhận), `classify/` (Phân loại), `detail/` (card trang chi tiết), `modals/` (modal thao tác); `OrderStatusCell`, `stickyAside` ở gốc.
+- `application/`: `queries/` (hook `useQuery`), `mutations/` (hook `useMutation`); `queryKeys.ts`, `schemas.ts` và hook không thuộc hai loại trên ở gốc.
+- Tên thư mục con viết thường, không có `index.ts` riêng; mọi export ra ngoài vẫn đi qua `index.ts` của feature.
+
+## Comment trong code
+
+- Chỉ viết comment cho **lý do** mà code không tự nói được: ràng buộc / lỗi lạ của BE, workaround thư viện, quy tắc nghiệp vụ không hiển nhiên, `shortcut:` kèm khi nào cần nâng cấp. Một dòng là đủ.
+- Không viết comment lặp lại tên hàm / prop / type (VD `/** Dịch vụ đang hoạt động */` trên `services: Service[]`), không mô tả lại code bên dưới làm gì.
+- Không ghi mã spec làm nội dung chính (`WF-…`, `BR-…`, `FR-…`, `US…`, `research R…`, ngày làm rõ): comment phải đọc hiểu được khi không mở spec. Chỉ kèm mã khi câu đã tự đủ nghĩa.
+- Không để comment lịch sử / tạm (`v3 mới thêm`, `trước đây…`, `TODO` không có chủ). Sửa code thì sửa hoặc xóa luôn comment đã sai.
+
 ## Tạo page mới
 
 - Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
@@ -69,6 +85,55 @@ Thứ tự ưu tiên:
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
 - Đăng ký page: lazy route trong `app/router/routes.tsx`, mục nav trong `app/layouts/MainLayout.tsx` (kèm `roles`).
 
+## Khai báo props trước khi truyền
+
+Mọi page (đặc biệt màn listing dùng `ListPage`) **khai báo const trước, rồi mới truyền vào props**. Không viết literal hay function trực tiếp trong JSX:
+
+```tsx
+const STATUS_OPTIONS = [{ label: 'Tất cả', value: 'ALL' }, ...]   // tĩnh → ngoài component
+
+export default function XxxPage() {
+  ...
+  const closeModal = () => setModal(null)
+  const handleRetry = () => refetch()
+  const rowKey = (x: Xxx) => x.id
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
+
+  const primaryAction = { label: 'Thêm …', onClick: openCreate }
+  const filters = (<>…</>)
+  const rowActions = (x: Xxx) => [{ label: 'Sửa', onClick: … }]
+  const columns: DataTableColumn<Xxx>[] = [ … render: (x) => <RowActions items={rowActions(x)} /> ]
+  const rowProps = (x: Xxx) => ({ … })
+  const empty = filtered ? <EmptyState … /> : <EmptyState … />
+
+  return <ListPage primaryAction={primaryAction} filters={filters} columns={columns} rowKey={rowKey} rowProps={rowProps} onRetry={handleRetry} empty={empty} … />
+}
+```
+
+- Phải tách ra const: array literal (`columns`, `data` của `SegmentedControl`/`Select`, `items` của `RowActions`), object literal (`primaryAction`), khối JSX nhiều dòng / nhiều element (`filters`, `empty`, `actions`, `description` dạng fragment).
+- **Mọi function truyền vào prop** (`onClick`, `onChange`, `onClose`, `onConfirm`, `onRetry`, `onSaved`, `rowKey`, `rowProps`…) phải là const đặt tên, kể cả một dòng: `onClose={closeModal}`, không `onClose={() => setModal(null)}`. Đặt tên theo hành động (`openCreate`, `closeModal`, `goIntake`, `confirmDisable`) hoặc `handleXxx` cho event (`handleSearchChange`, `handleStatusChange`, `handleRetry`).
+  - Handler cần cho nhánh early-return (VD nút Thử lại khi lỗi tải) → khai báo trước `if (isLoading)`.
+  - Ngoại lệ duy nhất: trong `render` của cột / callback `.map`, khi cần biến của dòng → gọi handler đã đặt tên: `onClick={() => openDetail(c)}`. Không viết logic trong closure đó.
+- Được viết thẳng: giá trị đơn (string, number, boolean, ternary giữa các giá trị đơn), một element ngắn (`actions={<DashboardToolbar />}`, `icon={<LuSearch size={16} />}`), tham chiếu tới biến / function có sẵn (`onPageChange={setPage}`, `onClick={openCreate}`).
+- Không phụ thuộc state/props → đặt ngoài component, tên `UPPER_SNAKE_CASE` (`STATUS_OPTIONS`); phụ thuộc → đặt trong component, ngay trước `return`, tên camelCase trùng tên prop (`filters`, `columns`, `empty`, `rowKey`). Trùng tên với biến khác thì thêm tiền tố (`headerActions`, `headerDescription`).
+- Mẫu: `UsersPage`, `CustomersPage`, `OrdersPage`, `ServicesPage`.
+
+## Tách khối JSX dài trước `return`
+
+- JSX trả về của một component **quá ~80 dòng** → tách từng khối có nghĩa thành const đặt ngay trước `return`, để `return` chỉ còn bộ khung bố cục đọc được trong một màn hình.
+- Đặt tên theo nội dung khối, camelCase: `customerFields`, `orderSummary`, `saveActions`, `receiptPreview`, `dialogs`. Nhiều element ngang hàng → bọc fragment `<>…</>`; khối điều kiện → const giữ cả biểu thức (`const conditionNotes = items.map(…)`), trong JSX chỉ còn `{conditionNotes}`.
+- Mỗi const vẫn dài (> ~80 dòng) hoặc có state / handler riêng → tách thành component con trong cùng file hoặc file mới.
+- Mẫu: `ClassifyEditor`, `IntakeForm`, `ItemLineEditor`, `OrderItemsCard`, `DesignSystemPage`.
+
+## Validate form
+
+Mọi form phải báo lỗi **cùng một kiểu**: chữ đỏ ngay dưới ô (lỗi của Mantine). Không để popup validate mặc định của trình duyệt ("Vui lòng điền vào trường này") hiện ra.
+
+- Thẻ `<form>` luôn có `noValidate`: `<form onSubmit={form.onSubmit(...)} noValidate>`. Prop `required` trên input chỉ để hiện dấu `*`; còn luật bắt buộc nằm ở schema zod / hàm `validate`.
+- Không dùng `pattern`, `minLength`, `type="email"`… để chặn submit; đưa luật vào schema để lỗi hiện đúng chỗ, đúng câu tiếng Việt.
+- Form không bọc `<form>` (gọi `form.onSubmit(handler)()` từ nút) thì không cần `noValidate`, nhưng vẫn phải validate qua `useForm`.
+- Lỗi từ BE: field error → `form.setErrors` (map tên field BE sang tên field form nếu khác), lỗi chung → `notify.error`.
+
 ## Quản lý state
 
 | Loại state | Giữ ở đâu | Ví dụ |
@@ -76,7 +141,7 @@ Thứ tự ưu tiên:
 | Dữ liệu từ backend | TanStack Query (`useQuery` / `useMutation` trong `features/<x>/application`). Không copy vào zustand hay `useState` | `useCustomers`, `useServices` |
 | Bộ lọc / tìm kiếm / trang của màn danh sách | URL, qua hook `useListParams(STATUSES)` (`shared/hooks`): `q` (ô gõ), `search` (đã debounce), `status`, `page`, `filtered`, `reset`. Không tự viết lại `useSearchParams` cho việc này | `CustomersPage`, `UsersPage`, `ServicesPage` |
 | Trạng thái UI của một component / page (mở modal, dòng đang sửa, tab) | `useState` trong page; nhiều modal → một union `ModalState` | `ServicesPage` |
-| Giá trị form | `@mantine/form` `useForm` + `validate: schemaResolver(xxxFormSchema, { sync: true })`, schema zod đặt ở `features/<x>/application/schemas.ts` (kèm `schemas.test.ts`); modal remount khi mở (`{opened && <Form/>}`); `isDirty` → `ConfirmModal` "Bỏ thay đổi?" | `ServiceFormModal` |
+| Giá trị form | `@mantine/form` `useForm` + `validate: schemaResolver(xxxFormSchema, { sync: true })`, schema zod đặt ở `features/<x>/application/schemas.ts`; modal remount khi mở (`{opened && <Form/>}`); `isDirty` → `ConfirmModal` "Bỏ thay đổi?" | `ServiceFormModal` |
 | State chia sẻ giữa các component trong **một page** | React context (`createContext` + `useContext`) đặt cạnh page | `DashboardPageContext` |
 | State dùng chung toàn app, không đến từ backend | zustand: `shared/store` (UI) hoặc `features/<x>/application` (theo feature) | `useUiStore`, `useAuthStore` |
 

@@ -17,6 +17,25 @@ export interface DataTableColumn<T> {
   render?: (row: T, index: number) => ReactNode
   width?: number
   align?: 'left' | 'center' | 'right'
+  /**
+   * Ghim cột khi cuộn ngang. Các cột cố định liền kề cần `width` để tính vị trí
+   * (cột cố định trong cùng – sát vùng cuộn – có thể không đặt width).
+   */
+  fixed?: 'left' | 'right'
+}
+
+/** Vị trí sticky của từng cột: cộng dồn width các cột cố định cùng phía nằm ngoài nó. */
+function fixedStyles<T>(columns: DataTableColumn<T>[]) {
+  return columns.map((col, i) => {
+    if (!col.fixed) return undefined
+    const side = col.fixed
+    const outer = side === 'left' ? columns.slice(0, i) : columns.slice(i + 1)
+    const offset = outer.filter((c) => c.fixed === side).reduce((sum, c) => sum + (c.width ?? 0), 0)
+    return {
+      className: 'ds-fixed-col',
+      style: { [side]: offset },
+    }
+  })
 }
 
 export interface DataTableProps<T> {
@@ -42,6 +61,7 @@ export function DataTable<T>({
   totalPages,
   onPageChange,
 }: DataTableProps<T>) {
+  const fixed = fixedStyles(columns)
   const body = loading ? (
     <Center h={200}>
       <Loader />
@@ -54,8 +74,8 @@ export function DataTable<T>({
       <Table highlightOnHover stickyHeaderOffset={60}>
         <Table.Thead>
           <Table.Tr>
-            {columns.map((col) => (
-              <Table.Th key={col.name} w={col.width} ta={col.align}>
+            {columns.map((col, c) => (
+              <Table.Th key={col.name} w={col.width} ta={col.align} {...fixed[c]}>
                 {col.label}
               </Table.Th>
             ))}
@@ -64,8 +84,8 @@ export function DataTable<T>({
         <Table.Tbody>
           {data.map((row, i) => (
             <Table.Tr key={rowKey(row)} {...rowProps?.(row, i)}>
-              {columns.map((col) => (
-                <Table.Td key={col.name} ta={col.align}>
+              {columns.map((col, c) => (
+                <Table.Td key={col.name} ta={col.align} {...fixed[c]}>
                   {col.render ? col.render(row, i) : (row as Record<string, ReactNode>)[col.name]}
                 </Table.Td>
               ))}

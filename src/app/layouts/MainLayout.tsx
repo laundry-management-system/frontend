@@ -5,6 +5,9 @@ import {
   LuListTodo,
   LuLogOut,
   LuMoon,
+  LuPackagePlus,
+  LuPackageSearch,
+  LuReceiptText,
   LuSun,
   LuTags,
   LuUsers,
@@ -20,6 +23,9 @@ import { queryClient } from '../providers/queryClient'
 const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; roles: Role[] }[] = [
   { to: '/', label: 'Tổng quan', icon: LuLayoutDashboard, roles: ['ADMIN'] },
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
+  { to: '/orders', label: 'Đơn hàng', icon: LuReceiptText, roles: ['ADMIN', 'STAFF'] },
+  { to: '/intake', label: 'Tạo đơn', icon: LuPackagePlus, roles: ['STAFF'] },
+  { to: '/classify', label: 'Phân loại đồ', icon: LuPackageSearch, roles: ['STAFF'] },
   { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
   { to: '/services', label: 'Bảng giá dịch vụ', icon: LuTags, roles: ['ADMIN', 'STAFF'] },
   { to: '/users', label: 'Nhân viên', icon: LuUsers, roles: ['ADMIN'] },
@@ -87,7 +93,8 @@ export function MainLayout() {
               key={to}
               component={RouterNavLink}
               to={to}
-              end
+              // Mục con (VD /orders/:id) vẫn sáng mục cha; riêng '/' phải khớp đúng
+              end={to === '/'}
               label={label}
               leftSection={<Icon size={18} />}
             />

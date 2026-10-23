@@ -1,4 +1,5 @@
 export { useServices } from './application/useServices'
+export { useActiveServices } from './application/useActiveServices'
 export { useCreateService } from './application/useCreateService'
 export { useUpdateService } from './application/useUpdateService'
 export { expressParts } from './domain/rules'
