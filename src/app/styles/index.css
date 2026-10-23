@@ -205,6 +205,13 @@
   line-height: 24px;
   font-variant-numeric: tabular-nums;
 }
+@utility text-code-display {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 36px;
+  letter-spacing: 0.02em;
+}
 @utility text-code-md {
   font-family: var(--font-mono);
   font-weight: 500;
@@ -256,5 +263,64 @@
   .mantine-Input-input[data-error]:focus,
   .mantine-Input-input[data-error]:focus-within {
     box-shadow: var(--shadow-focus-danger);
+  }
+
+  /* Ô lỗi: chỉ viền đỏ, placeholder giữ màu mờ để không bị nhầm là giá trị đã nhập */
+  .mantine-Input-input[data-error] {
+    --input-placeholder-color: var(--mantine-color-placeholder);
+  }
+}
+
+/* In phiếu nhận đồ: chỉ in vùng .print-area, ẩn trên màn hình */
+@layer components {
+  .print-area {
+    display: none;
+  }
+
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+
+    .print-area,
+    .print-area * {
+      visibility: visible;
+    }
+
+    .print-area {
+      display: block;
+      position: absolute;
+      inset: 0;
+    }
+  }
+}
+
+/* Stepper trạng thái đơn: bước hiện tại là bước đã đạt → tô nền như bước đã xong, không chỉ viền */
+@layer components {
+  .mantine-Stepper-stepIcon[data-progress] {
+    background-color: var(--step-color);
+    border-color: var(--step-color);
+    color: var(--stepper-icon-color, var(--mantine-color-white));
+  }
+}
+
+/* DataTable: cột ghim (fixed left/right) khi bảng cuộn ngang */
+@layer components {
+  .ds-fixed-col {
+    position: sticky;
+    z-index: 1;
+    background: var(--ds-card);
+  }
+
+  th.ds-fixed-col {
+    z-index: 2;
+    background: var(--ds-muted);
+  }
+
+  /* Giữ màu hover của dòng trên ô ghim (ô có nền riêng để che nội dung cuộn bên dưới) */
+  tr:hover > td.ds-fixed-col {
+    background:
+      linear-gradient(var(--table-highlight-on-hover-color), var(--table-highlight-on-hover-color)),
+      var(--ds-card);
   }
 }

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { InfoTooltip } from '../feedback/InfoTooltip'
 
 interface PageHeaderProps {
-  title: string
+  title: ReactNode
   description?: ReactNode
   /** Ghi chú phụ hiện trong InfoTooltip cạnh tiêu đề */
   info?: ReactNode
