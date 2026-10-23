@@ -19,6 +19,9 @@ export const servicesApi = {
     return fromSpringPage(data, toService)
   },
 
+  listActive: async () =>
+    (await httpClient.get<ServiceResponseDto[]>('/services/active')).data.map(toService),
+
   create: async (dto: CreateServiceRequestDto) =>
     toService((await httpClient.post<ServiceResponseDto>('/services', dto)).data),
 

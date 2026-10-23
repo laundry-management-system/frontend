@@ -1,5 +1,8 @@
 import {
   Button,
+  Checkbox,
+  Divider,
+  Group,
   Input,
   Modal,
   NumberInput,
@@ -7,7 +10,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  Switch,
+  Text,
   TextInput,
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
@@ -28,6 +31,12 @@ import {
   UNIT_LABEL,
 } from '../domain/types'
 import { PriceChange } from './PriceChange'
+
+const OPTION_BOX = {
+  border: '1px solid var(--ds-border)',
+  borderRadius: 'var(--radius-control)',
+  overflow: 'hidden',
+} as const
 
 interface ServiceFormModalProps {
   opened: boolean
@@ -117,107 +126,143 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
   )
 
   const close = () => (form.isDirty() ? setConfirmDiscard(true) : onClose())
+  const toggleExpress = () => form.setFieldValue('expressSupported', !v.expressSupported)
+  const toggleWhites = () => form.setFieldValue('whitesApplicable', !v.whitesApplicable)
 
-  return (
-    <form onSubmit={submit} noValidate>
-      <Stack>
-        <SimpleGrid cols={2}>
-          <TextInput
-            label="Tên dịch vụ"
-            required
-            data-autofocus
-            maxLength={SERVICE_NAME_MAX}
-            {...form.getInputProps('name')}
-          />
-          <Select
-            label="Đơn vị tính"
-            required
-            data={UNIT_OPTIONS}
-            allowDeselect={false}
-            {...form.getInputProps('unit')}
-          />
-        </SimpleGrid>
-        <SimpleGrid cols={2}>
-          <MoneyInput
+  const basicFields = (
+    <>
+      <SimpleGrid cols={2}>
+        <TextInput
+          label="Tên dịch vụ"
+          required
+          data-autofocus
+          maxLength={SERVICE_NAME_MAX}
+          {...form.getInputProps('name')}
+        />
+        <Select
+          label="Đơn vị tính"
+          required
+          data={UNIT_OPTIONS}
+          allowDeselect={false}
+          {...form.getInputProps('unit')}
+        />
+      </SimpleGrid>
+      <SimpleGrid cols={2}>
+        <MoneyInput
+          label={
+            <InfoLabel
+              info={
+                mode === 'edit' &&
+                // Không hứa ghi nhật ký: BE chưa lưu lịch sử giá (BE-S1)
+                'Đổi giá phải nhập lý do.'
+              }
+            >
+              {`Đơn giá (mỗi ${unitLabel})`}
+            </InfoLabel>
+          }
+          required
+          {...form.getInputProps('price')}
+        />
+        <NumberInput
+          label={
+            <InfoLabel info="Cân/đếm dưới mức này vẫn tính tiền bằng mức tối thiểu khi phân loại.">
+              {`Tối thiểu (${unitLabel})`}
+            </InfoLabel>
+          }
+          min={0}
+          allowNegative={false}
+          decimalSeparator=","
+          {...(v.unit === 'KG' ? { decimalScale: 2 } : { allowDecimal: false })}
+          {...form.getInputProps('minQuantity')}
+        />
+        <NumberInput
+          label="Thời gian xử lý chuẩn"
+          required
+          min={1}
+          allowDecimal={false}
+          allowNegative={false}
+          rightSection="giờ"
+          rightSectionWidth={44}
+          {...form.getInputProps('standardHours')}
+        />
+        {mode === 'edit' && (
+          <Input.Wrapper
             label={
-              <InfoLabel
-                info={
-                  mode === 'edit' &&
-                  // Không hứa ghi nhật ký: BE chưa lưu lịch sử giá (BE-S1)
-                  'Đổi giá phải nhập lý do.'
-                }
-              >
-                Đơn giá
+              <InfoLabel info="Dịch vụ ngừng hoạt động không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.">
+                Trạng thái
               </InfoLabel>
             }
+          >
+            <SegmentedControl
+              fullWidth
+              value={v.status}
+              onChange={(s) => form.setFieldValue('status', s as ServiceStatus)}
+              data={(['ACTIVE', 'INACTIVE'] as ServiceStatus[]).map((s) => ({
+                value: s,
+                label: SERVICE_STATUS_LABEL[s],
+              }))}
+            />
+          </Input.Wrapper>
+        )}
+      </SimpleGrid>
+    </>
+  )
+
+  const optionList = (
+    <Stack gap={0} style={OPTION_BOX}>
+      <Checkbox.Card
+        checked={v.expressSupported}
+        onClick={toggleExpress}
+        withBorder={false}
+        radius={0}
+        p="md"
+      >
+        <Group gap="sm" wrap="nowrap">
+          <Checkbox.Indicator />
+          <Text fw={500}>Hỗ trợ giặt nhanh</Text>
+        </Group>
+      </Checkbox.Card>
+      {v.expressSupported && (
+        <SimpleGrid cols={2} px="md" pb="md">
+          <MoneyInput
+            label={`Phụ phí giặt nhanh (mỗi ${unitLabel})`}
             required
-            {...form.getInputProps('price')}
+            {...form.getInputProps('expressSurcharge')}
           />
           <NumberInput
-            label="Thời gian xử lý chuẩn"
+            label="Thời gian giặt nhanh"
             required
             min={1}
             allowDecimal={false}
             allowNegative={false}
             rightSection="giờ"
             rightSectionWidth={44}
-            {...form.getInputProps('standardHours')}
+            {...form.getInputProps('expressHours')}
           />
         </SimpleGrid>
-        <Switch
-          label="Hỗ trợ giặt nhanh"
-          {...form.getInputProps('expressSupported', { type: 'checkbox' })}
-        />
-        {v.expressSupported && (
-          <SimpleGrid cols={2}>
-            <MoneyInput
-              label={`Phụ phí giặt nhanh (mỗi ${unitLabel})`}
-              required
-              {...form.getInputProps('expressSurcharge')}
-            />
-            <NumberInput
-              label="Thời gian giặt nhanh"
-              required
-              min={1}
-              allowDecimal={false}
-              allowNegative={false}
-              rightSection="giờ"
-              rightSectionWidth={44}
-              {...form.getInputProps('expressHours')}
-            />
-          </SimpleGrid>
-        )}
-        {mode === 'edit' && (
-          <SimpleGrid cols={2}>
-            <Input.Wrapper
-              label={
-                <InfoLabel info="Dịch vụ ngừng hoạt động không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.">
-                  Trạng thái
-                </InfoLabel>
-              }
-            >
-              <SegmentedControl
-                fullWidth
-                value={v.status}
-                onChange={(s) => form.setFieldValue('status', s as ServiceStatus)}
-                data={(['ACTIVE', 'INACTIVE'] as ServiceStatus[]).map((s) => ({
-                  value: s,
-                  label: SERVICE_STATUS_LABEL[s],
-                }))}
-              />
-            </Input.Wrapper>
-          </SimpleGrid>
-        )}
-        <ModalFooter>
-          <Button variant="secondary" onClick={close} disabled={pending}>
-            Hủy
-          </Button>
-          <Button type="submit" loading={pending}>
-            {mode === 'create' ? 'Thêm dịch vụ' : 'Lưu'}
-          </Button>
-        </ModalFooter>
-      </Stack>
+      )}
+      <Divider />
+      <Checkbox.Card
+        checked={v.whitesApplicable}
+        onClick={toggleWhites}
+        withBorder={false}
+        radius={0}
+        p="md"
+      >
+        <Group gap="sm" wrap="nowrap">
+          <Checkbox.Indicator />
+          <InfoLabel info="Ở quầy hiện tùy chọn giặt riêng đồ trắng (tính phụ phí theo đơn) cho đơn có dịch vụ này.">
+            <Text fw={500} span>
+              Áp dụng giặt riêng đồ trắng
+            </Text>
+          </InfoLabel>
+        </Group>
+      </Checkbox.Card>
+    </Stack>
+  )
 
+  const dialogs = (
+    <>
       <ConfirmModal
         opened={confirmDiscard}
         onClose={() => setConfirmDiscard(false)}
@@ -243,6 +288,27 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
           <PriceChange oldPrice={initial.price} newPrice={Number(pricePending.price)} />
         )}
       </ConfirmModal>
+    </>
+  )
+
+  return (
+    <form onSubmit={submit} noValidate>
+      <Stack>
+        {basicFields}
+
+        <Divider label="Tùy chọn" labelPosition="left" />
+        {optionList}
+        <ModalFooter>
+          <Button variant="secondary" onClick={close} disabled={pending}>
+            Hủy
+          </Button>
+          <Button type="submit" loading={pending}>
+            {mode === 'create' ? 'Thêm dịch vụ' : 'Lưu'}
+          </Button>
+        </ModalFooter>
+      </Stack>
+
+      {dialogs}
     </form>
   )
 }

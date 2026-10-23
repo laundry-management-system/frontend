@@ -1,5 +1,5 @@
 import { Button, SegmentedControl, Text, TextInput } from '@mantine/core'
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 import { LuChevronRight, LuSearch, LuSearchX, LuUserPlus, LuUsers } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -14,9 +14,15 @@ import {
   useCustomers,
 } from '@/features/customers'
 import { useListParams } from '@/shared/hooks/useListParams'
-import { EmptyState, EntityCode, IconButton, ListPage } from '@/shared/ui'
+import { CopyableCode, type DataTableColumn, EmptyState, IconButton, ListPage } from '@/shared/ui'
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly CustomerStatus[]
+
+const STATUS_OPTIONS = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: CUSTOMER_STATUS_LABEL.ACTIVE, value: 'ACTIVE' },
+  { label: CUSTOMER_STATUS_LABEL.INACTIVE, value: 'INACTIVE' },
+]
 
 export default function CustomersPage() {
   const navigate = useNavigate()
@@ -39,108 +45,123 @@ export default function CustomersPage() {
     setModal(!term ? {} : looksLikePhone(term) ? { phone: term } : { fullName: term })
   }
 
+  const openDetail = (c: Customer) => navigate(`/customers/${c.id}`)
+  const closeModal = () => setModal(null)
+  const showAll = () => setStatus('ALL')
+  const handleRetry = () => refetch()
+  const rowKey = (c: Customer) => c.id
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
+  const handleStatusChange = (v: string) => setStatus(v as CustomerStatus | 'ALL')
+
+  const primaryAction = { label: 'Thêm khách', onClick: () => setModal({}) }
+
+  const filters = (
+    <>
+      <TextInput
+        w={360}
+        placeholder="Số điện thoại hoặc họ tên"
+        leftSection={<LuSearch size={16} />}
+        value={q}
+        onChange={handleSearchChange}
+      />
+      <SegmentedControl value={status} onChange={handleStatusChange} data={STATUS_OPTIONS} />
+    </>
+  )
+
+  const columns: DataTableColumn<Customer>[] = [
+    {
+      name: 'code',
+      label: 'Mã KH',
+      width: 150,
+      fixed: 'left',
+      render: (c) => <CopyableCode code={c.code} />,
+    },
+    {
+      name: 'fullName',
+      label: 'Họ và tên',
+      fixed: 'left',
+      render: (c) => <CustomerCell customer={c} />,
+    },
+    {
+      name: 'phone',
+      label: 'Số điện thoại',
+      width: 140,
+      render: (c) => formatPhone(c.phone),
+    },
+    { name: 'orderCount', label: 'Số đơn', width: 100, align: 'center', render: stat },
+    { name: 'totalSpent', label: 'Tổng chi tiêu', width: 140, align: 'center', render: stat },
+    { name: 'lastOrderAt', label: 'Đơn gần nhất', width: 130, render: stat },
+    {
+      name: 'status',
+      label: 'Trạng thái',
+      width: 140,
+      render: (c) => <CustomerStatusText status={c.status} />,
+    },
+    {
+      name: 'open',
+      label: '',
+      width: 60,
+      align: 'right',
+      fixed: 'right',
+      render: (c) => (
+        <IconButton
+          label={`Mở hồ sơ ${c.fullName}`}
+          icon={<LuChevronRight size={18} />}
+          onClick={() => openDetail(c)}
+        />
+      ),
+    },
+  ]
+
+  const rowProps = (c: Customer) => ({
+    onClick: () => openDetail(c),
+    style: { cursor: 'pointer', opacity: c.status === 'INACTIVE' ? 0.6 : undefined },
+  })
+
+  const empty = search.trim() ? (
+    <EmptyState
+      icon={<LuSearchX size={32} />}
+      title="Không tìm thấy khách"
+      description={`Không có khách nào khớp "${search.trim()}".`}
+      action={
+        <Button leftSection={<LuUserPlus size={16} />} onClick={openCreate}>
+          Thêm khách
+        </Button>
+      }
+    />
+  ) : status !== 'ALL' ? (
+    <EmptyState
+      icon={<LuSearchX size={32} />}
+      title={`Không có khách ${CUSTOMER_STATUS_LABEL[status].toLowerCase()}`}
+      action={
+        <Button variant="secondary" onClick={showAll}>
+          Xem tất cả khách
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={<LuUsers size={32} />}
+      title="Chưa có khách hàng"
+      description="Khách mới thêm sẽ hiện ở đây."
+    />
+  )
+
   return (
     <>
       <ListPage<Customer>
         title="Khách hàng"
         description={`${total.toLocaleString('vi-VN')} khách`}
-        primaryAction={{ label: 'Thêm khách', onClick: () => setModal({}) }}
-        filters={
-          <>
-            <TextInput
-              w={360}
-              placeholder="Số điện thoại hoặc họ tên"
-              leftSection={<LuSearch size={16} />}
-              value={q}
-              onChange={(e) => setQ(e.currentTarget.value)}
-            />
-            <SegmentedControl
-              value={status}
-              onChange={(v) => setStatus(v as CustomerStatus | 'ALL')}
-              data={[
-                { label: 'Tất cả', value: 'ALL' },
-                { label: CUSTOMER_STATUS_LABEL.ACTIVE, value: 'ACTIVE' },
-                { label: CUSTOMER_STATUS_LABEL.INACTIVE, value: 'INACTIVE' },
-              ]}
-            />
-          </>
-        }
-        columns={[
-          {
-            name: 'code',
-            label: 'Mã KH',
-            width: 110,
-            render: (c) => <EntityCode code={c.code} />,
-          },
-          { name: 'fullName', label: 'Họ và tên', render: (c) => <CustomerCell customer={c} /> },
-          {
-            name: 'phone',
-            label: 'Số điện thoại',
-            width: 140,
-            render: (c) => formatPhone(c.phone),
-          },
-          { name: 'orderCount', label: 'Số đơn', width: 100, align: 'center', render: stat },
-          { name: 'totalSpent', label: 'Tổng chi tiêu', width: 140, align: 'center', render: stat },
-          { name: 'lastOrderAt', label: 'Đơn gần nhất', width: 130, render: stat },
-          {
-            name: 'status',
-            label: 'Trạng thái',
-            width: 140,
-            render: (c) => <CustomerStatusText status={c.status} />,
-          },
-          {
-            name: 'open',
-            label: '',
-            width: 60,
-            align: 'right',
-            render: (c) => (
-              <IconButton
-                label={`Mở hồ sơ ${c.fullName}`}
-                icon={<LuChevronRight size={18} />}
-                onClick={() => navigate(`/customers/${c.id}`)}
-              />
-            ),
-          },
-        ]}
+        primaryAction={primaryAction}
+        filters={filters}
+        columns={columns}
         data={data?.content ?? []}
-        rowKey={(c) => c.id}
+        rowKey={rowKey}
         loading={isLoading}
         error={isError}
-        onRetry={() => refetch()}
-        rowProps={(c) => ({
-          onClick: () => navigate(`/customers/${c.id}`),
-          style: { cursor: 'pointer', opacity: c.status === 'INACTIVE' ? 0.6 : undefined },
-        })}
-        empty={
-          search.trim() ? (
-            <EmptyState
-              icon={<LuSearchX size={32} />}
-              title="Không tìm thấy khách"
-              description={`Không có khách nào khớp "${search.trim()}".`}
-              action={
-                <Button leftSection={<LuUserPlus size={16} />} onClick={openCreate}>
-                  Thêm khách
-                </Button>
-              }
-            />
-          ) : status !== 'ALL' ? (
-            <EmptyState
-              icon={<LuSearchX size={32} />}
-              title={`Không có khách ${CUSTOMER_STATUS_LABEL[status].toLowerCase()}`}
-              action={
-                <Button variant="secondary" onClick={() => setStatus('ALL')}>
-                  Xem tất cả khách
-                </Button>
-              }
-            />
-          ) : (
-            <EmptyState
-              icon={<LuUsers size={32} />}
-              title="Chưa có khách hàng"
-              description="Khách mới thêm sẽ hiện ở đây."
-            />
-          )
-        }
+        onRetry={handleRetry}
+        rowProps={rowProps}
+        empty={empty}
         page={page}
         totalPages={data?.page.totalPages}
         onPageChange={setPage}
@@ -154,10 +175,10 @@ export default function CustomersPage() {
 
       <CustomerFormModal
         opened={!!modal}
-        onClose={() => setModal(null)}
+        onClose={closeModal}
         mode="create"
         prefill={modal ?? undefined}
-        onSaved={(c) => navigate(`/customers/${c.id}`)}
+        onSaved={openDetail}
       />
     </>
   )

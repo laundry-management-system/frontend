@@ -7,7 +7,6 @@ const money = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)
 
 const unitLabel = (unit: Service['unit']) => (unit ? UNIT_LABEL[unit] : 'đơn vị')
 
-/** Cột "Giặt nhanh": phụ phí và thời gian để hiện từng dòng; `null` khi không hỗ trợ. */
 export function expressParts(
   s: Pick<Service, 'expressSupported' | 'expressSurcharge' | 'expressHours' | 'unit'>,
 ) {
@@ -27,6 +26,8 @@ export const toServicePayload = (values: ServiceFormValues) => ({
   expressSupported: values.expressSupported,
   expressSurcharge: values.expressSupported ? Number(values.expressSurcharge) : null,
   expressHours: values.expressSupported ? Number(values.expressHours) : null,
+  minQuantity: values.minQuantity === '' ? 0 : Number(values.minQuantity),
+  whitesApplicable: values.whitesApplicable,
 })
 
 export const toFormValues = (s?: Service): ServiceFormValues => ({
@@ -37,6 +38,8 @@ export const toFormValues = (s?: Service): ServiceFormValues => ({
   expressSupported: s?.expressSupported ?? false,
   expressSurcharge: s?.expressSurcharge ?? '',
   expressHours: s?.expressHours ?? '',
+  minQuantity: s?.minQuantity ?? 0,
+  whitesApplicable: s?.whitesApplicable ?? false,
   status: s?.status ?? 'ACTIVE',
 })
 

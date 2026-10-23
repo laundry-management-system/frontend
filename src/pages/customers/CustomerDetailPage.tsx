@@ -17,8 +17,6 @@ import { formatDate, formatMoney } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, EmptyState, EntityCode, PageHeader, StatTile } from '@/shared/ui'
 
-const INTAKE_ROUTE_READY = false
-
 export default function CustomerDetailPage() {
   const id = Number(useParams().id)
   const navigate = useNavigate()
@@ -87,6 +85,28 @@ export default function CustomerDetailPage() {
     }
   }
 
+  const createOrder = () => navigate(`/intake?phone=${customer.phone}`)
+  const openEdit = () => setEditing(true)
+  const closeEdit = () => setEditing(false)
+  const closeConfirm = () => setConfirmDeactivate(false)
+  const confirmDeactivateCustomer = () => setStatus('INACTIVE')
+
+  const headerDescription = (
+    <>
+      <EntityCode code={customer.code} /> · tạo {formatDate(customer.createdAt)} bởi{' '}
+      {customer.createdBy ?? '—'}
+    </>
+  )
+
+  const headerActions = (
+    <Group gap="sm">
+      <Button leftSection={<LuPlus size={16} />} disabled={!active} onClick={createOrder}>
+        Tạo đơn cho khách
+      </Button>
+      <Button onClick={openEdit}>Sửa</Button>
+    </Group>
+  )
+
   return (
     <>
       <Breadcrumbs mb="xs">
@@ -99,26 +119,8 @@ export default function CustomerDetailPage() {
       </Breadcrumbs>
       <PageHeader
         title={customer.fullName}
-        description={
-          <>
-            <EntityCode code={customer.code} /> · tạo {formatDate(customer.createdAt)} bởi{' '}
-            {customer.createdBy ?? '—'}
-          </>
-        }
-        actions={
-          <Group gap="sm">
-            {INTAKE_ROUTE_READY && (
-              <Button
-                leftSection={<LuPlus size={16} />}
-                disabled={!active}
-                onClick={() => navigate(`/intake?phone=${customer.phone}`)}
-              >
-                Tạo đơn cho khách
-              </Button>
-            )}
-            <Button onClick={() => setEditing(true)}>Sửa</Button>
-          </Group>
-        }
+        description={headerDescription}
+        actions={headerActions}
       />
 
       <SimpleGrid cols={4} mb="lg">
@@ -144,16 +146,11 @@ export default function CustomerDetailPage() {
         <CustomerOrdersCard phone={customer.phone} />
       </Group>
 
-      <CustomerFormModal
-        opened={editing}
-        onClose={() => setEditing(false)}
-        mode="edit"
-        initial={customer}
-      />
+      <CustomerFormModal opened={editing} onClose={closeEdit} mode="edit" initial={customer} />
       <ConfirmModal
         opened={confirmDeactivate}
-        onClose={() => setConfirmDeactivate(false)}
-        onConfirm={() => setStatus('INACTIVE')}
+        onClose={closeConfirm}
+        onConfirm={confirmDeactivateCustomer}
         kind="destructive"
         title={`Ngừng hoạt động khách ${customer.fullName}?`}
         confirmLabel="Ngừng hoạt động"

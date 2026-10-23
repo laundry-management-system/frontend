@@ -3,6 +3,7 @@ import { useForm } from '@mantine/form'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toApiError } from '@/shared/api/apiError'
+import { formatPersonName, stripDigits } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, ModalFooter } from '@/shared/ui'
 import {
@@ -77,7 +78,7 @@ function CustomerForm({ onClose, mode, initial, prefill, onSaved }: CustomerForm
   }
 
   const save = (values: CustomerFormValues) => {
-    const dto = toCustomerPayload(values)
+    const dto = toCustomerPayload({ ...values, fullName: formatPersonName(values.fullName) })
     const done = (customer: Customer) => {
       notify.success(mode === 'create' ? 'Đã thêm khách' : 'Đã cập nhật khách')
       onSaved?.(customer)
@@ -98,67 +99,66 @@ function CustomerForm({ onClose, mode, initial, prefill, onSaved }: CustomerForm
   const remaining = (field: 'address' | 'note') =>
     `Còn ${CUSTOMER_LIMITS[field] - form.values[field].length} ký tự`
 
-  return (
-    <form onSubmit={submit} noValidate>
-      <Stack>
-        <TextInput
-          label="Họ và tên"
-          required
-          data-autofocus
-          maxLength={CUSTOMER_LIMITS.fullName}
-          {...form.getInputProps('fullName')}
-        />
-        <TextInput
-          label="Số điện thoại"
-          required
-          inputMode="numeric"
-          placeholder="0901 234 567"
-          {...form.getInputProps('phone')}
-          error={
-            form.errors.phone && (
-              <>
-                {form.errors.phone}
-                {duplicateOwner && (
-                  <>
-                    {' · '}
-                    <Anchor
-                      component={Link}
-                      to={`/customers/${duplicateOwner.id}`}
-                      size="xs"
-                      onClick={onClose}
-                    >
-                      Xem hồ sơ {duplicateOwner.fullName}
-                    </Anchor>
-                  </>
-                )}
-              </>
-            )
-          }
-        />
-        <TextInput
-          label="Địa chỉ"
-          maxLength={CUSTOMER_LIMITS.address}
-          description={remaining('address')}
-          {...form.getInputProps('address')}
-        />
-        <Textarea
-          label="Ghi chú"
-          autosize
-          minRows={3}
-          maxLength={CUSTOMER_LIMITS.note}
-          description={remaining('note')}
-          {...form.getInputProps('note')}
-        />
-        <ModalFooter>
-          <Button variant="secondary" onClick={close} disabled={pending}>
-            Hủy
-          </Button>
-          <Button type="submit" loading={pending}>
-            {mode === 'create' ? 'Thêm khách' : 'Lưu'}
-          </Button>
-        </ModalFooter>
-      </Stack>
+  const fields = (
+    <>
+      <TextInput
+        label="Họ và tên"
+        required
+        data-autofocus
+        maxLength={CUSTOMER_LIMITS.fullName}
+        {...form.getInputProps('fullName')}
+        onChange={(e) => form.setFieldValue('fullName', stripDigits(e.currentTarget.value))}
+        onBlur={(e) => {
+          form.setFieldValue('fullName', formatPersonName(e.currentTarget.value))
+          form.getInputProps('fullName').onBlur?.()
+        }}
+      />
+      <TextInput
+        label="Số điện thoại"
+        required
+        inputMode="numeric"
+        placeholder="0901 234 567"
+        {...form.getInputProps('phone')}
+        error={
+          form.errors.phone && (
+            <>
+              {form.errors.phone}
+              {duplicateOwner && (
+                <>
+                  {' · '}
+                  <Anchor
+                    component={Link}
+                    to={`/customers/${duplicateOwner.id}`}
+                    size="xs"
+                    onClick={onClose}
+                  >
+                    Xem hồ sơ {duplicateOwner.fullName}
+                  </Anchor>
+                </>
+              )}
+            </>
+          )
+        }
+      />
+      <TextInput
+        label="Địa chỉ"
+        maxLength={CUSTOMER_LIMITS.address}
+        description={remaining('address')}
+        {...form.getInputProps('address')}
+      />
+      <Textarea
+        label="Ghi chú"
+        autosize
+        minRows={3}
+        maxLength={CUSTOMER_LIMITS.note}
+        description={remaining('note')}
+        {...form.getInputProps('note')}
+      />
+    </>
+  )
 
+  const dialogs = (
+    <>
       <ConfirmModal
         opened={confirmDiscard}
         onClose={() => setConfirmDiscard(false)}
@@ -184,6 +184,24 @@ function CustomerForm({ onClose, mode, initial, prefill, onSaved }: CustomerForm
         {formatPhone(normalizePhone(confirmPhone?.phone.trim() ?? ''))}. Đơn cũ đang gắn theo số cũ
         nên sẽ không còn hiện trong lịch sử của khách.
       </ConfirmModal>
+    </>
+  )
+
+  return (
+    <form onSubmit={submit} noValidate>
+      <Stack>
+        {fields}
+        <ModalFooter>
+          <Button variant="secondary" onClick={close} disabled={pending}>
+            Hủy
+          </Button>
+          <Button type="submit" loading={pending}>
+            {mode === 'create' ? 'Thêm khách' : 'Lưu'}
+          </Button>
+        </ModalFooter>
+      </Stack>
+
+      {dialogs}
     </form>
   )
 }

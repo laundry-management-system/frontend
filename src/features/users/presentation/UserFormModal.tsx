@@ -4,6 +4,7 @@ import { useForm } from '@mantine/form'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { toApiError } from '@/shared/api/apiError'
+import { formatPersonName, stripDigits } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, ModalFooter } from '@/shared/ui'
 import { useCreateUser, useUpdateUser } from '../application/useUserMutations'
@@ -92,7 +93,10 @@ function UserForm({ onClose, mode, user }: UserFormModalProps) {
   const submit = form.onSubmit((values) => {
     if (isEdit && user) {
       updateUser.mutate(
-        { id: user.id, dto: { fullName: values.fullName.trim(), phone: values.phone.trim() } },
+        {
+          id: user.id,
+          dto: { fullName: formatPersonName(values.fullName), phone: values.phone.trim() },
+        },
         {
           onSuccess: () => {
             notify.success('Đã cập nhật nhân viên')
@@ -104,7 +108,7 @@ function UserForm({ onClose, mode, user }: UserFormModalProps) {
     } else {
       createUser.mutate(
         {
-          fullName: values.fullName.trim(),
+          fullName: formatPersonName(values.fullName),
           phone: values.phone.trim(),
           email: values.email.trim(),
           hiredDate: values.hiredDate,
@@ -130,7 +134,16 @@ function UserForm({ onClose, mode, user }: UserFormModalProps) {
     <form onSubmit={submit} noValidate>
       <Stack>
         <Group grow align="flex-start">
-          <TextInput label="Họ tên" required {...getInputProps('fullName')} />
+          <TextInput
+            label="Họ tên"
+            required
+            {...getInputProps('fullName')}
+            onChange={(e) => form.setFieldValue('fullName', stripDigits(e.currentTarget.value))}
+            onBlur={(e) => {
+              form.setFieldValue('fullName', formatPersonName(e.currentTarget.value))
+              getInputProps('fullName').onBlur?.()
+            }}
+          />
           <TextInput
             label="Số điện thoại"
             placeholder="0988666777"

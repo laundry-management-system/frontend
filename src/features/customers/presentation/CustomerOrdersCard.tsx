@@ -1,12 +1,14 @@
 import { Card, Stack, Title } from '@mantine/core'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LuReceiptText } from 'react-icons/lu'
 import { formatDate } from '@/shared/lib/format'
-import { DataTable, EmptyState, Money, OrderCode, StatusBadge } from '@/shared/ui'
+import { CopyableCode, DataTable, EmptyState, Money, StatusBadge } from '@/shared/ui'
 import { useCustomerOrders } from '../application/useCustomerOrders'
 import { ORDER_STATUS_KEY, type CustomerOrder } from '../domain/types'
 
 export function CustomerOrdersCard({ phone }: { phone: string }) {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const { data, isLoading } = useCustomerOrders(phone, page - 1)
 
@@ -19,8 +21,8 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
             {
               name: 'code',
               label: 'Mã đơn',
-              width: 170,
-              render: (o) => <OrderCode code={o.code} />,
+              width: 190,
+              render: (o) => <CopyableCode code={o.code} />,
             },
             {
               name: 'receivedAt',
@@ -47,6 +49,10 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
           ]}
           data={data?.content ?? []}
           rowKey={(o) => o.id}
+          rowProps={(o) => ({
+            onClick: () => navigate(`/orders/${o.id}`),
+            style: { cursor: 'pointer' },
+          })}
           loading={isLoading}
           empty={
             <EmptyState

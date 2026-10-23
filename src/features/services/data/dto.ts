@@ -11,6 +11,8 @@ export interface ServiceResponseDto {
   expressSupported: boolean | null
   expressSurcharge: number | string | null
   expressHours: number | null
+  minQuantity?: number | string | null
+  whitesApplicable?: boolean | null
   status: ServiceStatus
   createdAt: string
   updatedAt: string
@@ -24,6 +26,8 @@ export interface CreateServiceRequestDto {
   expressSupported: boolean
   expressSurcharge: number | null
   expressHours: number | null
+  minQuantity: number
+  whitesApplicable: boolean
 }
 
 export type UpdateServiceRequestDto = CreateServiceRequestDto & {

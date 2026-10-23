@@ -1,5 +1,5 @@
 import { Badge, Button, SegmentedControl, Text, TextInput } from '@mantine/core'
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 import { LuSearch, LuSearchX, LuUsers } from 'react-icons/lu'
 import {
   ROLE_LABEL,
@@ -16,9 +16,22 @@ import { DEFAULT_PAGE_SIZE } from '@/shared/config/constants'
 import { useListParams } from '@/shared/hooks/useListParams'
 import { formatDate } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
-import { ConfirmModal, type DataTableColumn, EmptyState, ListPage, RowActions } from '@/shared/ui'
+import {
+  ConfirmModal,
+  CopyableCode,
+  type DataTableColumn,
+  EmptyState,
+  ListPage,
+  RowActions,
+} from '@/shared/ui'
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly UserStatus[]
+
+const STATUS_OPTIONS = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: 'Đang làm', value: 'ACTIVE' },
+  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
+]
 
 type ModalState =
   { kind: 'create' } | { kind: 'edit' | 'disable' | 'activate' | 'resend'; user: User } | null
@@ -40,6 +53,7 @@ export default function UsersPage() {
 
   const [modal, setModal] = useState<ModalState>(null)
   const close = () => setModal(null)
+  const openCreate = () => setModal({ kind: 'create' })
   const target = modal && modal.kind !== 'create' ? modal.user : undefined
 
   const run = (mutation: { mutate: (id: number, opts: object) => void }, success: string) => {
@@ -57,6 +71,9 @@ export default function UsersPage() {
   const total = data?.page.totalElements ?? 0
   const totalPages = data?.page.totalPages ?? 1
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
+  const handleStatusChange = (v: string) => setStatus(v as UserStatus | 'ALL')
+
   const filters = (
     <>
       <TextInput
@@ -64,24 +81,42 @@ export default function UsersPage() {
         placeholder="Tìm theo mã / họ tên / SĐT / email"
         aria-label="Tìm theo mã / họ tên / SĐT / email"
         value={q}
-        onChange={(e) => setQ(e.currentTarget.value)}
+        onChange={handleSearchChange}
         w={320}
       />
-      <SegmentedControl
-        value={status}
-        onChange={(v) => setStatus(v as UserStatus | 'ALL')}
-        data={[
-          { label: 'Tất cả', value: 'ALL' },
-          { label: 'Đang làm', value: 'ACTIVE' },
-          { label: 'Ngừng hoạt động', value: 'INACTIVE' },
-        ]}
-      />
+      <SegmentedControl value={status} onChange={handleStatusChange} data={STATUS_OPTIONS} />
     </>
   )
 
+  const rowActions = (u: User) => [
+    { label: 'Sửa', onClick: () => setModal({ kind: 'edit', user: u }) },
+    {
+      label: 'Vô hiệu hóa',
+      danger: true,
+      hidden: !(u.status === 'ACTIVE' && u.role !== 'ADMIN'),
+      onClick: () => setModal({ kind: 'disable', user: u }),
+    },
+    {
+      label: 'Gửi lại link kích hoạt',
+      hidden: u.status !== 'INACTIVE',
+      onClick: () => setModal({ kind: 'resend', user: u }),
+    },
+    {
+      label: 'Kích hoạt lại',
+      hidden: u.status !== 'INACTIVE',
+      onClick: () => setModal({ kind: 'activate', user: u }),
+    },
+  ]
+
   const columns: DataTableColumn<User>[] = [
-    { name: 'employeeCode', label: 'Mã', width: 70 },
-    { name: 'fullName', label: 'Họ tên', width: 250 },
+    {
+      name: 'employeeCode',
+      label: 'Mã',
+      width: 110,
+      fixed: 'left',
+      render: (u) => <CopyableCode code={u.employeeCode} />,
+    },
+    { name: 'fullName', label: 'Họ tên', width: 250, fixed: 'left' },
     { name: 'phone', label: 'Số điện thoại', width: 140 },
     { name: 'email', label: 'Email' },
     { name: 'username', label: 'Tài khoản', width: 140 },
@@ -119,68 +154,54 @@ export default function UsersPage() {
       label: '',
       width: 40,
       align: 'right',
-      render: (u) => (
-        <RowActions
-          items={[
-            { label: 'Sửa', onClick: () => setModal({ kind: 'edit', user: u }) },
-            {
-              label: 'Vô hiệu hóa',
-              danger: true,
-              hidden: !(u.status === 'ACTIVE' && u.role !== 'ADMIN'),
-              onClick: () => setModal({ kind: 'disable', user: u }),
-            },
-            {
-              label: 'Gửi lại link kích hoạt',
-              hidden: u.status !== 'INACTIVE',
-              onClick: () => setModal({ kind: 'resend', user: u }),
-            },
-            {
-              label: 'Kích hoạt lại',
-              hidden: u.status !== 'INACTIVE',
-              onClick: () => setModal({ kind: 'activate', user: u }),
-            },
-          ]}
-        />
-      ),
+      fixed: 'right',
+      render: (u) => <RowActions items={rowActions(u)} />,
     },
   ]
+
+  const handleRetry = () => void refetch()
+  const rowKey = (u: User) => u.id
+  const rowProps = (u: User) => ({ opacity: u.status === 'INACTIVE' ? 0.55 : 1 })
+  const confirmDisable = () => run(disableUser, 'Đã vô hiệu hóa nhân viên')
+  const confirmResend = () => run(resendSetupMail, `Đã gửi lại link tới ${target?.email}`)
+  const confirmActivate = () => run(enableUser, 'Đã kích hoạt lại nhân viên')
+
+  const primaryAction = { label: 'Thêm nhân viên', onClick: openCreate }
+
+  const empty = filtered ? (
+    <EmptyState
+      icon={<LuSearchX size={32} />}
+      title="Không tìm thấy nhân viên"
+      description={search.trim() ? `Không có nhân viên nào khớp "${search.trim()}".` : undefined}
+      action={
+        <Button variant="secondary" onClick={reset}>
+          Xóa bộ lọc
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={<LuUsers size={32} />}
+      title="Chưa có nhân viên"
+      description="Nhân viên mới thêm sẽ hiện ở đây."
+      action={<Button onClick={openCreate}>Thêm nhân viên</Button>}
+    />
+  )
 
   return (
     <ListPage
       title="Nhân viên"
       description={`${total} tài khoản`}
-      primaryAction={{ label: 'Thêm nhân viên', onClick: () => setModal({ kind: 'create' }) }}
+      primaryAction={primaryAction}
       filters={filters}
       columns={columns}
       data={users}
-      rowKey={(u) => u.id}
+      rowKey={rowKey}
       loading={isLoading}
       error={isError}
-      onRetry={() => void refetch()}
-      empty={
-        filtered ? (
-          <EmptyState
-            icon={<LuSearchX size={32} />}
-            title="Không tìm thấy nhân viên"
-            description={
-              search.trim() ? `Không có nhân viên nào khớp "${search.trim()}".` : undefined
-            }
-            action={
-              <Button variant="secondary" onClick={reset}>
-                Xóa bộ lọc
-              </Button>
-            }
-          />
-        ) : (
-          <EmptyState
-            icon={<LuUsers size={32} />}
-            title="Chưa có nhân viên"
-            description="Nhân viên mới thêm sẽ hiện ở đây."
-            action={<Button onClick={() => setModal({ kind: 'create' })}>Thêm nhân viên</Button>}
-          />
-        )
-      }
-      rowProps={(u) => ({ opacity: u.status === 'INACTIVE' ? 0.55 : 1 })}
+      onRetry={handleRetry}
+      empty={empty}
+      rowProps={rowProps}
       page={page}
       totalPages={totalPages}
       onPageChange={setPage}
@@ -194,7 +215,7 @@ export default function UsersPage() {
       <ConfirmModal
         opened={modal?.kind === 'disable'}
         onClose={close}
-        onConfirm={() => run(disableUser, 'Đã vô hiệu hóa nhân viên')}
+        onConfirm={confirmDisable}
         kind="destructive"
         title="Vô hiệu hóa nhân viên"
         confirmLabel="Vô hiệu hóa"
@@ -206,7 +227,7 @@ export default function UsersPage() {
       <ConfirmModal
         opened={modal?.kind === 'resend'}
         onClose={close}
-        onConfirm={() => run(resendSetupMail, `Đã gửi lại link tới ${target?.email}`)}
+        onConfirm={confirmResend}
         kind="confirm"
         title="Gửi lại link kích hoạt"
         confirmLabel="Gửi"
@@ -217,7 +238,7 @@ export default function UsersPage() {
       <ConfirmModal
         opened={modal?.kind === 'activate'}
         onClose={close}
-        onConfirm={() => run(enableUser, 'Đã kích hoạt lại nhân viên')}
+        onConfirm={confirmActivate}
         kind="confirm"
         title="Kích hoạt lại nhân viên"
         confirmLabel="Kích hoạt lại"

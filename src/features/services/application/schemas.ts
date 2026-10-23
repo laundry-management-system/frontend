@@ -5,7 +5,6 @@ import { SERVICE_NAME_MAX } from '../domain/rules.ts'
 const numberOrBlank = z.union([z.number(), z.literal('')])
 const isInt = (v: number | '') => v !== '' && Number.isInteger(v)
 
-/** Schema form Thêm / sửa dịch vụ, dùng qua `schemaResolver(serviceFormSchema, { sync: true })`. */
 export const serviceFormSchema = z
   .object({
     name: z
@@ -23,12 +22,21 @@ export const serviceFormSchema = z
     standardHours: numberOrBlank
       .refine((v) => v !== '', { message: 'Vui lòng nhập thời gian xử lý chuẩn', abort: true })
       .refine((v) => isInt(v) && Number(v) >= 1, 'Thời gian phải lớn hơn 0 giờ'),
+    minQuantity: numberOrBlank.refine((v) => v === '' || v >= 0, 'Tối thiểu không được âm'),
+    whitesApplicable: z.boolean(),
     expressSupported: z.boolean(),
     expressSurcharge: numberOrBlank,
     expressHours: numberOrBlank,
     status: z.enum(['ACTIVE', 'INACTIVE']),
   })
   .superRefine((v, ctx) => {
+    // KG cho 2 số lẻ, đơn vị khác chỉ số nguyên (khớp BE)
+    if (v.minQuantity !== '' && v.unit && v.unit !== 'KG' && !Number.isInteger(v.minQuantity))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['minQuantity'],
+        message: 'Tối thiểu phải là số nguyên',
+      })
     if (!v.expressSupported) return
     const issue = (path: 'expressSurcharge' | 'expressHours', message: string) =>
       ctx.addIssue({ code: 'custom', path: [path], message })
