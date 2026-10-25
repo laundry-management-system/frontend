@@ -4,7 +4,15 @@ export type Tone =
   'neutral' | 'primary' | 'info' | 'success' | 'warning' | 'express' | 'danger' | 'vip'
 
 export type StatusGroup =
-  'order' | 'payment' | 'payment-method' | 'flag' | 'machine' | 'voucher' | 'incident' | 'role'
+  | 'order'
+  | 'payment'
+  | 'payment-method'
+  | 'payment-txn'
+  | 'flag'
+  | 'machine'
+  | 'voucher'
+  | 'incident'
+  | 'role'
 
 export type StatusIcon = 'wallet' | 'qr-code' | 'triangle-alert' | 'zap' | 'star' | 'package'
 
@@ -22,6 +30,7 @@ export const GROUP_LABEL: Record<StatusGroup, string> = {
   order: 'Đơn',
   payment: 'Thanh toán',
   'payment-method': 'Phương thức',
+  'payment-txn': 'Giao dịch',
   flag: 'Cờ',
   machine: 'Máy',
   voucher: 'Voucher',
@@ -39,6 +48,9 @@ export const DOMAIN_STATUSES: DomainStatus[] = [
   { group: 'payment', key: 'paid', label: 'Đã thanh toán', tone: 'success' },
   { group: 'payment-method', key: 'cash', label: 'Tiền mặt', tone: 'neutral', icon: 'wallet' },
   { group: 'payment-method', key: 'qr', label: 'Chuyển khoản (QR)', tone: 'info', icon: 'qr-code' },
+  { group: 'payment-txn', key: 'confirmed', label: 'Đã xác nhận', tone: 'success' },
+  { group: 'payment-txn', key: 'voided', label: 'Đã hủy', tone: 'neutral' },
+  { group: 'payment-txn', key: 'refunded', label: 'Đã hoàn tiền', tone: 'warning' },
   { group: 'flag', key: 'late', label: 'TRỄ', tone: 'danger', solid: true, icon: 'triangle-alert' },
   { group: 'flag', key: 'express', label: 'Giặt nhanh', tone: 'express', solid: true, icon: 'zap' },
   { group: 'flag', key: 'vip', label: 'VIP', tone: 'vip', icon: 'star' },

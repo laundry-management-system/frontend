@@ -1,4 +1,5 @@
 export { useMe } from './application/useMe'
+export { useUserName } from './application/useUserName'
 export { useUsers } from './application/useUsers'
 export {
   useCreateUser,
