@@ -1,5 +1,5 @@
 import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
-import type { ChangeEvent, KeyboardEvent } from 'react'
+import type { ChangeEvent } from 'react'
 import { LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { formatPhone } from '@/features/customers'
@@ -139,9 +139,6 @@ export default function OrdersPage() {
 
   const rowProps = (o: OrderListItem) => ({
     onClick: () => open(o),
-    // Thay cho nút "›" đã bỏ: dòng vẫn mở được bằng bàn phím
-    tabIndex: 0,
-    onKeyDown: (e: KeyboardEvent) => e.key === 'Enter' && open(o),
     style: { cursor: 'pointer', opacity: o.status === 'CANCELLED' ? 0.6 : undefined },
   })
 

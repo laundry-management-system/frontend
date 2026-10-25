@@ -1,6 +1,6 @@
 import { Button, SegmentedControl, Text, TextInput } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
-import { LuChevronRight, LuSearch, LuSearchX, LuUserPlus, LuUsers } from 'react-icons/lu'
+import { LuSearch, LuSearchX, LuUserPlus, LuUsers } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import {
   type Customer,
@@ -14,7 +14,7 @@ import {
   useCustomers,
 } from '@/features/customers'
 import { useListParams } from '@/shared/hooks/useListParams'
-import { CopyableCode, type DataTableColumn, EmptyState, IconButton, ListPage } from '@/shared/ui'
+import { CopyableCode, type DataTableColumn, EmptyState, ListPage } from '@/shared/ui'
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly CustomerStatus[]
 
@@ -96,20 +96,6 @@ export default function CustomersPage() {
       label: 'Trạng thái',
       width: 140,
       render: (c) => <CustomerStatusText status={c.status} />,
-    },
-    {
-      name: 'open',
-      label: '',
-      width: 60,
-      align: 'right',
-      fixed: 'right',
-      render: (c) => (
-        <IconButton
-          label={`Mở hồ sơ ${c.fullName}`}
-          icon={<LuChevronRight size={18} />}
-          onClick={() => openDetail(c)}
-        />
-      ),
     },
   ]
 
