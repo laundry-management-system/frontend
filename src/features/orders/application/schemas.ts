@@ -81,3 +81,52 @@ export const adminReasonSchema = z
         issue('newTotalAmount', 'Tổng tiền phải là số nguyên không âm')
     }
   })
+
+export const transferConfirmSchema = z.object({
+  referenceCode: z.string().trim().max(50, 'Mã tham chiếu tối đa 50 ký tự'),
+})
+
+export type TransferConfirmValues = z.input<typeof transferConfirmSchema>
+
+export const discrepancySchema = (expected: number) =>
+  z.object({
+    receivedAmount: z
+      .union([z.number(), z.literal('')])
+      .refine((v) => v !== '', { message: 'Nhập số tiền đã nhận', abort: true })
+      .refine((v) => Number(v) > 0, { message: 'Số tiền phải lớn hơn 0', abort: true })
+      .refine((v) => v !== expected, 'Không có chênh lệch'),
+    note: z.string().trim().min(1, 'Nhập ghi chú chênh lệch').max(500, 'Ghi chú tối đa 500 ký tự'),
+  })
+
+export interface DiscrepancyValues {
+  receivedAmount: number | ''
+  note: string
+}
+
+export const resolutionSchema = z.object({
+  resolution: z.enum(['VOIDED', 'REFUNDED']),
+  reason: z.string().trim().min(1, 'Nhập lý do').max(255, 'Lý do tối đa 255 ký tự'),
+})
+
+export type ResolutionValues = z.input<typeof resolutionSchema>
+
+/** Nhận hộ thì tên và quan hệ phải đi cùng nhau. */
+export const deliverySchema = z
+  .object({
+    mode: z.enum(['SELF', 'PROXY']),
+    receiverName: z.string().trim().max(100, 'Tối đa 100 ký tự'),
+    receiverRelation: z.string().trim().max(50, 'Tối đa 50 ký tự'),
+  })
+  .superRefine((v, ctx) => {
+    if (v.mode !== 'PROXY') return
+    if (!v.receiverName)
+      ctx.addIssue({ code: 'custom', path: ['receiverName'], message: 'Nhập họ tên người nhận' })
+    if (!v.receiverRelation)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['receiverRelation'],
+        message: 'Nhập quan hệ với khách',
+      })
+  })
+
+export type DeliveryValues = z.input<typeof deliverySchema>

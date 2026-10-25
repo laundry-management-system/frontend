@@ -139,6 +139,7 @@ export interface OrderDetail extends OrderSummary {
   receiverRelation: string | null
   completedAt: string | null
   deliveredAt: string | null
+  deliveredBy: string | null
   /** Suy ra từ mục lịch sử CREATED (BE không trả createdBy – handoff 008 #7) */
   createdBy: string | null
   history: OrderHistoryEntry[]
@@ -213,4 +214,81 @@ export const ORDER_STATUS_KEY: Record<OrderStatus, string> = {
   COMPLETED: 'completed',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
+}
+
+export type PaymentMethod = 'CASH' | 'BANK_TRANSFER'
+export type PaymentTxnStatus = 'CONFIRMED' | 'VOIDED' | 'REFUNDED'
+export type PaymentResolution = 'VOIDED' | 'REFUNDED'
+
+export interface PaymentTxn {
+  id: number
+  invoiceNo: string
+  amount: number
+  method: PaymentMethod
+  paidAt: string
+  /** User id; BE chưa trả tên (handoff 010 #1) */
+  confirmedBy: number
+  referenceCode: string | null
+  status: PaymentTxnStatus
+  /** Dùng chung cho hủy xác nhận và hoàn tiền */
+  voidedBy: number | null
+  voidedAt: string | null
+  voidReason: string | null
+}
+
+export interface VietQr {
+  amount: number
+  bankId: string
+  accountNo: string
+  accountName: string
+  transferContent: string
+  qrImageUrl: string
+}
+
+export interface DeliveryResult {
+  orderCode: string
+  customerName: string
+  invoiceNo: string
+  paymentMethod: PaymentMethod
+  paidAt: string
+  deliveredAt: string
+  /** Username */
+  deliveredBy: string
+  receiverName: string | null
+  receiverRelation: string | null
+}
+
+export type CheckoutMode = 'checkout' | 'handover'
+
+export interface InvoiceLine {
+  index: number
+  name: string
+  quantity: number
+  unit: ItemUnit
+  unitPrice: number
+  lineTotal: number
+}
+
+export interface Invoice {
+  shopName: string
+  hotline: string
+  invoiceNo: string
+  orderCode: string
+  customerName: string
+  customerPhone: string
+  receivedAt: string
+  paidAt: string
+  method: PaymentMethod
+  referenceCode: string | null
+  confirmedByName: string
+  lines: InvoiceLine[]
+  subtotal: number
+  discountAmount: number
+  expressFee: number
+  whitesFee: number
+  totalAmount: number
+  /** Chỉ có ở lần in ngay sau khi thu tiền mặt (BE không lưu) */
+  cash: { given: number; change: number } | null
+  /** `null` = chưa giao; `name: null` = khách tự nhận */
+  receiver: { name: string | null; relation: string | null } | null
 }

@@ -31,13 +31,14 @@ Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiế
 
 ## Thao tác trên từng dòng bảng
 
-Mọi màn danh sách dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.
+Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.
 
-- Cột cố định khi bảng cuộn ngang (`DataTableColumn.fixed`): cột **Mã** và cột **Tên** `fixed: 'left'`, cột thao tác / mở chi tiết `fixed: 'right'`. Các cột cố định liền kề phải có `width` để tính vị trí (riêng cột cố định trong cùng có thể bỏ trống).
+- Cột cố định khi bảng cuộn ngang (`DataTableColumn.fixed`): cột **Mã** và cột **Tên** `fixed: 'left'`, cột thao tác `fixed: 'right'`. Các cột cố định liền kề phải có `width` để tính vị trí (riêng cột cố định trong cùng có thể bỏ trống).
 - Không đặt nút chữ/icon rời ("Sửa", bút chì…) trực tiếp trong dòng, kể cả khi chỉ có một thao tác.
 - Thao tác hủy / vô hiệu hóa / ngừng hoạt động: `danger: true`. Thao tác không áp dụng cho dòng đó: `hidden: true` (không disable).
 - Cột chỉ hiện với vai trò có quyền thao tác (VD `canManage`); thao tác nguy hiểm vẫn qua `ConfirmModal`.
-- Ngoại lệ: dòng chỉ để mở trang chi tiết (danh sách Khách hàng) dùng `IconButton` "›" + bấm cả dòng, không phải menu.
+- **Dòng chỉ để xem chi tiết** (không có thao tác nào khác ngoài mở trang chi tiết): **không có cột thao tác**, không đặt nút "›". Bấm thẳng vào dòng để mở chi tiết qua `rowProps` (`onClick` + `style: { cursor: 'pointer' }`). `DataTable` tự cho dòng có `onClick` nhận focus và mở bằng phím Enter. Mẫu: `OrdersPage`, `CustomersPage`, `CustomerOrdersCard`.
+- Chỉ thêm cột thao tác (`RowActions`) khi dòng có thao tác thật (sửa, vô hiệu hóa, gửi lại mail…), VD `UsersPage`, `ServicesPage`.
 
 ## Phần giải thích trên UI
 

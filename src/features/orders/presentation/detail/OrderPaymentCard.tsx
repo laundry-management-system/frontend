@@ -1,54 +1,76 @@
-import { Button, Card, Divider, Group, Stack, Text, Title, Tooltip } from '@mantine/core'
-import type { ReactNode } from 'react'
+import { Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { formatMoney } from '@/shared/lib/format'
-import { Money, StatusBadge } from '@/shared/ui'
+import { StatusBadge } from '@/shared/ui'
 import { isUnclassified } from '../../domain/rules'
-import type { OrderDetail } from '../../domain/types'
+import type { OrderDetail, PaymentTxn } from '../../domain/types'
+import { InfoRow, InfoSection } from '../InfoRow'
+import { PaymentHistoryList } from '../payment/PaymentHistoryList'
 
-function Row({ label, value, strong }: { label: string; value: ReactNode; strong?: boolean }) {
-  return (
-    <Group justify="space-between" wrap="nowrap">
-      <Text fw={strong ? 700 : undefined}>{label}</Text>
-      <Text fw={strong ? 700 : undefined}>{value}</Text>
-    </Group>
-  )
-}
-
-export function OrderPaymentCard({ order }: { order: OrderDetail }) {
+export function OrderPaymentCard({
+  order,
+  onResolve,
+}: {
+  order: OrderDetail
+  /** Chỉ truyền cho Admin */
+  onResolve?: (p: PaymentTxn) => void
+}) {
   const pending = isUnclassified({ ...order, totalItemsCount: order.items.length })
-  const show = (v: ReactNode) =>
-    pending ? (
-      <Text span c="dimmed">
+  // Chỉ liệt kê khoản điều chỉnh khác 0; không có thì tổng tiền hàng chính là tổng thanh toán
+  const adjustments = [
+    { label: 'Giảm giá', value: -order.discountAmount },
+    { label: 'Phụ phí giặt nhanh', value: order.expressFee },
+    { label: 'Giặt riêng đồ trắng', value: order.whitesFee },
+  ].filter((a) => a.value !== 0)
+  const signed = (v: number) => (v < 0 ? `−${formatMoney(-v)}` : `+${formatMoney(v)}`)
+
+  const costs = pending ? (
+    <InfoRow label="Tổng thanh toán" strong>
+      <Text span size="sm" c="dimmed">
         Đang cập nhật
       </Text>
-    ) : (
-      v
-    )
+    </InfoRow>
+  ) : (
+    <>
+      {adjustments.length > 0 && (
+        <>
+          <InfoRow label="Tổng tiền hàng">{formatMoney(order.subtotal)}</InfoRow>
+          {adjustments.map((a) => (
+            <InfoRow key={a.label} label={a.label}>
+              {signed(a.value)}
+            </InfoRow>
+          ))}
+          <Divider />
+        </>
+      )}
+      <InfoRow label="Tổng thanh toán" strong>
+        {formatMoney(order.totalAmount)}
+      </InfoRow>
+    </>
+  )
+
   return (
     <Card>
-      <Stack gap="xs">
-        <Title order={5}>Thanh toán</Title>
-        <Row label="Tổng tiền hàng" value={show(<Money value={order.subtotal} />)} />
-        <Row
-          label="Giảm giá"
-          value={show(
-            order.discountAmount ? `−${formatMoney(order.discountAmount)}` : formatMoney(0),
+      <Stack gap="lg">
+        <Group justify="space-between">
+          <Title order={5}>Thanh toán</Title>
+          {order.status !== 'CANCELLED' && (
+            <StatusBadge group="payment" statusKey={order.paymentStatus.toLowerCase()} size="sm" />
           )}
-        />
-        <Row label="Phụ phí giặt nhanh" value={show(<Money value={order.expressFee} />)} />
-        {order.whitesFee > 0 && (
-          <Row label="Giặt riêng đồ trắng" value={show(<Money value={order.whitesFee} />)} />
-        )}
-        <Divider />
-        <Row label="Tổng thanh toán" value={show(<Money value={order.totalAmount} />)} strong />
-        <Group justify="space-between" mt="xs">
-          <StatusBadge group="payment" statusKey={order.paymentStatus.toLowerCase()} />
-          <Tooltip label="Làm ở màn Thanh toán (sắp có)">
-            <Button variant="secondary" size="xs" data-disabled onClick={(e) => e.preventDefault()}>
-              Thu tiền
-            </Button>
-          </Tooltip>
         </Group>
+
+        <InfoSection title="Chi phí">{costs}</InfoSection>
+
+        <InfoSection title="Giao dịch">
+          <PaymentHistoryList orderCode={order.orderCode} onResolve={onResolve} />
+        </InfoSection>
+
+        {order.note && (
+          <InfoSection title="Ghi chú">
+            <Text size="sm" style={{ whiteSpace: 'pre-line' }}>
+              {order.note}
+            </Text>
+          </InfoSection>
+        )}
       </Stack>
     </Card>
   )

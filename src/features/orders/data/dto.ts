@@ -3,7 +3,10 @@ import type {
   ItemUnit,
   OrderStatus,
   OrderType,
+  PaymentMethod,
+  PaymentResolution,
   PaymentStatus,
+  PaymentTxnStatus,
 } from '../domain/types'
 
 export interface OrderResponseDto {
@@ -68,6 +71,7 @@ export interface OrderDetailResponseDto extends Omit<
   receiverRelation: string | null
   completedAt: string | null
   deliveredAt: string | null
+  deliveredBy?: string | null
   historyList: OrderHistoryDto[] | null
   customerId?: number | null
   requestedServices?: { id: number; name: string | null; unit: ItemUnit | null }[] | null
@@ -166,4 +170,68 @@ export interface NotificationResponseDto {
   publicLookupUrl: string
   lastNotifiedAt: string | null
   notifyCount: number
+}
+
+type Amount = number | string
+
+export interface PaymentResponseDto {
+  id: number
+  orderId: number
+  invoiceNo: string
+  amount: Amount
+  method: PaymentMethod
+  paidAt: string
+  confirmedBy: number
+  referenceCode: string | null
+  status: PaymentTxnStatus
+  voidedBy: number | null
+  voidedAt: string | null
+  voidReason: string | null
+}
+
+export interface VietQrResponseDto {
+  orderCode: string
+  amount: Amount
+  bankId: string
+  accountNo: string
+  accountName: string
+  transferContent: string
+  qrImageUrl: string
+}
+
+export interface ConfirmPaymentRequestDto {
+  amount: number
+  method: PaymentMethod
+  referenceCode?: string
+}
+
+export interface ResolvePaymentRequestDto {
+  resolution: PaymentResolution
+  reason: string
+}
+
+export interface PaymentDiscrepancyRequestDto {
+  receivedAmount: number
+  note: string
+}
+
+export interface DeliveryRequestDto {
+  receiverName?: string
+  receiverRelation?: string
+}
+
+export interface DeliveryResponseDto {
+  orderCode: string
+  customerName: string
+  customerPhone: string
+  dueAt: string
+  totalAmount: Amount
+  invoiceNo: string
+  paymentMethod: PaymentMethod
+  paidAt: string
+  status: string
+  deliveredAt: string
+  deliveredBy: string
+  receiverName: string | null
+  receiverRelation: string | null
 }

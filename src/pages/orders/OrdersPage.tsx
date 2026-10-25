@@ -1,6 +1,6 @@
 import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import type { ChangeEvent } from 'react'
-import { LuChevronRight, LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
+import { LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { formatPhone } from '@/features/customers'
 import {
@@ -18,7 +18,6 @@ import {
   CopyableCode,
   type DataTableColumn,
   EmptyState,
-  IconButton,
   ListPage,
   Money,
   StatusBadge,
@@ -135,20 +134,6 @@ export default function OrdersPage() {
         ) : (
           <Money value={o.totalAmount} />
         ),
-    },
-    {
-      name: 'open',
-      label: '',
-      width: 60,
-      align: 'right',
-      fixed: 'right',
-      render: (o) => (
-        <IconButton
-          label="Mở chi tiết đơn"
-          icon={<LuChevronRight size={18} />}
-          onClick={() => open(o)}
-        />
-      ),
     },
   ]
 
