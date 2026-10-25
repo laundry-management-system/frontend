@@ -8,7 +8,7 @@ import {
   Table,
   type TableTrProps,
 } from '@mantine/core'
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { EmptyState } from '../feedback/EmptyState'
 
 export interface DataTableColumn<T> {
@@ -50,6 +50,11 @@ export interface DataTableProps<T> {
   onPageChange?: (page: number) => void
 }
 
+// Dòng bấm được (mở chi tiết, không có cột thao tác) phải mở được bằng bàn phím
+const openOnEnter = (e: KeyboardEvent<HTMLTableRowElement>) => {
+  if (e.key === 'Enter' && e.target === e.currentTarget) e.currentTarget.click()
+}
+
 export function DataTable<T>({
   columns,
   data,
@@ -82,15 +87,22 @@ export function DataTable<T>({
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {data.map((row, i) => (
-            <Table.Tr key={rowKey(row)} {...rowProps?.(row, i)}>
-              {columns.map((col, c) => (
-                <Table.Td key={col.name} ta={col.align} {...fixed[c]}>
-                  {col.render ? col.render(row, i) : (row as Record<string, ReactNode>)[col.name]}
-                </Table.Td>
-              ))}
-            </Table.Tr>
-          ))}
+          {data.map((row, i) => {
+            const props = rowProps?.(row, i)
+            return (
+              <Table.Tr
+                key={rowKey(row)}
+                {...(props?.onClick && { tabIndex: 0, onKeyDown: openOnEnter })}
+                {...props}
+              >
+                {columns.map((col, c) => (
+                  <Table.Td key={col.name} ta={col.align} {...fixed[c]}>
+                    {col.render ? col.render(row, i) : (row as Record<string, ReactNode>)[col.name]}
+                  </Table.Td>
+                ))}
+              </Table.Tr>
+            )
+          })}
         </Table.Tbody>
       </Table>
     </Table.ScrollContainer>
