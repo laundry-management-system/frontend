@@ -1,19 +1,25 @@
 import { formatConditionNote, parseConditionNote } from '../domain/conditionNote'
 import { sortHistory } from '../domain/history'
 import type {
+  DeliveryResult,
   NotificationResult,
   OrderDetail,
   OrderLine,
   OrderListItem,
   OrderSummary,
+  PaymentTxn,
   ReceiptData,
+  VietQr,
 } from '../domain/types'
 import type {
+  DeliveryResponseDto,
   NotificationResponseDto,
   OrderDetailResponseDto,
   OrderItemDto,
   OrderReceiptResponseDto,
   OrderResponseDto,
+  PaymentResponseDto,
+  VietQrResponseDto,
 } from './dto'
 
 const money = (v: number | string | null | undefined) => Number(v ?? 0)
@@ -86,6 +92,7 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     receiverRelation: dto.receiverRelation,
     completedAt: dto.completedAt,
     deliveredAt: dto.deliveredAt,
+    deliveredBy: dto.deliveredBy ?? null,
     createdBy: history.find((h) => h.actionType === 'CREATED')?.performedBy ?? null,
     history,
     intakeCode: dto.intakeCode ?? null,
@@ -143,3 +150,38 @@ export const toItemDto = (line: OrderLine, expressSurcharge: number): OrderItemD
     conditionNote: formatConditionNote(line.conditionTags, line.conditionText),
   }
 }
+
+export const toPaymentTxn = (dto: PaymentResponseDto): PaymentTxn => ({
+  id: dto.id,
+  invoiceNo: dto.invoiceNo,
+  amount: money(dto.amount),
+  method: dto.method,
+  paidAt: dto.paidAt,
+  confirmedBy: dto.confirmedBy,
+  referenceCode: dto.referenceCode,
+  status: dto.status,
+  voidedBy: dto.voidedBy,
+  voidedAt: dto.voidedAt,
+  voidReason: dto.voidReason,
+})
+
+export const toVietQr = (dto: VietQrResponseDto): VietQr => ({
+  amount: money(dto.amount),
+  bankId: dto.bankId,
+  accountNo: dto.accountNo,
+  accountName: dto.accountName,
+  transferContent: dto.transferContent,
+  qrImageUrl: dto.qrImageUrl,
+})
+
+export const toDeliveryResult = (dto: DeliveryResponseDto): DeliveryResult => ({
+  orderCode: dto.orderCode,
+  customerName: dto.customerName,
+  invoiceNo: dto.invoiceNo,
+  paymentMethod: dto.paymentMethod,
+  paidAt: dto.paidAt,
+  deliveredAt: dto.deliveredAt,
+  deliveredBy: dto.deliveredBy,
+  receiverName: dto.receiverName,
+  receiverRelation: dto.receiverRelation,
+})

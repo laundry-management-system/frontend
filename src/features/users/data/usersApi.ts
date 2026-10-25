@@ -35,6 +35,7 @@ export const usersApi = {
       },
     }
   },
+  get: async (id: number) => toUser((await httpClient.get<UserResponseDto>(`/users/${id}`)).data),
   me: async () => toUser((await httpClient.get<UserResponseDto>('/users/me')).data),
   create: async (dto: CreateUserRequestDto) =>
     toUser((await httpClient.post<UserResponseDto>('/users', dto)).data),

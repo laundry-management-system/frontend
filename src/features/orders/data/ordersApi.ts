@@ -1,27 +1,37 @@
 import { httpClient } from '@/shared/api/httpClient'
 import { fromSpringPage, type SpringPage } from '@/shared/api/page'
-import type { OrderLine, OrderStatus } from '../domain/types'
+import type { OrderLine, OrderStatus, PaymentResolution } from '../domain/types'
 import type {
   AdjustPriceRequestDto,
   CancelOrderRequestDto,
   ChangeStatusRequestDto,
   CompleteOrderRequestDto,
   ComposeNotificationRequestDto,
+  ConfirmPaymentRequestDto,
+  DeliveryRequestDto,
+  DeliveryResponseDto,
   NotificationResponseDto,
   OrderDetailResponseDto,
   OrderReceiptResponseDto,
   OrderResponseDto,
   IntakeRequestDto,
+  PaymentDiscrepancyRequestDto,
+  PaymentResponseDto,
+  ResolvePaymentRequestDto,
+  VietQrResponseDto,
   IntakeResponseDto,
   RescheduleRequestDto,
   RevertStatusRequestDto,
 } from './dto'
 import {
+  toDeliveryResult,
   toItemDto,
   toNotificationResult,
   toOrderDetail,
   toOrderListItem,
+  toPaymentTxn,
   toReceiptData,
+  toVietQr,
 } from './mapper'
 
 export interface OrderListParams {
@@ -142,4 +152,45 @@ export const ordersApi = {
     const dto: AdjustPriceRequestDto = { newTotalAmount, reason }
     return detail(httpClient.patch<OrderDetailResponseDto>(`/orders/${id}/price`, dto))
   },
+
+  payments: async (orderCode: string) =>
+    (await httpClient.get<PaymentResponseDto[]>(`/orders/${orderCode}/payments`)).data.map(
+      toPaymentTxn,
+    ),
+
+  vietQr: async (orderCode: string) =>
+    toVietQr(
+      (await httpClient.get<VietQrResponseDto>(`/orders/${orderCode}/payments/vietqr`)).data,
+    ),
+
+  confirmPayment: async (orderCode: string, dto: ConfirmPaymentRequestDto) =>
+    toPaymentTxn(
+      (await httpClient.post<PaymentResponseDto>(`/orders/${orderCode}/payments`, dto)).data,
+    ),
+
+  resolvePayment: async (
+    orderCode: string,
+    paymentId: number,
+    resolution: PaymentResolution,
+    reason: string,
+  ) => {
+    const dto: ResolvePaymentRequestDto = { resolution, reason }
+    return toPaymentTxn(
+      (
+        await httpClient.post<PaymentResponseDto>(
+          `/orders/${orderCode}/payments/${paymentId}/resolution`,
+          dto,
+        )
+      ).data,
+    )
+  },
+
+  recordDiscrepancy: (orderCode: string, dto: PaymentDiscrepancyRequestDto) =>
+    httpClient.post(`/orders/${orderCode}/payment-discrepancies`, dto),
+
+  /** Endpoint của module thanh toán: kiểm tra đơn đã thanh toán (`/orders/{id}/deliver` thì không). */
+  deliver: async (orderCode: string, dto: DeliveryRequestDto) =>
+    toDeliveryResult(
+      (await httpClient.post<DeliveryResponseDto>(`/orders/${orderCode}/delivery`, dto)).data,
+    ),
 }

@@ -14,16 +14,25 @@ import {
   Tooltip,
 } from '@mantine/core'
 import { type MouseEvent, useState } from 'react'
-import { LuCloudOff, LuMessageCircle, LuPackageX, LuPrinter } from 'react-icons/lu'
+import { LuCloudOff, LuMessageCircle, LuPackageX, LuPrinter, LuReceiptText } from 'react-icons/lu'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { selectHasRole, useAuthStore } from '@/features/auth'
+import { useMe, useUserName } from '@/features/users'
 import {
   type AdminAction,
   AdminActionsCard,
   AdminReasonModal,
   canCancel,
+  buildInvoice,
   CancelOrderModal,
+  type CheckoutDone,
+  CheckoutModal,
+  checkoutMode,
   CompleteOrderModal,
+  confirmedTxn,
+  DiscrepancyModal,
+  type Invoice,
+  InvoicePrintArea,
   type NotificationResult,
   NotifyModal,
   OrderCustomerCard,
@@ -34,11 +43,16 @@ import {
   OrderPaymentCard,
   OrderStatusCell,
   ORDER_TYPE_LABEL,
+  type PaymentTxn,
   primaryActionOf,
   ReceiptPrintArea,
+  ResolvePaymentModal,
   useIntakeOrders,
   useOrder,
+  usePayments,
+  usePrintInvoice,
   usePrintReceipt,
+  useShopInfo,
   useStartProcessing,
 } from '@/features/orders'
 import { toApiError } from '@/shared/api/apiError'
@@ -52,8 +66,12 @@ type ModalState =
   | { kind: 'notify' }
   | { kind: 'cancel' }
   | { kind: 'admin'; mode: 'revert' | 'reschedule' | 'price' }
+  | { kind: 'checkout' }
+  | { kind: 'discrepancy' }
+  | { kind: 'resolve'; payment: PaymentTxn }
 
-const STEP_OF = { RECEIVED: 0, PROCESSING: 1, COMPLETED: 2, DELIVERED: 3, CANCELLED: 0 } as const
+// Đã giao là bước cuối: active = số bước để mọi bước đều hiện dấu tick
+const STEP_OF = { RECEIVED: 0, PROCESSING: 1, COMPLETED: 2, DELIVERED: 4, CANCELLED: 0 } as const
 
 const dateTime = (iso: string) => formatDateTime(iso).slice(0, 16)
 
@@ -69,6 +87,12 @@ export default function OrderDetailPage() {
   const [modal, setModal] = useState<ModalState>(null)
   // BE chỉ trả số lần nhắn khi soạn tin (handoff 008 #6a)
   const [lastNotification, setLastNotification] = useState<NotificationResult | null>(null)
+  const payments = usePayments(order?.orderCode)
+  const txn = confirmedTxn(payments.data ?? [])
+  const shop = useShopInfo(order?.id ?? null)
+  const confirmerName = useUserName(txn?.confirmedBy ?? null)
+  const me = useMe()
+  const invoicePrint = usePrintInvoice()
 
   const handleRetry = () => refetch()
   const closeModal = () => setModal(null)
@@ -119,7 +143,39 @@ export default function OrderDetailPage() {
     setModal(action === 'cancel' ? { kind: 'cancel' } : { kind: 'admin', mode: action })
   const canNotify = order.status === 'COMPLETED'
   const openComplete = () => setModal({ kind: 'complete' })
-  const preventClick = (e: MouseEvent) => e.preventDefault()
+  const mode = checkoutMode(order)
+  const openCheckout = () => setModal({ kind: 'checkout' })
+  const openDiscrepancy = () => setModal({ kind: 'discrepancy' })
+  // Ghi nhận chênh lệch chỉ mở từ màn thanh toán: đóng thì quay lại màn đó
+  const closeDiscrepancy = () => setModal({ kind: 'checkout' })
+  const makeInvoice = (t: PaymentTxn, name: string, extra: Pick<Invoice, 'cash' | 'receiver'>) =>
+    buildInvoice(order, t, {
+      shopName: shop.data?.shopName ?? '',
+      hotline: shop.data?.hotline ?? '',
+      confirmedByName: name,
+      ...extra,
+    })
+  const printInvoice = () =>
+    txn &&
+    invoicePrint.print(
+      makeInvoice(txn, confirmerName, {
+        cash: null,
+        receiver: order.deliveredAt
+          ? { name: order.receiverName, relation: order.receiverRelation }
+          : null,
+      }),
+    )
+  const handleCheckoutDone = ({ payment, delivery, cash }: CheckoutDone) => {
+    const t = payment ?? txn
+    if (!t) return
+    // Giao dịch vừa tạo do chính người đang đăng nhập xác nhận
+    const name = payment ? (me.data?.fullName ?? '') : confirmerName
+    const receiver = delivery
+      ? { name: delivery.receiverName, relation: delivery.receiverRelation }
+      : null
+    invoicePrint.print(makeInvoice(t, name, { cash, receiver }))
+  }
+  const openResolve = (payment: PaymentTxn) => setModal({ kind: 'resolve', payment })
   const handleNotifyClick = (e: MouseEvent) =>
     canNotify ? setModal({ kind: 'notify' }) : e.preventDefault()
 
@@ -133,12 +189,10 @@ export default function OrderDetailPage() {
       <Button size="md" onClick={openComplete}>
         Hoàn thành
       </Button>
-    ) : primary === 'DELIVER' ? (
-      <Tooltip label="Làm ở màn Giao đồ (sắp có)">
-        <Button size="md" data-disabled onClick={preventClick}>
-          Giao đồ
-        </Button>
-      </Tooltip>
+    ) : mode ? (
+      <Button size="md" onClick={openCheckout}>
+        {mode === 'checkout' ? 'Thanh toán & trả đồ' : 'Trả đồ'}
+      </Button>
     ) : null
 
   const cancelActions = [
@@ -185,6 +239,16 @@ export default function OrderDetailPage() {
           Nhắn khách
         </Button>
       </Tooltip>
+      {txn && (
+        <Button
+          variant="secondary"
+          leftSection={<LuReceiptText size={16} />}
+          disabled={!shop.data}
+          onClick={printInvoice}
+        >
+          In hóa đơn
+        </Button>
+      )}
       {!isAdmin && canCancel(order) && <RowActions items={cancelActions} />}
       {primaryButton}
     </Group>
@@ -238,6 +302,21 @@ export default function OrderDetailPage() {
       {modal?.kind === 'admin' && (
         <AdminReasonModal order={order} initialMode={modal.mode} onClose={closeModal} />
       )}
+      {modal?.kind === 'checkout' && mode && (
+        <CheckoutModal
+          order={order}
+          mode={mode}
+          onClose={closeModal}
+          onDiscrepancy={openDiscrepancy}
+          onDone={handleCheckoutDone}
+        />
+      )}
+      {modal?.kind === 'discrepancy' && (
+        <DiscrepancyModal order={order} onClose={closeDiscrepancy} />
+      )}
+      {modal?.kind === 'resolve' && (
+        <ResolvePaymentModal order={order} payment={modal.payment} onClose={closeModal} />
+      )}
     </>
   )
 
@@ -271,7 +350,7 @@ export default function OrderDetailPage() {
         <Grid.Col span={{ base: 12, lg: 4 }}>
           <Stack gap="lg">
             <OrderCustomerCard order={order} />
-            <OrderPaymentCard order={order} />
+            <OrderPaymentCard order={order} onResolve={isAdmin ? openResolve : undefined} />
             <OrderNotifyCard last={lastNotification} />
             <OrderIncidentCard />
             {isAdmin && <AdminActionsCard status={order.status} onAction={onAdminAction} />}
@@ -281,6 +360,7 @@ export default function OrderDetailPage() {
 
       {modals}
       <ReceiptPrintArea receipts={receipts} />
+      <InvoicePrintArea invoice={invoicePrint.invoice} />
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
-import type { ChangeEvent } from 'react'
-import { LuChevronRight, LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
+import type { ChangeEvent, KeyboardEvent } from 'react'
+import { LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { formatPhone } from '@/features/customers'
 import {
@@ -18,7 +18,6 @@ import {
   CopyableCode,
   type DataTableColumn,
   EmptyState,
-  IconButton,
   ListPage,
   Money,
   StatusBadge,
@@ -136,24 +135,13 @@ export default function OrdersPage() {
           <Money value={o.totalAmount} />
         ),
     },
-    {
-      name: 'open',
-      label: '',
-      width: 60,
-      align: 'right',
-      fixed: 'right',
-      render: (o) => (
-        <IconButton
-          label="Mở chi tiết đơn"
-          icon={<LuChevronRight size={18} />}
-          onClick={() => open(o)}
-        />
-      ),
-    },
   ]
 
   const rowProps = (o: OrderListItem) => ({
     onClick: () => open(o),
+    // Thay cho nút "›" đã bỏ: dòng vẫn mở được bằng bàn phím
+    tabIndex: 0,
+    onKeyDown: (e: KeyboardEvent) => e.key === 'Enter' && open(o),
     style: { cursor: 'pointer', opacity: o.status === 'CANCELLED' ? 0.6 : undefined },
   })
 

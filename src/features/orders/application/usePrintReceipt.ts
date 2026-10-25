@@ -23,6 +23,13 @@ export function usePrintReceipt() {
     window.print()
   }, [receipts])
 
+  // Gỡ phiếu sau khi in để không chồng lên hóa đơn (cùng dùng .print-area)
+  useEffect(() => {
+    const clear = () => setReceipts([])
+    window.addEventListener('afterprint', clear)
+    return () => window.removeEventListener('afterprint', clear)
+  }, [])
+
   const print = async (orderIds: number | number[]) => {
     setIsPrinting(true)
     try {
