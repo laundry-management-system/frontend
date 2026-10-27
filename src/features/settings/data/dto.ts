@@ -1,7 +1,11 @@
 export interface SettingResponseDto {
-  whitesFee: number | string
+  settingKey: string
+  value: string
+  description: string | null
+  updatedBy: number | null
+  updatedAt: string | null
 }
 
-export interface UpdateSettingRequestDto {
-  whitesFee: number
+export interface SettingUpdateRequestDto {
+  value: string
 }

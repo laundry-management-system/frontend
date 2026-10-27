@@ -1,6 +1,7 @@
 import { AppShell, Burger, Group, NavLink, Text, Title, useMantineColorScheme } from '@mantine/core'
 import {
   LuContact,
+  LuFileText,
   LuLayoutDashboard,
   LuListTodo,
   LuLogOut,
@@ -8,6 +9,7 @@ import {
   LuPackagePlus,
   LuPackageSearch,
   LuReceiptText,
+  LuSettings,
   LuSun,
   LuTags,
   LuUsers,
@@ -28,7 +30,9 @@ const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; rol
   { to: '/classify', label: 'Phân loại đồ', icon: LuPackageSearch, roles: ['STAFF'] },
   { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
   { to: '/services', label: 'Bảng giá dịch vụ', icon: LuTags, roles: ['ADMIN', 'STAFF'] },
+  { to: '/audit-log', label: 'Nhật ký hệ thống', icon: LuFileText, roles: ['ADMIN'] },
   { to: '/users', label: 'Nhân viên', icon: LuUsers, roles: ['ADMIN'] },
+  { to: '/settings', label: 'Cài đặt cửa hàng', icon: LuSettings, roles: ['ADMIN'] },
 ]
 
 export function MainLayout() {
