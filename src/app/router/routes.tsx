@@ -7,6 +7,7 @@ import { GuestRoute } from './GuestRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleGuard } from './RoleGuard'
 
+const AuditLogPage = lazy(() => import('@/pages/audit-log/AuditLogPage'))
 const ClassifyPage = lazy(() => import('@/pages/classify/ClassifyPage'))
 const CustomerDetailPage = lazy(() => import('@/pages/customers/CustomerDetailPage'))
 const CustomersPage = lazy(() => import('@/pages/customers/CustomersPage'))
@@ -18,6 +19,7 @@ const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'))
 const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
+const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
 const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
@@ -52,6 +54,8 @@ export const router = createBrowserRouter([
             children: [
               { path: '/', element: page(<DashboardPage />) },
               { path: '/users', element: page(<UsersPage />) },
+              { path: '/audit-log', element: page(<AuditLogPage />) },
+              { path: '/settings', element: page(<SettingsPage />) },
             ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },
