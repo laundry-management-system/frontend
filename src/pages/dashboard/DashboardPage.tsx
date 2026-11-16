@@ -1,8 +1,17 @@
-import { Box, Button, Card, Group, SegmentedControl, SimpleGrid, Skeleton, Title } from '@mantine/core'
+import {
+  Box,
+  Button,
+  Card,
+  Group,
+  SegmentedControl,
+  SimpleGrid,
+  Skeleton,
+  Title,
+} from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { LuCloudOff, LuRefreshCw } from 'react-icons/lu'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   type DashboardPreset,
   PaymentSplit,
@@ -15,7 +24,7 @@ import { EmptyState, IconButton, PageHeader } from '@/shared/ui'
 import { DueSoonCard } from './components/DueSoonCard'
 import { KpiRow } from './components/KpiRow'
 import { OrderFlow } from './components/OrderFlow'
-import { STORED_ORDERS_ID, StoredOrdersCard } from './components/StoredOrdersCard'
+import { StoredOrdersCard } from './components/StoredOrdersCard'
 
 const PRESETS: { value: DashboardPreset; label: string }[] = [
   { value: 'today', label: 'Hôm nay' },
@@ -37,6 +46,7 @@ export default function DashboardPage() {
   const dashboard = useDashboard(range)
   const revenue = useDailyRevenue(today)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { data } = dashboard
 
   const handlePresetChange = (v: string) =>
@@ -45,10 +55,10 @@ export default function DashboardPage() {
   const refreshAll = () => queryClient.invalidateQueries()
   const handleRetry = () => dashboard.refetch()
   const retryRevenue = () => revenue.refetch()
-  const scrollToStored = () =>
-    document.getElementById(STORED_ORDERS_ID)?.scrollIntoView({ block: 'start' })
+  const openStored = () => navigate('/stored-orders')
 
-  const rangeText = range.from === range.to ? fmt(range.to) : `${fmt(range.from)} – ${fmt(range.to)}`
+  const rangeText =
+    range.from === range.to ? fmt(range.to) : `${fmt(range.from)} – ${fmt(range.to)}`
   const description = dashboard.dataUpdatedAt
     ? `${rangeText} · cập nhật ${dayjs(dashboard.dataUpdatedAt).format('HH:mm')}`
     : rangeText
@@ -71,7 +81,7 @@ export default function DashboardPage() {
     </Card>
   ) : data ? (
     <>
-      <KpiRow data={data} preset={preset} onStoredClick={scrollToStored} />
+      <KpiRow data={data} preset={preset} onStoredClick={openStored} />
       <OrderFlow orders={data.orders} preset={preset} />
     </>
   ) : (

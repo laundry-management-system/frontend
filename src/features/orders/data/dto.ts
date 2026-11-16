@@ -250,8 +250,16 @@ export interface OverdueOrderResponseDto {
   orderCode: string
   customerName: string
   customerPhone: string
+  customerVip: boolean
   completedAt: string
   daysInStorage: number
   notifyCount: number
+  lastNotifiedAt: string | null
   shelfLocation: string | null
+  paymentStatus: PaymentStatus
+}
+
+export interface OverdueOrderListResponseDto {
+  overdueDays: number
+  orders: OverdueOrderResponseDto[]
 }
