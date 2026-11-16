@@ -235,3 +235,23 @@ export interface DeliveryResponseDto {
   receiverName: string | null
   receiverRelation: string | null
 }
+
+export interface WorkCountsResponseDto {
+  all: number
+  unclassified: number
+  received: number
+  processing: number
+  late: number
+  express: number
+}
+
+export interface OverdueOrderResponseDto {
+  orderId: number
+  orderCode: string
+  customerName: string
+  customerPhone: string
+  completedAt: string
+  daysInStorage: number
+  notifyCount: number
+  shelfLocation: string | null
+}

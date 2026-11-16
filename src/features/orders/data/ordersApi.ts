@@ -1,6 +1,14 @@
 import { httpClient } from '@/shared/api/httpClient'
 import { fromSpringPage, type SpringPage } from '@/shared/api/page'
-import type { OrderLine, OrderStatus, PaymentResolution } from '../domain/types'
+import type {
+  OrderLine,
+  OrderStatus,
+  PaymentResolution,
+  StoredOrder,
+  WorkCounts,
+  WorkListParams,
+} from '../domain/types'
+import { tabParams } from '../domain/workList'
 import type {
   AdjustPriceRequestDto,
   CancelOrderRequestDto,
@@ -22,6 +30,8 @@ import type {
   IntakeResponseDto,
   RescheduleRequestDto,
   RevertStatusRequestDto,
+  OverdueOrderResponseDto,
+  WorkCountsResponseDto,
 } from './dto'
 import {
   toDeliveryResult,
@@ -45,6 +55,13 @@ export interface OrderListParams {
 }
 
 const isPhoneQuery = (q: string) => /^\d+$/.test(q.replace(/[\s.-]/g, ''))
+
+// BE: `search` chỉ tìm mã/tên, SĐT phải gửi qua `phone`
+function termParams(q: string) {
+  const term = q.trim()
+  if (!term) return {}
+  return isPhoneQuery(term) ? { phone: term.replace(/[\s.-]/g, '') } : { search: term }
+}
 
 const detail = async (req: Promise<{ data: OrderDetailResponseDto }>) =>
   toOrderDetail((await req).data)
@@ -97,21 +114,51 @@ export const ordersApi = {
   },
 
   list: async ({ status, intakeCode, q, page, size }: OrderListParams) => {
-    const term = q.trim()
-    // BE: `search` chỉ tìm mã/tên, SĐT phải gửi qua `phone`
-    const byPhone = term && isPhoneQuery(term)
     const { data } = await httpClient.get<SpringPage<OrderResponseDto>>('/orders', {
-      params: {
-        status,
-        intakeCode,
-        phone: byPhone ? term.replace(/[\s.-]/g, '') : undefined,
-        search: term && !byPhone ? term : undefined,
-        page,
-        size,
-        sort: 'receivedAt,desc',
-      },
+      params: { status, intakeCode, ...termParams(q), page, size, sort: 'receivedAt,desc' },
     })
     return fromSpringPage(data, toOrderListItem)
+  },
+
+  /** Danh sách công việc: lọc và phân trang ở BE, cùng ngày hẹn thì xếp theo giờ nhận. */
+  listWork: async ({ tab, q, dueFrom, dueTo, page, size }: WorkListParams) => {
+    const { statuses, ...filter } = tabParams(tab)
+    const { data } = await httpClient.get<SpringPage<OrderResponseDto>>('/orders', {
+      params: {
+        statuses: statuses.join(','),
+        ...filter,
+        ...termParams(q),
+        dueFrom,
+        dueTo,
+        page,
+        size,
+        sort: ['dueAt,asc', 'receivedAt,asc'],
+      },
+      // Gửi mảng thành `sort=a&sort=b` (mặc định axios gửi `sort[]=`, Spring không đọc)
+      paramsSerializer: { indexes: null },
+    })
+    return fromSpringPage(data, toOrderListItem)
+  },
+
+  workCounts: async ({ q, dueFrom, dueTo }: Pick<WorkListParams, 'q' | 'dueFrom' | 'dueTo'>) => {
+    const { data } = await httpClient.get<WorkCountsResponseDto>('/orders/work-counts', {
+      params: { ...termParams(q), dueFrom, dueTo },
+    })
+    const counts: WorkCounts = {
+      ALL: data.all,
+      UNCLASSIFIED: data.unclassified,
+      RECEIVED: data.received,
+      PROCESSING: data.processing,
+      LATE: data.late,
+      EXPRESS: data.express,
+    }
+    return counts
+  },
+
+  /** Đồ tồn, lâu nhất trước */
+  overdue: async (): Promise<StoredOrder[]> => {
+    const { data } = await httpClient.get<OverdueOrderResponseDto[]>('/orders/overdue')
+    return [...data].sort((a, b) => b.daysInStorage - a.daysInStorage)
   },
 
   // shortcut: đếm bằng truy vấn size=1 cho từng trạng thái, đổi khi BE có /orders/counts (handoff 008 #2)

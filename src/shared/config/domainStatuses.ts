@@ -55,6 +55,7 @@ export const DOMAIN_STATUSES: DomainStatus[] = [
   { group: 'flag', key: 'express', label: 'Giặt nhanh', tone: 'express', solid: true, icon: 'zap' },
   { group: 'flag', key: 'vip', label: 'VIP', tone: 'vip', icon: 'star' },
   { group: 'flag', key: 'stale', label: 'Đồ tồn', tone: 'warning', icon: 'package' },
+  { group: 'flag', key: 'unclassified', label: 'Chưa phân loại', tone: 'warning' },
   { group: 'machine', key: 'ready', label: 'Sẵn sàng', tone: 'success' },
   { group: 'machine', key: 'maintenance', label: 'Bảo trì', tone: 'warning' },
   { group: 'machine', key: 'retired', label: 'Ngừng sử dụng', tone: 'neutral' },

@@ -82,6 +82,9 @@ Thứ tự ưu tiên:
 
 - Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
 - Truyền `empty` cho trạng thái rỗng / tìm không ra (mục Empty state); cột thao tác theo mục "Thao tác trên từng dòng bảng"; ghi chú dưới bảng qua `children`.
+- Thứ tự trong khối `filters` có tab trạng thái (`SegmentedControl`):
+  - Vừa **một hàng** → ô tìm / Select / bộ lọc khác **trước**, tab trạng thái **sau** (mẫu: `CustomersPage`, `UsersPage`, `ServicesPage`).
+  - Phải xuống **hai hàng** (nhiều tab, tab có số đếm) → bọc `Stack`: tab trạng thái ở **hàng trên**, các bộ lọc còn lại ở hàng dưới (mẫu: `OrdersPage`, `WorkListPage`). Không để `Group` tự xuống dòng làm tab rơi xuống dưới.
 - Chỉ dựng layout riêng khi màn không phải danh sách (trang chi tiết, form nhiều bước, dashboard); khi đó vẫn dùng `PageHeader` cho tiêu đề.
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
 - Đăng ký page: lazy route trong `app/router/routes.tsx`, mục nav trong `app/layouts/MainLayout.tsx` (kèm `roles`).
@@ -143,7 +146,7 @@ Mọi form phải báo lỗi **cùng một kiểu**: chữ đỏ ngay dưới ô
 | Bộ lọc / tìm kiếm / trang của màn danh sách | URL, qua hook `useListParams(STATUSES)` (`shared/hooks`): `q` (ô gõ), `search` (đã debounce), `status`, `page`, `filtered`, `reset`. Không tự viết lại `useSearchParams` cho việc này | `CustomersPage`, `UsersPage`, `ServicesPage` |
 | Trạng thái UI của một component / page (mở modal, dòng đang sửa, tab) | `useState` trong page; nhiều modal → một union `ModalState` | `ServicesPage` |
 | Giá trị form | `@mantine/form` `useForm` + `validate: schemaResolver(xxxFormSchema, { sync: true })`, schema zod đặt ở `features/<x>/application/schemas.ts`; modal remount khi mở (`{opened && <Form/>}`); `isDirty` → `ConfirmModal` "Bỏ thay đổi?" | `ServiceFormModal` |
-| State chia sẻ giữa các component trong **một page** | React context (`createContext` + `useContext`) đặt cạnh page | `DashboardPageContext` |
+| State chia sẻ giữa các component trong **một page** | React context (`createContext` + `useContext`) đặt cạnh page | chưa có trang nào cần; đặt tên theo `pages/<page>/<Page>Context.tsx` |
 | State dùng chung toàn app, không đến từ backend | zustand: `shared/store` (UI) hoặc `features/<x>/application` (theo feature) | `useUiStore`, `useAuthStore` |
 
 - **Context trong page** (theo mẫu `pages/<page>/<Page>Context.tsx`):
