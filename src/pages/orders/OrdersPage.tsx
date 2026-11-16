@@ -57,7 +57,8 @@ export default function OrdersPage() {
   ]
 
   const filters = (
-    <>
+    <Stack gap="sm" w="100%">
+      <SegmentedControl value={status} onChange={handleStatusChange} data={statusOptions} />
       <TextInput
         w={320}
         placeholder="Mã đơn / tên / SĐT"
@@ -65,8 +66,7 @@ export default function OrdersPage() {
         value={q}
         onChange={handleSearchChange}
       />
-      <SegmentedControl value={status} onChange={handleStatusChange} data={statusOptions} />
-    </>
+    </Stack>
   )
 
   const columns: DataTableColumn<OrderListItem>[] = [

@@ -304,6 +304,64 @@
   }
 }
 
+/* Dòng bảng có cờ: vạch màu ở mép trái (đặt trên ô đầu vì <tr> không vẽ được viền khi bảng collapse) */
+@layer components {
+  tr.ds-row-flag-late > td:first-child {
+    box-shadow: inset 4px 0 0 var(--tone-danger-solid);
+  }
+
+  tr.ds-row-flag-express > td:first-child {
+    box-shadow: inset 4px 0 0 var(--tone-express-solid);
+  }
+}
+
+/* Thẻ số liệu / bước luồng đơn bấm được: viền đổi màu khi rê chuột để báo là bấm được */
+@layer components {
+  .ds-kpi-card--link {
+    transition: border-color 150ms ease;
+  }
+
+  a:hover > .ds-kpi-card--link,
+  button:hover > .ds-kpi-card--link {
+    border-color: var(--ds-primary);
+  }
+
+  .ds-flow-step {
+    padding: 4px 8px;
+    border-radius: var(--mantine-radius-sm);
+  }
+
+  .ds-flow-step:hover {
+    background: var(--ds-muted);
+  }
+
+  /* Cột doanh thu: cả khung cao là vùng bấm, cột bên trong đậm hơn khi rê chuột */
+  .ds-revenue-bar {
+    display: flex;
+    align-items: flex-end;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .ds-revenue-bar > div {
+    width: 100%;
+    background: var(--ds-primary);
+    border-radius: 4px 4px 0 0;
+    transition: background-color 150ms ease;
+  }
+
+  .ds-revenue-bar:not(:disabled):hover > div {
+    background: var(--ds-primary-hover);
+  }
+
+  .ds-revenue-bar:disabled {
+    cursor: default;
+  }
+
+  .ds-chart-gridline {
+    border-top: 1px dashed var(--ds-border);
+  }
+}
+
 /* DataTable: cột ghim (fixed left/right) khi bảng cuộn ngang */
 @layer components {
   .ds-fixed-col {
@@ -319,8 +377,6 @@
 
   /* Giữ màu hover của dòng trên ô ghim (ô có nền riêng để che nội dung cuộn bên dưới) */
   tr:hover > td.ds-fixed-col {
-    background:
-      linear-gradient(var(--table-highlight-on-hover-color), var(--table-highlight-on-hover-color)),
-      var(--ds-card);
+    background: var(--tr-hover-bg, var(--ds-card));
   }
 }
