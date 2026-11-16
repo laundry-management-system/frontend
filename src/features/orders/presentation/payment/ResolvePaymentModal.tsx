@@ -1,6 +1,9 @@
 import { Button, Group, Modal, SegmentedControl, Stack, Text, Textarea } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { invalidateShifts, NoShiftBanner, useCurrentShift } from '@/features/shifts'
+import { useMe } from '@/features/users'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
@@ -34,6 +37,10 @@ export function ResolvePaymentModal({
 }) {
   const [confirming, setConfirming] = useState(false)
   const resolve = useResolvePayment()
+  const queryClient = useQueryClient()
+  const { data: me } = useMe()
+  // Hủy / hoàn được ghi vào ca đang mở lúc thao tác, nên cũng phải có ca
+  const noShift = useCurrentShift().data?.current === null
   const form = useForm<ResolutionValues>({
     initialValues: { resolution: 'VOIDED', reason: '' },
     validate: schemaResolver(resolutionSchema, { sync: true }),
@@ -54,7 +61,9 @@ export function ResolvePaymentModal({
           onClose()
         },
         onError: (e) => {
-          notify.error(toApiError(e).message)
+          const err = toApiError(e)
+          notify.error(err.message)
+          if (err.status === 409) invalidateShifts(queryClient)
           setConfirming(false)
         },
       },
@@ -71,6 +80,7 @@ export function ResolvePaymentModal({
       >
         <form onSubmit={askConfirm} noValidate>
           <Stack>
+            {noShift && <NoShiftBanner staffName={me?.fullName ?? ''} />}
             <Group justify="space-between">
               <EntityCode code={payment.invoiceNo} />
               <Text fw={600}>
@@ -102,7 +112,7 @@ export function ResolvePaymentModal({
               <Button variant="secondary" onClick={onClose}>
                 Quay lại
               </Button>
-              <Button type="submit" color="danger">
+              <Button type="submit" color="danger" disabled={noShift}>
                 Tiếp tục
               </Button>
             </ModalFooter>

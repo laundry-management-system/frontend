@@ -11,10 +11,12 @@ import {
   TextInput,
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { formatPhone } from '@/features/customers'
 import { UNIT_LABEL } from '@/features/services'
-import { useUserName } from '@/features/users'
+import { invalidateShifts, NoShiftBanner, useCurrentShift } from '@/features/shifts'
+import { useMe, useUserName } from '@/features/users'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime, formatMoney, formatNumber } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
@@ -94,6 +96,11 @@ export function CheckoutModal({
   onDone: (r: CheckoutDone) => void
 }) {
   const paying = mode === 'checkout'
+  const queryClient = useQueryClient()
+  const { data: me } = useMe()
+  const shift = useCurrentShift()
+  // Thu tiền phải có ca đang mở; chỉ trả đồ (đã thanh toán trước) thì không cần
+  const noShift = paying && shift.data?.current === null
   const [payment, setPayment] = useState<PaymentValue>(EMPTY_PAYMENT)
   const qr = useVietQr(order.orderCode, paying && payment.method === 'BANK_TRANSFER')
   const payments = usePayments(order.orderCode)
@@ -151,6 +158,8 @@ export function CheckoutModal({
           }
           const err = toApiError(e)
           notify.error(err.message)
+          // Ca vừa bị kết ở máy khác: tải lại để hiện cảnh báo Chưa mở ca
+          if (err.status === 409) invalidateShifts(queryClient)
           // Lỗi nghiệp vụ: đơn đã được tải lại, đóng để thấy trạng thái mới; lỗi mạng thì giữ dữ liệu đã nhập
           if (err.status) onClose()
         },
@@ -191,6 +200,7 @@ export function CheckoutModal({
 
   const paymentSection = (
     <InfoSection title="Thanh toán">
+      {noShift && <NoShiftBanner staffName={me?.fullName ?? ''} />}
       {paying ? (
         <PaymentFields
           total={total}
@@ -264,7 +274,7 @@ export function CheckoutModal({
           <Button variant="secondary" onClick={onClose}>
             Đóng
           </Button>
-          <Button type="submit" disabled={!paymentReady} loading={checkout.isPending}>
+          <Button type="submit" disabled={!paymentReady || noShift} loading={checkout.isPending}>
             {paying ? 'Thu tiền & trả đồ' : 'Xác nhận trả đồ'}
           </Button>
         </ModalFooter>
