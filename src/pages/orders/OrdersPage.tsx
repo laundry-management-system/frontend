@@ -125,7 +125,6 @@ export default function OrdersPage() {
       name: 'total',
       label: 'Tổng',
       width: 120,
-      align: 'right',
       render: (o) =>
         o.status === 'CANCELLED' ? (
           <Text c="dimmed">0đ</Text>

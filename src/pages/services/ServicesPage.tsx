@@ -81,12 +81,12 @@ export default function ServicesPage() {
       name: 'price',
       label: 'Đơn giá',
       width: 120,
-      align: 'right',
       render: (s) => <Money value={s.price} />,
     },
     {
       name: 'minQuantity',
       label: 'Tối thiểu',
+      align: 'center',
       width: 110,
       render: (s) =>
         s.minQuantity ? `${formatNumber(s.minQuantity)} ${s.unit ? UNIT_LABEL[s.unit] : ''}` : '—',
@@ -94,6 +94,7 @@ export default function ServicesPage() {
     {
       name: 'standardHours',
       label: 'Xử lý chuẩn',
+      align: 'center',
       width: 140,
       render: (s) => `${s.standardHours} giờ`,
     },

@@ -19,7 +19,6 @@ const columns: DataTableColumn<ShiftTransaction>[] = [
   {
     name: 'amount',
     label: 'Số tiền',
-    align: 'right',
     // Hủy / hoàn là tiền đi ra khỏi két hoặc trừ khỏi tổng chuyển khoản
     render: (t) => (
       <Text

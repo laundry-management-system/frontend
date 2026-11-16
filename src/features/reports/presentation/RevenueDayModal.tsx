@@ -66,7 +66,6 @@ export function RevenueDayModal({ range, title, expectedCount, onClose }: Revenu
       name: 'amount',
       label: 'Số tiền',
       width: 120,
-      align: 'right',
       render: (p) => <Money value={p.amount} />,
     },
   ]

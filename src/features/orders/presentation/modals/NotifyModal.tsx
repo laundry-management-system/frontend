@@ -8,7 +8,7 @@ import { useComposeNotification } from '../../application/mutations/useComposeNo
 import type { NotificationResult, OrderDetail } from '../../domain/types'
 
 interface NotifyModalProps {
-  order: OrderDetail
+  order: Pick<OrderDetail, 'orderCode'>
   onClose: () => void
   onNotified: (result: NotificationResult) => void
 }

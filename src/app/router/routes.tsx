@@ -23,6 +23,7 @@ const OrderReportPage = lazy(() => import('@/pages/reports/OrderReportPage'))
 const RevenueReportPage = lazy(() => import('@/pages/reports/RevenueReportPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
+const StoredOrdersPage = lazy(() => import('@/pages/stored-orders/StoredOrdersPage'))
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
 const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
           { path: '/shifts/:id/close', element: page(<ShiftReconcilePage mode="close" />) },
           { path: '/orders', element: page(<OrdersPage />) },
           { path: '/orders/:id', element: page(<OrderDetailPage />) },
+          { path: '/stored-orders', element: page(<StoredOrdersPage />) },
           { path: '/intake', element: page(<IntakePage />) },
           { path: '/intake/:orderId/done', element: page(<IntakeDonePage />) },
           { path: '/classify', element: page(<ClassifyPage />) },

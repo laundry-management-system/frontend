@@ -29,21 +29,18 @@ const COLUMNS: DataTableColumn<ShiftRow>[] = [
     name: 'cash',
     label: 'Tiền mặt theo sổ',
     width: 140,
-    align: 'right',
     render: (s) => moneyCell(s.expectedCash),
   },
   {
     name: 'transfer',
     label: 'Chuyển khoản',
     width: 120,
-    align: 'right',
     render: (s) => moneyCell(s.transferTotal),
   },
   {
     name: 'diff',
     label: 'Chênh lệch',
     width: 130,
-    align: 'right',
     render: (s) =>
       s.difference === null ? (
         DASH

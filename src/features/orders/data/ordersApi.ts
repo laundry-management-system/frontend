@@ -4,7 +4,7 @@ import type {
   OrderLine,
   OrderStatus,
   PaymentResolution,
-  StoredOrder,
+  StoredOrderList,
   WorkCounts,
   WorkListParams,
 } from '../domain/types'
@@ -30,7 +30,7 @@ import type {
   IntakeResponseDto,
   RescheduleRequestDto,
   RevertStatusRequestDto,
-  OverdueOrderResponseDto,
+  OverdueOrderListResponseDto,
   WorkCountsResponseDto,
 } from './dto'
 import {
@@ -156,9 +156,12 @@ export const ordersApi = {
   },
 
   /** Đồ tồn, lâu nhất trước */
-  overdue: async (): Promise<StoredOrder[]> => {
-    const { data } = await httpClient.get<OverdueOrderResponseDto[]>('/orders/overdue')
-    return [...data].sort((a, b) => b.daysInStorage - a.daysInStorage)
+  overdue: async (): Promise<StoredOrderList> => {
+    const { data } = await httpClient.get<OverdueOrderListResponseDto>('/orders/overdue')
+    return {
+      overdueDays: data.overdueDays,
+      orders: [...data.orders].sort((a, b) => b.daysInStorage - a.daysInStorage),
+    }
   },
 
   // shortcut: đếm bằng truy vấn size=1 cho từng trạng thái, đổi khi BE có /orders/counts (handoff 008 #2)
