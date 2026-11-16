@@ -23,13 +23,17 @@ export function useListParams<S extends string>(statuses: readonly S[]) {
     setQ(search)
   }
 
-  // Bỏ giá trị mặc định khỏi URL cho gọn
+  // Bỏ giá trị mặc định khỏi URL cho gọn; giữ nguyên tham số riêng của trang (VD `due`)
   const write = (query: string, st: S | 'ALL', p: number) =>
     setParams(
-      {
-        ...(query && { q: query }),
-        ...(st !== 'ALL' && { status: st }),
-        ...(p > 1 && { page: String(p) }),
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        const put = (key: string, value: string | false) =>
+          value ? next.set(key, value) : next.delete(key)
+        put('q', query)
+        put('status', st !== 'ALL' && st)
+        put('page', p > 1 && String(p))
+        return next
       },
       { replace: true },
     )

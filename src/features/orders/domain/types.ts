@@ -58,6 +58,52 @@ export interface OrderListItem extends OrderSummary {
   washWhitesSeparately: boolean
 }
 
+/** Tab của Danh sách công việc; các tab chồng nhau, không cộng thành tổng. */
+export type WorkTab = 'ALL' | 'UNCLASSIFIED' | 'RECEIVED' | 'PROCESSING' | 'LATE' | 'EXPRESS'
+
+/** Tab khác 'ALL', dùng cho `useListParams` */
+export const WORK_TABS = [
+  'UNCLASSIFIED',
+  'RECEIVED',
+  'PROCESSING',
+  'LATE',
+  'EXPRESS',
+] as const satisfies readonly WorkTab[]
+
+export const WORK_TAB_LABEL: Record<WorkTab, string> = {
+  ALL: 'Tất cả',
+  UNCLASSIFIED: 'Chưa phân loại',
+  RECEIVED: 'Mới nhận',
+  PROCESSING: 'Đang xử lý',
+  LATE: 'Chỉ TRỄ',
+  EXPRESS: 'Giặt nhanh',
+}
+
+export type WorkCounts = Record<WorkTab, number>
+
+export interface WorkListParams {
+  tab: WorkTab
+  q: string
+  /** yyyy-MM-dd, gồm cả hai đầu */
+  dueFrom?: string
+  dueTo?: string
+  /** Bắt đầu từ 0 */
+  page: number
+  size: number
+}
+
+/** Đơn Hoàn thành quá số ngày cấu hình mà khách chưa đến lấy */
+export interface StoredOrder {
+  orderId: number
+  orderCode: string
+  customerName: string
+  customerPhone: string
+  completedAt: string
+  daysInStorage: number
+  notifyCount: number
+  shelfLocation: string | null
+}
+
 /** Dịch vụ chọn ở quầy: ghi chú tham khảo để tách đơn / gợi ý dòng, không có giá */
 export interface RequestedService {
   id: number

@@ -12,7 +12,6 @@ import {
   UNIT_LABEL,
   useServices,
 } from '@/features/services'
-import { WhitesFeeField } from '@/features/settings'
 import { useListParams } from '@/shared/hooks/useListParams'
 import { formatNumber } from '@/shared/lib/format'
 import {
@@ -204,9 +203,7 @@ export default function ServicesPage() {
         onRetry={handleRetry}
         rowProps={rowProps}
         empty={empty}
-      >
-        <WhitesFeeField canManage={canManage} />
-      </ListPage>
+      />
 
       <ServiceFormModal
         opened={!!modal}
