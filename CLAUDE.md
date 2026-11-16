@@ -29,6 +29,14 @@ Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiế
 - Luôn có icon. `EmptyState` tự dùng `LuInbox` khi không truyền `icon`, nhưng chỉ coi đó là dự phòng — chọn icon đúng ngữ cảnh.
 - Dùng `ListPage` thì lỗi tải đã có sẵn; vẫn phải truyền `empty` cho trạng thái rỗng / không tìm thấy.
 
+## Cột bảng: header và căn lề
+
+- **Header hạn chế xuống dòng nhất có thể.** `th` đã `white-space: nowrap` trong `app/theme.ts`; khi khai báo cột, chọn `label` ngắn và đặt `width` đủ chứa trọn label (VD "Số ngày tồn" cần ~120), không để chữ header tràn sang cột bên cạnh.
+- **Căn lề nội dung theo loại dữ liệu**:
+  - Số nhỏ (vài chữ số: số ngày, số lần, số lượng) → `align: 'center'`.
+  - Số lớn hoặc nội dung dài (tiền, chuỗi nhiều chữ số, tên, mô tả) → `align: 'left'` (mặc định, không cần khai báo).
+- Header căn theo cùng `align` với nội dung của cột (`DataTable` dùng chung `align` cho `th` và `td`).
+
 ## Thao tác trên từng dòng bảng
 
 Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.

@@ -1,25 +1,44 @@
-import { Box, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core'
-import dayjs from 'dayjs'
+import { Box, ColorSwatch, Group, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core'
 import { useState } from 'react'
 import { LuChartColumn } from 'react-icons/lu'
 import { formatMoney } from '@/shared/lib/format'
 import { EmptyState } from '@/shared/ui'
 import { barHeights, compactMoney, niceTicks } from '../domain/dashboard'
-import type { DailyRevenue } from '../domain/types'
+import { periodBounds, periodLabel } from '../domain/report'
+import type { DateRange, ReportMode, RevenueRow } from '../domain/types'
+import { BANK_COLOR, CASH_COLOR } from './paymentColors'
 import { RevenueDayModal } from './RevenueDayModal'
 
 const CHART_HEIGHT = 180
 const AXIS_WIDTH = 44
+const LEGEND = [
+  { label: 'Tiền mặt', color: CASH_COLOR },
+  { label: 'Chuyển khoản', color: BANK_COLOR },
+]
+// Không có kỳ thì cột tháng lấy trọn tháng
+const NO_CLIP = { from: '0000-01-01', to: '9999-12-31' }
 
 interface RevenueBarsProps {
-  rows: DailyRevenue[]
+  rows: RevenueRow[]
+  /** Tách mỗi cột thành tiền mặt (dưới) và chuyển khoản (trên) */
+  split?: boolean
+  mode?: ReportMode
+  /** Kỳ đang xem, để cắt khoảng ngày của cột tháng đầu / cuối */
+  range?: DateRange
+  emptyText?: string
 }
 
-/** Cột doanh thu theo ngày; bấm vào cột để xem các giao dịch của ngày đó. */
-export function RevenueBars({ rows }: RevenueBarsProps) {
-  const [openDate, setOpenDate] = useState<string | null>(null)
-  const openDay = (date: string) => setOpenDate(date)
-  const closeModal = () => setOpenDate(null)
+/** Cột doanh thu theo ngày / tháng; bấm vào cột để xem các giao dịch tạo nên cột đó. */
+export function RevenueBars({
+  rows,
+  split = false,
+  mode = 'day',
+  range,
+  emptyText = 'Doanh thu 14 ngày gần nhất sẽ hiện ở đây.',
+}: RevenueBarsProps) {
+  const [openRow, setOpenRow] = useState<RevenueRow | null>(null)
+  const openColumn = (r: RevenueRow) => setOpenRow(r)
+  const closeModal = () => setOpenRow(null)
   const totals = rows.map((r) => r.total)
   const ticks = niceTicks(Math.max(0, ...totals))
   const top = ticks[ticks.length - 1]
@@ -29,9 +48,47 @@ export function RevenueBars({ rows }: RevenueBarsProps) {
       <EmptyState
         icon={<LuChartColumn size={32} />}
         title="Chưa có doanh thu"
-        description="Doanh thu 14 ngày gần nhất sẽ hiện ở đây."
+        description={emptyText}
       />
     )
+
+  const tooltipOf = (r: RevenueRow) => {
+    const head = `${periodLabel(r.period, mode)}: ${formatMoney(r.total)}`
+    return split
+      ? `${head} · Tiền mặt ${formatMoney(r.cash)} · Chuyển khoản ${formatMoney(r.bankTransfer)}`
+      : head
+  }
+  const barFill = (r: RevenueRow, height: number) =>
+    split ? (
+      <Box h={height} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Box style={{ flex: r.bankTransfer, background: BANK_COLOR }} />
+        <Box style={{ flex: r.cash, background: CASH_COLOR }} />
+      </Box>
+    ) : (
+      <Box h={height} />
+    )
+  const legend = split && (
+    <Group gap="md" mt="sm" justify="center">
+      {LEGEND.map((l) => (
+        <Group key={l.label} gap={6}>
+          <ColorSwatch color={l.color} size={10} withShadow={false} />
+          <Text size="xs" c="dimmed">
+            {l.label}
+          </Text>
+        </Group>
+      ))}
+    </Group>
+  )
+  // Nhiều cột thì chỉ hiện nhãn cách quãng cho khỏi chồng chữ
+  const step = Math.ceil(rows.length / 16)
+  const modal = openRow && (
+    <RevenueDayModal
+      range={periodBounds(openRow.period, mode, range ?? NO_CLIP)}
+      title={`Doanh thu ${mode === 'month' ? 'tháng' : 'ngày'} ${periodLabel(openRow.period, mode)}`}
+      expectedCount={openRow.paymentCount}
+      onClose={closeModal}
+    />
+  )
 
   return (
     <>
@@ -65,23 +122,28 @@ export function RevenueBars({ rows }: RevenueBarsProps) {
           ))}
           <Box pos="relative" style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
             {rows.map((r, i) => {
-              const label = `${dayjs(r.date).format('DD/MM')}: ${formatMoney(r.total)}`
+              const label = tooltipOf(r)
               return (
-                <Stack key={r.date} gap={4} align="center" style={{ flex: 1, minWidth: 0 }}>
+                <Stack key={r.period} gap={4} align="center" style={{ flex: 1, minWidth: 0 }}>
                   <Tooltip label={label}>
                     <UnstyledButton
-                      className="ds-revenue-bar"
+                      className={split ? 'ds-revenue-bar ds-revenue-bar--split' : 'ds-revenue-bar'}
                       h={CHART_HEIGHT}
                       w="100%"
                       disabled={r.total === 0}
                       aria-label={r.total > 0 ? `${label}, xem giao dịch` : label}
-                      onClick={() => openDay(r.date)}
+                      onClick={() => openColumn(r)}
                     >
-                      <Box h={r.total > 0 ? Math.max(2, heights[i] * CHART_HEIGHT) : 0} />
+                      {barFill(r, r.total > 0 ? Math.max(2, heights[i] * CHART_HEIGHT) : 0)}
                     </UnstyledButton>
                   </Tooltip>
-                  <Text size="xs" c="dimmed" visibleFrom={i % 2 ? 'md' : undefined}>
-                    {dayjs(r.date).format('DD/MM')}
+                  <Text
+                    size="xs"
+                    c="dimmed"
+                    visibleFrom={step === 1 && i % 2 ? 'md' : undefined}
+                    style={{ visibility: i % step ? 'hidden' : undefined, whiteSpace: 'nowrap' }}
+                  >
+                    {periodLabel(r.period, mode)}
                   </Text>
                 </Stack>
               )
@@ -89,7 +151,8 @@ export function RevenueBars({ rows }: RevenueBarsProps) {
           </Box>
         </Box>
       </Box>
-      {openDate && <RevenueDayModal date={openDate} onClose={closeModal} />}
+      {legend}
+      {modal}
     </>
   )
 }

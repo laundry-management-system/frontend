@@ -3,9 +3,7 @@ import { LuWallet } from 'react-icons/lu'
 import { EmptyState, Money } from '@/shared/ui'
 import { paymentShare } from '../domain/dashboard'
 import type { RevenueSummary } from '../domain/types'
-
-const CASH_COLOR = 'var(--ds-primary)'
-const BANK_COLOR = 'var(--tone-info-solid)'
+import { BANK_COLOR, CASH_COLOR } from './paymentColors'
 
 interface PaymentSplitProps {
   summary: RevenueSummary

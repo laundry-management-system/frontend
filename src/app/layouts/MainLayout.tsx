@@ -10,6 +10,9 @@ import {
 } from '@mantine/core'
 import { useState } from 'react'
 import {
+  LuArchive,
+  LuChartColumn,
+  LuChartPie,
   LuContact,
   LuFileText,
   LuLayoutDashboard,
@@ -39,10 +42,13 @@ const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; rol
   { to: '/', label: 'Tổng quan', icon: LuLayoutDashboard, roles: ['ADMIN'] },
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
   { to: '/orders', label: 'Đơn hàng', icon: LuReceiptText, roles: ['ADMIN', 'STAFF'] },
+  { to: '/stored-orders', label: 'Đồ tồn', icon: LuArchive, roles: ['ADMIN', 'STAFF'] },
   { to: '/intake', label: 'Tạo đơn', icon: LuPackagePlus, roles: ['STAFF'] },
   { to: '/classify', label: 'Phân loại đồ', icon: LuPackageSearch, roles: ['STAFF'] },
   { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
   { to: '/services', label: 'Bảng giá dịch vụ', icon: LuTags, roles: ['ADMIN', 'STAFF'] },
+  { to: '/reports/revenue', label: 'Báo cáo doanh thu', icon: LuChartColumn, roles: ['ADMIN'] },
+  { to: '/reports/orders', label: 'Báo cáo đơn & dịch vụ', icon: LuChartPie, roles: ['ADMIN'] },
   { to: '/shifts', label: 'Ca làm việc', icon: LuWallet, roles: ['ADMIN'] },
   { to: '/audit-log', label: 'Nhật ký hệ thống', icon: LuFileText, roles: ['ADMIN'] },
   { to: '/users', label: 'Nhân viên', icon: LuUsers, roles: ['ADMIN'] },

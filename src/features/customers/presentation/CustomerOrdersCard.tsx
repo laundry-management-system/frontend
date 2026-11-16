@@ -35,7 +35,6 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
               name: 'totalAmount',
               label: 'Tổng tiền',
               width: 110,
-              align: 'right',
               render: (o) => <Money value={o.totalAmount} />,
             },
             {

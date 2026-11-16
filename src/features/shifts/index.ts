@@ -13,6 +13,7 @@ export {
   type DenominationCounts,
   denominationTotal,
   difference,
+  diffColor,
   differenceLabel,
   type DiffTone,
   handIn,

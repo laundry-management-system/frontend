@@ -357,6 +357,15 @@
     cursor: default;
   }
 
+  .ds-revenue-bar--split > div,
+  .ds-revenue-bar--split:not(:disabled):hover > div {
+    background: transparent;
+  }
+
+  .ds-revenue-bar--split:not(:disabled):hover > div {
+    opacity: 0.85;
+  }
+
   .ds-chart-gridline {
     border-top: 1px dashed var(--ds-border);
   }

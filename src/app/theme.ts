@@ -213,6 +213,7 @@ export const theme = createTheme({
           lineHeight: '16px',
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
         },
         td: { height: 'var(--ds-table-row-height)' },
       },

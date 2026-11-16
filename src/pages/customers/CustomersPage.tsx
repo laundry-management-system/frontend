@@ -89,7 +89,7 @@ export default function CustomersPage() {
       render: (c) => formatPhone(c.phone),
     },
     { name: 'orderCount', label: 'Số đơn', width: 100, align: 'center', render: stat },
-    { name: 'totalSpent', label: 'Tổng chi tiêu', width: 140, align: 'center', render: stat },
+    { name: 'totalSpent', label: 'Tổng chi tiêu', width: 140, render: stat },
     { name: 'lastOrderAt', label: 'Đơn gần nhất', width: 130, render: stat },
     {
       name: 'status',

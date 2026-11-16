@@ -25,6 +25,9 @@ export type DiffTone = 'success' | 'danger' | 'warning'
 export const toneOf = (d: number | null): DiffTone | undefined =>
   d === null ? undefined : d === 0 ? 'success' : d < 0 ? 'danger' : 'warning'
 
+export const diffColor = (d: number) =>
+  d === 0 ? 'var(--tone-success-fg)' : d < 0 ? 'var(--tone-danger-fg)' : 'var(--tone-warning-fg)'
+
 export const differenceLabel = (d: number) =>
   d === 0 ? 'Khớp' : d < 0 ? `Thiếu ${money(-d)}` : `Dư ${money(d)}`
 

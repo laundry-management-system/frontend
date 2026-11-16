@@ -98,11 +98,22 @@ export interface StoredOrder {
   orderCode: string
   customerName: string
   customerPhone: string
+  customerVip: boolean
   completedAt: string
   daysInStorage: number
   notifyCount: number
+  lastNotifiedAt: string | null
   shelfLocation: string | null
+  paymentStatus: PaymentStatus
 }
+
+export interface StoredOrderList {
+  overdueDays: number
+  orders: StoredOrder[]
+}
+
+/** Khớp `setMaxResults(200)` của GET /orders/overdue */
+export const STORED_ORDERS_LIMIT = 200
 
 /** Dịch vụ chọn ở quầy: ghi chú tham khảo để tách đơn / gợi ý dòng, không có giá */
 export interface RequestedService {
