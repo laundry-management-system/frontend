@@ -13,8 +13,13 @@ export type AuditAction =
   | 'SET_UP_PASSWORD'
   | 'STATUS_ROLLBACK'
   | 'SETTING_UPDATED'
+  | 'SHIFT_OPEN'
+  | 'SHIFT_CLOSE'
+  | 'SHIFT_CLOSE_ON_BEHALF'
+  | 'SHIFT_APPROVE'
 
-export type EntityType = 'AUTH' | 'USER' | 'CUSTOMER' | 'ORDER' | 'PAYMENT' | 'SERVICE' | 'SETTING'
+export type EntityType =
+  'AUTH' | 'USER' | 'CUSTOMER' | 'ORDER' | 'PAYMENT' | 'SERVICE' | 'SETTING' | 'SHIFT'
 
 export interface AuditLogSummary {
   id: number

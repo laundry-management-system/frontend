@@ -15,6 +15,10 @@ export const ACTION_LABEL: Record<AuditAction, string> = {
   SET_UP_PASSWORD: 'Thiết lập mật khẩu',
   STATUS_ROLLBACK: 'Lùi trạng thái',
   SETTING_UPDATED: 'Đổi cài đặt',
+  SHIFT_OPEN: 'Mở ca',
+  SHIFT_CLOSE: 'Kết ca',
+  SHIFT_CLOSE_ON_BEHALF: 'Kết ca thay',
+  SHIFT_APPROVE: 'Duyệt ca',
 }
 
 export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
@@ -25,6 +29,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
   PAYMENT: 'Thanh toán',
   SERVICE: 'Dịch vụ',
   SETTING: 'Tham số',
+  SHIFT: 'Ca làm việc',
 }
 
 export const AUDIT_ACTIONS = Object.keys(ACTION_LABEL) as AuditAction[]
