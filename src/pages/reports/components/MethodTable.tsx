@@ -20,22 +20,21 @@ const COLUMNS: DataTableColumn<MethodRow>[] = [
   {
     name: 'count',
     label: 'Số đơn',
+    align: 'center',
     width: 90,
-    align: 'right',
     render: (r) => formatNumber(r.count),
   },
   {
     name: 'amount',
     label: 'Số tiền',
     width: 140,
-    align: 'right',
     render: (r) => <Money value={r.amount} />,
   },
   {
     name: 'pct',
     label: 'Tỉ trọng',
+    align: 'center',
     width: 90,
-    align: 'right',
     render: (r) => (r.pct === null ? '—' : `${r.pct}%`),
   },
 ]

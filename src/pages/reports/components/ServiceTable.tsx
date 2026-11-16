@@ -22,21 +22,19 @@ const COLUMNS: DataTableColumn<Row>[] = [
     name: 'quantity',
     label: 'Tổng KL / SL',
     width: 140,
-    align: 'right',
     render: (r) => (r.unit ? `${formatNumber(r.quantity)} ${UNIT_LABEL[r.unit]}` : '—'),
   },
   {
     name: 'revenue',
     label: 'Doanh thu',
     width: 150,
-    align: 'right',
     render: (r) => <Money value={r.revenue} />,
   },
   {
     name: 'pct',
     label: 'Tỉ trọng',
+    align: 'center',
     width: 100,
-    align: 'right',
     render: (r) => `${pct.format(r.pct)}%`,
   },
 ]

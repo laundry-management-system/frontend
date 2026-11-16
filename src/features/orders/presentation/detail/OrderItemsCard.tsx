@@ -85,33 +85,31 @@ export function OrderItemsCard({
     <Table>
       <Table.Thead>
         <Table.Tr>
-          <Table.Th w={30}>#</Table.Th>
+          <Table.Th w={30} ta="center">
+            #
+          </Table.Th>
           <Table.Th>Loại đồ</Table.Th>
           <Table.Th w={170}>Dịch vụ</Table.Th>
-          <Table.Th w={90} ta="right">
+          <Table.Th w={90} ta="center">
             SL/KL
           </Table.Th>
-          <Table.Th w={100} ta="right">
-            Đơn giá
-          </Table.Th>
-          <Table.Th w={110} ta="right">
-            Thành tiền
-          </Table.Th>
+          <Table.Th w={100}>Đơn giá</Table.Th>
+          <Table.Th w={110}>Thành tiền</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
         {items.map((l, i) => (
           <Table.Tr key={l.id ?? i}>
-            <Table.Td>{i + 1}</Table.Td>
+            <Table.Td ta="center">{i + 1}</Table.Td>
             <Table.Td>{l.itemType}</Table.Td>
             <Table.Td>{services.find((s) => s.id === l.serviceId)?.name ?? '—'}</Table.Td>
-            <Table.Td ta="right" style={{ whiteSpace: 'nowrap' }}>
+            <Table.Td ta="center" style={{ whiteSpace: 'nowrap' }}>
               {qty(l)}
             </Table.Td>
-            <Table.Td ta="right">
+            <Table.Td>
               <Money value={l.unitPrice} />
             </Table.Td>
-            <Table.Td ta="right">
+            <Table.Td>
               <Money value={Math.round(l.unitPrice * billed(l))} />
             </Table.Td>
           </Table.Tr>
