@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { LuCalendar, LuSearchX, LuWalletCards } from 'react-icons/lu'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  diffColor,
   differenceLabel,
   SHIFT_STATUS_LABEL,
   type ShiftRow,
@@ -26,9 +27,6 @@ const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const
 const DATE = 'YYYY-MM-DD'
 const PAGE_INFO =
   'Ca có chênh lệch tiền mặt hoặc chuyển khoản được tô màu. Mở ca để xem phiếu kết ca, giao dịch và duyệt ca.'
-
-const diffColor = (d: number) =>
-  d === 0 ? 'var(--tone-success-fg)' : d < 0 ? 'var(--tone-danger-fg)' : 'var(--tone-warning-fg)'
 
 const money = (v: number | null) => (v === null ? '' : formatMoney(v))
 const time = (iso: string) => dayjs(iso).format('DD/MM HH:mm')
