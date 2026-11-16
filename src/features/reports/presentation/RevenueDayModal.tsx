@@ -12,22 +12,26 @@ import {
   StatusBadge,
 } from '@/shared/ui'
 import { useRevenuePayments } from '../application/useRevenuePayments'
-import type { RevenuePayment } from '../domain/types'
+import type { DateRange, RevenuePayment } from '../domain/types'
 
 const METHOD_KEY = { CASH: 'cash', BANK_TRANSFER: 'qr' } as const
 
 interface RevenueDayModalProps {
-  /** yyyy-MM-dd */
-  date: string
+  range: DateRange
+  title: string
+  /** Số giao dịch của cột; nhiều hơn số dòng tải về nghĩa là API đã cắt bớt */
+  expectedCount?: number
   onClose: () => void
 }
 
-/** Các giao dịch được cộng vào doanh thu của một ngày; tổng khớp với cột trên biểu đồ. */
-export function RevenueDayModal({ date, onClose }: RevenueDayModalProps) {
+/** Các giao dịch được cộng vào doanh thu của một cột; tổng khớp với cột trên biểu đồ. */
+export function RevenueDayModal({ range, title, expectedCount, onClose }: RevenueDayModalProps) {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = useRevenuePayments({ from: date, to: date })
+  const { data, isLoading, isError, refetch } = useRevenuePayments(range)
   const payments = data ?? []
   const total = payments.reduce((sum, p) => sum + p.amount, 0)
+  const oneDay = range.from === range.to
+  const truncated = expectedCount !== undefined && expectedCount > payments.length
 
   const handleRetry = () => refetch()
   const rowKey = (p: RevenuePayment) => p.paymentId
@@ -37,7 +41,12 @@ export function RevenueDayModal({ date, onClose }: RevenueDayModalProps) {
   })
 
   const columns: DataTableColumn<RevenuePayment>[] = [
-    { name: 'time', label: 'Giờ', width: 70, render: (p) => dayjs(p.paidAt).format('HH:mm') },
+    {
+      name: 'time',
+      label: 'Giờ',
+      width: oneDay ? 70 : 110,
+      render: (p) => dayjs(p.paidAt).format(oneDay ? 'HH:mm' : 'DD/MM HH:mm'),
+    },
     {
       name: 'order',
       label: 'Mã đơn',
@@ -73,17 +82,12 @@ export function RevenueDayModal({ date, onClose }: RevenueDayModalProps) {
     <EmptyState
       icon={<LuWallet size={32} />}
       title="Không có giao dịch"
-      description="Ngày này chưa có thanh toán nào được xác nhận."
+      description="Khoảng này chưa có thanh toán nào được xác nhận."
     />
   )
 
   return (
-    <Modal
-      opened
-      onClose={onClose}
-      size="xl"
-      title={`Doanh thu ngày ${dayjs(date).format('DD/MM/YYYY')}`}
-    >
+    <Modal opened onClose={onClose} size="xl" title={title}>
       <DataTable
         columns={columns}
         data={isError ? [] : payments}
@@ -95,7 +99,9 @@ export function RevenueDayModal({ date, onClose }: RevenueDayModalProps) {
       {payments.length > 0 && (
         <Group justify="space-between" mt="md">
           <Text c="dimmed" size="sm">
-            {formatNumber(payments.length)} giao dịch đã xác nhận
+            {truncated
+              ? `Chỉ hiện ${formatNumber(payments.length)} / ${formatNumber(expectedCount)} giao dịch mới nhất`
+              : `${formatNumber(payments.length)} giao dịch đã xác nhận`}
           </Text>
           <Group gap="xs">
             <Text fw={600}>Tổng</Text>

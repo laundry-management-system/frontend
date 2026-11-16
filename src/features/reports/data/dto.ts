@@ -6,6 +6,9 @@ interface RevenueSummaryDto {
   bankTransfer: Money
   total: Money
   paymentCount: number
+  /** Chỉ có ở báo cáo doanh thu mới; dashboard cũ có thể thiếu */
+  cashCount?: number
+  bankTransferCount?: number
 }
 
 export interface DashboardResponseDto {
@@ -41,4 +44,28 @@ export interface RevenuePaymentDto {
   orderId: number
   orderCode: string
   customerName: string
+}
+
+export interface OrderReportResponseDto {
+  from: string
+  to: string
+  granularity: 'DAY' | 'MONTH'
+  summary: {
+    totalOrders: number
+    cancelledOrders: number
+    activeOrders: number
+    lateOrders: number
+    lateRatePercent: Money
+  }
+  byStatus: { status: string; description: string; count: number }[]
+  rows: { period: string; received: number }[]
+  byService: {
+    serviceId: number | null
+    serviceCode: string | null
+    serviceName: string
+    orderCount: number
+    quantity: Money
+    unit: 'KG' | 'PIECE' | 'SET' | 'PRODUCT' | null
+    revenue: Money
+  }[]
 }

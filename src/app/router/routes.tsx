@@ -19,6 +19,8 @@ const IntakeDonePage = lazy(() => import('@/pages/intake/IntakeDonePage'))
 const IntakePage = lazy(() => import('@/pages/intake/IntakePage'))
 const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'))
 const OrdersPage = lazy(() => import('@/pages/orders/OrdersPage'))
+const OrderReportPage = lazy(() => import('@/pages/reports/OrderReportPage'))
+const RevenueReportPage = lazy(() => import('@/pages/reports/RevenueReportPage'))
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const ServicesPage = lazy(() => import('@/pages/services/ServicesPage'))
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
@@ -57,6 +59,8 @@ export const router = createBrowserRouter([
               { path: '/', element: page(<DashboardPage />) },
               { path: '/users', element: page(<UsersPage />) },
               { path: '/audit-log', element: page(<AuditLogPage />) },
+              { path: '/reports/revenue', element: page(<RevenueReportPage />) },
+              { path: '/reports/orders', element: page(<OrderReportPage />) },
               { path: '/shifts', element: page(<ShiftsPage />) },
               { path: '/shifts/:id', element: page(<ShiftReconcilePage mode="approve" />) },
               { path: '/settings', element: page(<SettingsPage />) },
