@@ -380,3 +380,42 @@
     background: var(--tr-hover-bg, var(--ds-card));
   }
 }
+
+/* Chấm "đang diễn ra" (ca đang mở): vòng sáng lan ra; tắt khi người dùng chọn giảm chuyển động */
+@layer components {
+  .ds-live-dot {
+    position: relative;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tone-success-solid);
+    flex-shrink: 0;
+  }
+
+  .ds-live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--tone-success-solid);
+    animation: ds-live-pulse 1.6s ease-out infinite;
+  }
+
+  @keyframes ds-live-pulse {
+    from {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    to {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ds-live-dot::after {
+      animation: none;
+    }
+  }
+}

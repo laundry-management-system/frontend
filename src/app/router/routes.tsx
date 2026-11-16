@@ -9,6 +9,8 @@ import { RoleGuard } from './RoleGuard'
 
 const AuditLogPage = lazy(() => import('@/pages/audit-log/AuditLogPage'))
 const ClassifyPage = lazy(() => import('@/pages/classify/ClassifyPage'))
+const ShiftReconcilePage = lazy(() => import('@/pages/shifts/ShiftReconcilePage'))
+const ShiftsPage = lazy(() => import('@/pages/shifts/ShiftsPage'))
 const CustomerDetailPage = lazy(() => import('@/pages/customers/CustomerDetailPage'))
 const CustomersPage = lazy(() => import('@/pages/customers/CustomersPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
@@ -55,10 +57,13 @@ export const router = createBrowserRouter([
               { path: '/', element: page(<DashboardPage />) },
               { path: '/users', element: page(<UsersPage />) },
               { path: '/audit-log', element: page(<AuditLogPage />) },
+              { path: '/shifts', element: page(<ShiftsPage />) },
+              { path: '/shifts/:id', element: page(<ShiftReconcilePage mode="approve" />) },
               { path: '/settings', element: page(<SettingsPage />) },
             ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },
+          { path: '/shifts/:id/close', element: page(<ShiftReconcilePage mode="close" />) },
           { path: '/orders', element: page(<OrdersPage />) },
           { path: '/orders/:id', element: page(<OrderDetailPage />) },
           { path: '/intake', element: page(<IntakePage />) },

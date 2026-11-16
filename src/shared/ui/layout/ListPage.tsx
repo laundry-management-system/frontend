@@ -12,6 +12,8 @@ export interface ListPageProps<T> extends DataTableProps<T> {
   primaryAction?: { label: string; onClick: () => void; icon?: ReactNode }
   actions?: ReactNode
   filters?: ReactNode
+  /** Cảnh báo cần chú ý ngay, hiện giữa tiêu đề và khối lọc */
+  notice?: ReactNode
   error?: boolean
   onRetry?: () => void
   children?: ReactNode
@@ -24,6 +26,7 @@ export function ListPage<T>({
   primaryAction,
   actions,
   filters,
+  notice,
   error,
   onRetry,
   empty,
@@ -48,6 +51,7 @@ export function ListPage<T>({
   return (
     <>
       <PageHeader title={title} description={description} info={info} actions={headerActions} />
+      {notice}
       {filters && (
         <Card mb="md">
           <Group>{filters}</Group>

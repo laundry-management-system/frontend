@@ -11,6 +11,8 @@ import {
   WorkListPrintSheet,
   WORK_TAB_LABEL,
 } from '@/features/orders'
+import { NoShiftBanner } from '@/features/shifts'
+import { useMe } from '@/features/users'
 import { DEFAULT_PAGE_SIZE } from '@/shared/config/constants'
 import { EmptyState, ListPage } from '@/shared/ui'
 import { WorkListFilters } from './components/WorkListFilters'
@@ -23,6 +25,7 @@ const weekday = (d: dayjs.Dayjs) => (d.day() === 0 ? 'Chủ nhật' : `Thứ ${d
 
 export default function WorkListPage() {
   const navigate = useNavigate()
+  const { data: me } = useMe()
   const now = useNow()
   const { search, tab, page, setPage, range, filtered, clearAll } = useWorkListParams()
   const { data, isLoading, isError, refetch } = useWorkOrders({
@@ -49,6 +52,7 @@ export default function WorkListPage() {
 
   const columns = workColumns(now)
   const filters = <WorkListFilters />
+  const notice = <NoShiftBanner staffName={me?.fullName ?? ''} withAction={false} />
 
   const empty = filtered ? (
     <EmptyState
@@ -91,6 +95,7 @@ export default function WorkListPage() {
         description={description}
         info="Đơn chưa Hoàn thành, hẹn trả sớm nhất ở trên. Đơn chưa phân loại phải phân loại xong mới bắt đầu xử lý được."
         actions={headerActions}
+        notice={notice}
         filters={filters}
         columns={columns}
         data={rows}
