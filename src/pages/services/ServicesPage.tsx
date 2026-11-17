@@ -1,13 +1,13 @@
 import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
-import { LuHistory, LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
-import { Link } from 'react-router-dom'
+import { LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
 import { selectHasRole, useAuthStore } from '@/features/auth'
 import {
   expressParts,
   SERVICE_STATUS_LABEL,
   type Service,
   type ServiceStatus,
+  PriceTimelineDrawer,
   ServiceFormModal,
   ServiceStatusBadge,
   UNIT_LABEL,
@@ -47,6 +47,8 @@ export default function ServicesPage() {
   const [modal, setModal] = useState<ModalState>(null)
   const openCreate = () => setModal({ mode: 'create' })
   const closeModal = () => setModal(null)
+  const [timelineFor, setTimelineFor] = useState<Service | null>(null)
+  const closeTimeline = () => setTimelineFor(null)
   const handleRetry = () => refetch()
   const rowKey = (s: Service) => s.id
   const rowProps = (s: Service) => ({
@@ -57,6 +59,7 @@ export default function ServicesPage() {
 
   const rowActions = (s: Service) => [
     { label: 'Sửa', onClick: () => setModal({ mode: 'edit', service: s }) },
+    { label: 'Diễn biến đơn giá', onClick: () => setTimelineFor(s) },
   ]
 
   const columns: DataTableColumn<Service>[] = [
@@ -147,16 +150,6 @@ export default function ServicesPage() {
   ]
 
   const primaryAction = canManage ? { label: 'Thêm dịch vụ', onClick: openCreate } : undefined
-  const headerActions = canManage && (
-    <Button
-      variant="secondary"
-      leftSection={<LuHistory size={16} />}
-      component={Link}
-      to="/services/price-history"
-    >
-      Lịch sử đổi giá
-    </Button>
-  )
   const issuedText = issued?.effectiveFrom
     ? ` · Áp dụng từ ${formatDate(issued.effectiveFrom)} · ban hành bởi ${issued.issuedBy}`
     : ''
@@ -207,7 +200,6 @@ export default function ServicesPage() {
         title="Bảng giá dịch vụ"
         description={`${data?.page.totalElements ?? 0} dịch vụ${issuedText}`}
         primaryAction={primaryAction}
-        actions={headerActions}
         info="Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn."
         filters={filters}
         columns={columns}
@@ -229,6 +221,7 @@ export default function ServicesPage() {
         mode={modal?.mode ?? 'create'}
         initial={modal?.mode === 'edit' ? modal.service : undefined}
       />
+      <PriceTimelineDrawer service={timelineFor} onClose={closeTimeline} />
     </>
   )
 }

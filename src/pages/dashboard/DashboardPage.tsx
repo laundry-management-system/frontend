@@ -25,6 +25,7 @@ import { DueSoonCard } from './components/DueSoonCard'
 import { KpiRow } from './components/KpiRow'
 import { OrderFlow } from './components/OrderFlow'
 import { StoredOrdersCard } from './components/StoredOrdersCard'
+import { PATHS } from '@/shared/config/paths'
 
 const PRESETS: { value: DashboardPreset; label: string }[] = [
   { value: 'today', label: 'Hôm nay' },
@@ -55,7 +56,7 @@ export default function DashboardPage() {
   const refreshAll = () => queryClient.invalidateQueries()
   const handleRetry = () => dashboard.refetch()
   const retryRevenue = () => revenue.refetch()
-  const openStored = () => navigate('/stored-orders')
+  const openStored = () => navigate(PATHS.ordersStored)
 
   const rangeText =
     range.from === range.to ? fmt(range.to) : `${fmt(range.from)} – ${fmt(range.to)}`

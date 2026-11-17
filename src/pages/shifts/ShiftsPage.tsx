@@ -17,6 +17,7 @@ import { useListParams } from '@/shared/hooks/useListParams'
 import { DEFAULT_PAGE_SIZE } from '@/shared/config/constants'
 import { formatMoney } from '@/shared/lib/format'
 import { CopyableCode, type DataTableColumn, EmptyState, ListPage, StatTile } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const STATUSES = ['OPEN', 'CLOSED', 'APPROVED'] as const satisfies readonly ShiftStatus[]
 const STATUS_OPTIONS = [
@@ -151,7 +152,7 @@ export default function ShiftsPage() {
     )
   }
   const rowProps = (s: ShiftRow) => ({
-    onClick: () => navigate(`/shifts/${s.id}`),
+    onClick: () => navigate(PATHS.shiftDetail(s.id)),
     style: { cursor: 'pointer' },
   })
 

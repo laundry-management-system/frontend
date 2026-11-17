@@ -12,6 +12,7 @@ import {
 import { toApiError } from '@/shared/api/apiError'
 import { notify } from '@/shared/lib/notify'
 import { EmptyState } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 export default function IntakeDonePage() {
   const id = Number(useParams().orderId)
@@ -49,7 +50,7 @@ export default function IntakeDonePage() {
   }, [ready, orderIds, location.state, navigate, print])
 
   const handleRetry = () => refetch()
-  const goIntake = () => navigate('/intake')
+  const goIntake = () => navigate(PATHS.intake)
 
   if (isLoading || (order?.intakeCode && intake.isLoading))
     return (
@@ -75,7 +76,7 @@ export default function IntakeDonePage() {
               Thử lại
             </Button>
           ) : (
-            <Button variant="secondary" component={Link} to="/intake">
+            <Button variant="secondary" component={Link} to={PATHS.intake}>
               Về tiếp nhận đồ
             </Button>
           )
@@ -84,7 +85,7 @@ export default function IntakeDonePage() {
     )
   }
 
-  const openClassify = (orderId: number) => navigate(`/classify?order=${orderId}`)
+  const openClassify = (orderId: number) => navigate(`${PATHS.classify}?order=${orderId}`)
 
   return (
     <>

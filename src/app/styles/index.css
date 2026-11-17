@@ -398,7 +398,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--tone-success-solid);
+    background: var(--live-dot-color, var(--tone-success-solid));
     flex-shrink: 0;
   }
 
@@ -407,7 +407,7 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: var(--tone-success-solid);
+    background: var(--live-dot-color, var(--tone-success-solid));
     animation: ds-live-pulse 1.6s ease-out infinite;
   }
 

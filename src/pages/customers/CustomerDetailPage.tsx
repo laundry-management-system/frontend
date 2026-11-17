@@ -16,6 +16,7 @@ import { toApiError } from '@/shared/api/apiError'
 import { formatDate, formatMoney } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, EmptyState, EntityCode, PageHeader, StatTile } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 export default function CustomerDetailPage() {
   const id = Number(useParams().id)
@@ -47,7 +48,7 @@ export default function CustomerDetailPage() {
             : 'Khách này không tồn tại hoặc đường dẫn không đúng.'
         }
         action={
-          <Button variant="secondary" component={Link} to="/customers">
+          <Button variant="secondary" component={Link} to={PATHS.customers}>
             Về danh sách khách
           </Button>
         }
@@ -85,7 +86,7 @@ export default function CustomerDetailPage() {
     }
   }
 
-  const createOrder = () => navigate(`/intake?phone=${customer.phone}`)
+  const createOrder = () => navigate(`${PATHS.intake}?phone=${customer.phone}`)
   const openEdit = () => setEditing(true)
   const closeEdit = () => setEditing(false)
   const closeConfirm = () => setConfirmDeactivate(false)
@@ -112,7 +113,7 @@ export default function CustomerDetailPage() {
   return (
     <>
       <Breadcrumbs mb="xs">
-        <Anchor component={Link} to="/customers" size="sm">
+        <Anchor component={Link} to={PATHS.customers} size="sm">
           Khách hàng
         </Anchor>
         <span className="text-muted-foreground">

@@ -6,6 +6,7 @@ import { formatDate } from '@/shared/lib/format'
 import { CopyableCode, DataTable, EmptyState, Money, StatusBadge } from '@/shared/ui'
 import { useCustomerOrders } from '../application/useCustomerOrders'
 import { ORDER_STATUS_KEY, type CustomerOrder } from '../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 export function CustomerOrdersCard({ phone }: { phone: string }) {
   const navigate = useNavigate()
@@ -49,7 +50,7 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
           data={data?.content ?? []}
           rowKey={(o) => o.id}
           rowProps={(o) => ({
-            onClick: () => navigate(`/orders/${o.id}`),
+            onClick: () => navigate(PATHS.orderDetail(o.id)),
             style: { cursor: 'pointer' },
           })}
           loading={isLoading}

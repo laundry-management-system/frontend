@@ -10,6 +10,7 @@ import {
   useShifts,
 } from '@/features/shifts'
 import { type DataTableColumn, DataTable, EmptyState, InfoLabel, Money } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const DASH = '—'
 const time = (iso: string) => dayjs(iso).format('HH:mm')
@@ -68,7 +69,7 @@ export function ShiftReconcileCard() {
 
   const handleRetry = () => refetch()
   const rowProps = (s: ShiftRow) => ({
-    onClick: () => navigate(`/shifts/${s.id}`),
+    onClick: () => navigate(PATHS.shiftDetail(s.id)),
     style: { cursor: 'pointer' },
   })
 

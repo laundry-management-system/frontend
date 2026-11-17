@@ -3,6 +3,7 @@ import { LuCloudOff, LuPackageCheck } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { type StoredOrder, useOverdueOrders } from '@/features/orders'
 import { CopyableCode, type DataTableColumn, DataTable, EmptyState } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const COLUMNS: DataTableColumn<StoredOrder>[] = [
   { name: 'code', label: 'Mã đơn', width: 190, render: (o) => <CopyableCode code={o.orderCode} /> },
@@ -26,8 +27,8 @@ const COLUMNS: DataTableColumn<StoredOrder>[] = [
 export function StoredOrdersCard() {
   const navigate = useNavigate()
   const { data, isLoading, isError, refetch } = useOverdueOrders()
-  const openOrder = (o: StoredOrder) => navigate(`/orders/${o.orderId}`)
-  const openAll = () => navigate('/stored-orders')
+  const openOrder = (o: StoredOrder) => navigate(PATHS.orderDetail(o.orderId))
+  const openAll = () => navigate(PATHS.ordersStored)
   const handleRetry = () => refetch()
   const rowKey = (o: StoredOrder) => o.orderId
   const rowProps = (o: StoredOrder) => ({

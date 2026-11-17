@@ -4,6 +4,7 @@ import { formatPhone } from '@/features/customers'
 import { formatDateTime } from '@/shared/lib/format'
 import type { OrderDetail } from '../../domain/types'
 import { InfoRow, InfoSection } from '../InfoRow'
+import { PATHS } from '@/shared/config/paths'
 
 export function OrderCustomerCard({ order }: { order: OrderDetail }) {
   return (
@@ -11,7 +12,7 @@ export function OrderCustomerCard({ order }: { order: OrderDetail }) {
       <Stack gap="md">
         <Group justify="space-between">
           <Title order={5}>Khách hàng</Title>
-          <Anchor component={Link} to={`/customers?q=${order.customerPhone}`} size="sm">
+          <Anchor component={Link} to={`${PATHS.customers}?q=${order.customerPhone}`} size="sm">
             Xem hồ sơ
           </Anchor>
         </Group>

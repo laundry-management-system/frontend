@@ -6,6 +6,7 @@ import { EmptyState, EntityCode, StatusBadge } from '@/shared/ui'
 import { useIncidents } from '../application/queries/useIncidents'
 import { payoutState } from '../domain/rules'
 import { INCIDENT_TYPE_LABEL, RESOLUTION_LABEL, type IncidentSummary } from '../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 const ITEM_STYLE = {
   border: '1px solid var(--ds-border)',
@@ -40,8 +41,8 @@ export function OrderIncidentsCard({
   const navigate = useNavigate()
   const { data, isError, refetch } = useIncidents({ orderId, page: 0, size: 50 })
   const incidents = data?.content ?? []
-  const openIncident = (id: number) => navigate(`/incidents/${id}`)
-  const createIncident = () => navigate(`/incidents/new?orderId=${orderId}`)
+  const openIncident = (id: number) => navigate(PATHS.incidentDetail(id))
+  const createIncident = () => navigate(`${PATHS.incidentNew}?orderId=${orderId}`)
   const handleRetry = () => refetch()
 
   const list = incidents.map((i) => {

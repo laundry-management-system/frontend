@@ -1,10 +1,8 @@
-import { Anchor, Breadcrumbs, Button, Text } from '@mantine/core'
-import { useState } from 'react'
+import { Button, Text } from '@mantine/core'
 import { LuDownload, LuFileText, LuReceiptText, LuSearchX } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
 import {
   PRICE_HISTORY_COLUMNS,
-  PriceHistoryDrawer,
   PriceHistoryFilters,
   type PriceHistoryRow,
   useExportPriceHistory,
@@ -12,6 +10,7 @@ import {
   usePriceHistoryParams,
 } from '@/features/services'
 import { EmptyState, ListPage } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const rowKey = (r: PriceHistoryRow) => `${r.logId}-${r.field}`
 
@@ -20,17 +19,11 @@ export default function PriceHistoryPage() {
   const { filter, page, filtered, setPage, reset } = params
   const { data, isLoading, isError, refetch } = usePriceHistory(filter)
   const { exportCsv, exporting } = useExportPriceHistory()
-  const [openRow, setOpenRow] = useState<PriceHistoryRow | null>(null)
 
   const rows = data?.content ?? []
   const total = data?.page.totalElements ?? 0
   const handleRetry = () => refetch()
   const handleExport = () => exportCsv(filter)
-  const closeRow = () => setOpenRow(null)
-  const rowProps = (r: PriceHistoryRow) => ({
-    onClick: () => setOpenRow(r),
-    style: { cursor: 'pointer' },
-  })
 
   const headerActions = (
     <>
@@ -38,7 +31,7 @@ export default function PriceHistoryPage() {
         variant="secondary"
         leftSection={<LuFileText size={16} />}
         component={Link}
-        to="/audit-log?action=PRICE_CHANGE"
+        to={`${PATHS.auditLog}?action=PRICE_CHANGE`}
       >
         Xem trong Nhật ký hệ thống
       </Button>
@@ -84,34 +77,24 @@ export default function PriceHistoryPage() {
   )
 
   return (
-    <>
-      <Breadcrumbs mb="xs">
-        <Anchor component={Link} to="/services" size="sm">
-          Bảng giá dịch vụ
-        </Anchor>
-        <span>Lịch sử thay đổi giá</span>
-      </Breadcrumbs>
-      <ListPage<PriceHistoryRow>
-        title="Lịch sử thay đổi giá"
-        description={`${total.toLocaleString('vi-VN')} lần thay đổi trong kỳ`}
-        info="Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn."
-        actions={headerActions}
-        filters={filters}
-        columns={PRICE_HISTORY_COLUMNS}
-        data={rows}
-        rowKey={rowKey}
-        rowProps={rowProps}
-        loading={isLoading}
-        error={isError}
-        onRetry={handleRetry}
-        page={page}
-        totalPages={data?.page.totalPages ?? 0}
-        onPageChange={setPage}
-        empty={empty}
-      >
-        {rangeText}
-      </ListPage>
-      <PriceHistoryDrawer row={openRow} onClose={closeRow} />
-    </>
+    <ListPage<PriceHistoryRow>
+      title="Lịch sử thay đổi giá"
+      description={`${total.toLocaleString('vi-VN')} lần thay đổi trong kỳ`}
+      info="Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn."
+      actions={headerActions}
+      filters={filters}
+      columns={PRICE_HISTORY_COLUMNS}
+      data={rows}
+      rowKey={rowKey}
+      loading={isLoading}
+      error={isError}
+      onRetry={handleRetry}
+      page={page}
+      totalPages={data?.page.totalPages ?? 0}
+      onPageChange={setPage}
+      empty={empty}
+    >
+      {rangeText}
+    </ListPage>
   )
 }

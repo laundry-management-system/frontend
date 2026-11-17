@@ -1,6 +1,4 @@
-import type { LoginFailureKind, Role, SetupPasswordFailure } from './types'
-
-export const homePathFor = (roles: Role[]) => (roles.includes('ADMIN') ? '/' : '/work-list')
+import type { LoginFailureKind, SetupPasswordFailure } from './types'
 
 export const LOCK_DURATION_MS = 15 * 60_000
 

@@ -4,6 +4,7 @@ import { LuChevronRight } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
 import type { Dashboard, DashboardPreset } from '@/features/reports'
 import { formatNumber } from '@/shared/lib/format'
+import { PATHS } from '@/shared/config/paths'
 
 const DELIVERED_LABEL: Record<DashboardPreset, string> = {
   today: 'Đã giao hôm nay',
@@ -20,10 +21,18 @@ export function OrderFlow({
   preset: DashboardPreset
 }) {
   const steps = [
-    { label: 'Mới nhận', value: orders.waiting, to: '/work-list?status=RECEIVED' },
-    { label: 'Đang xử lý', value: orders.processing, to: '/work-list?status=PROCESSING' },
-    { label: 'Chờ khách lấy', value: orders.readyForPickup, to: '/orders?status=COMPLETED' },
-    { label: DELIVERED_LABEL[preset], value: orders.delivered, to: '/orders?status=DELIVERED' },
+    { label: 'Mới nhận', value: orders.waiting, to: `${PATHS.workList}?status=RECEIVED` },
+    { label: 'Đang xử lý', value: orders.processing, to: `${PATHS.workList}?status=PROCESSING` },
+    {
+      label: 'Chờ khách lấy',
+      value: orders.readyForPickup,
+      to: `${PATHS.orders}?status=COMPLETED`,
+    },
+    {
+      label: DELIVERED_LABEL[preset],
+      value: orders.delivered,
+      to: `${PATHS.orders}?status=DELIVERED`,
+    },
   ]
   return (
     <Card mb="lg" py="sm">

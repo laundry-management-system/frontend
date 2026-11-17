@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { homePathFor, type Role, useAuthStore } from '@/features/auth'
+import { type Role, useAuthStore } from '@/features/auth'
+import { homePathFor } from './homePath'
 
 /** Dùng bên trong ProtectedRoute: <Route element={<RoleGuard roles={['ADMIN']} />}>. */
 export function RoleGuard({ roles }: { roles: Role[] }) {

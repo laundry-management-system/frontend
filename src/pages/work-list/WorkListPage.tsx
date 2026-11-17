@@ -18,6 +18,7 @@ import { EmptyState, ListPage } from '@/shared/ui'
 import { WorkListFilters } from './components/WorkListFilters'
 import { workColumns } from './components/workColumns'
 import { useWorkListParams } from './useWorkListParams'
+import { PATHS } from '@/shared/config/paths'
 
 const FLAG_CLASS = { late: 'ds-row-flag-late', express: 'ds-row-flag-express' } as const
 
@@ -44,7 +45,7 @@ export default function WorkListPage() {
   const rowProps = (o: OrderListItem) => {
     const flag = rowFlag(o, now)
     return {
-      onClick: () => navigate(`/orders/${o.id}`),
+      onClick: () => navigate(PATHS.orderDetail(o.id)),
       style: { cursor: 'pointer' },
       className: flag ? FLAG_CLASS[flag] : undefined,
     }

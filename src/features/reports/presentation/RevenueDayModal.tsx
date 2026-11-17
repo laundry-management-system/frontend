@@ -13,6 +13,7 @@ import {
 } from '@/shared/ui'
 import { useRevenuePayments } from '../application/useRevenuePayments'
 import type { DateRange, RevenuePayment } from '../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 const METHOD_KEY = { CASH: 'cash', BANK_TRANSFER: 'qr' } as const
 
@@ -36,7 +37,7 @@ export function RevenueDayModal({ range, title, expectedCount, onClose }: Revenu
   const handleRetry = () => refetch()
   const rowKey = (p: RevenuePayment) => p.paymentId
   const rowProps = (p: RevenuePayment) => ({
-    onClick: () => navigate(`/orders/${p.orderId}`),
+    onClick: () => navigate(PATHS.orderDetail(p.orderId)),
     style: { cursor: 'pointer' },
   })
 
