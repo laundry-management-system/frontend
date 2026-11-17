@@ -104,9 +104,9 @@ export default defineConfig([
       ],
     },
   },
-  // routes.tsx chỉ khai báo router, không phải module component
+  // routes.tsx / modules.tsx chỉ khai báo router và menu, không phải module component
   {
-    files: ['src/app/router/routes.tsx'],
+    files: ['src/app/router/routes.tsx', 'src/app/router/modules.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   // domain là TS thuần

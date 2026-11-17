@@ -3,13 +3,14 @@ import dayjs from 'dayjs'
 import { Link } from 'react-router-dom'
 import { type ShiftDetail, ShiftStatusBadge } from '@/features/shifts'
 import { EntityCode } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const dateTime = (iso: string | null) => (iso ? dayjs(iso).format('DD/MM HH:mm') : '')
 
 export function ShiftBreadcrumbs({ code }: { code: string }) {
   return (
     <Breadcrumbs mb="xs">
-      <Anchor component={Link} to="/shifts" size="sm">
+      <Anchor component={Link} to={PATHS.shifts} size="sm">
         Ca làm việc
       </Anchor>
       <EntityCode code={code} size="sm" />

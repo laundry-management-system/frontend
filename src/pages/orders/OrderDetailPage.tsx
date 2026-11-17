@@ -59,6 +59,7 @@ import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { EmptyState, EntityCode, PageHeader, RowActions, StatusBadge } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 type ModalState =
   | null
@@ -121,7 +122,7 @@ export default function OrderDetailPage() {
               Thử lại
             </Button>
           ) : (
-            <Button variant="secondary" component={Link} to="/orders">
+            <Button variant="secondary" component={Link} to={PATHS.orders}>
               Về danh sách đơn
             </Button>
           )
@@ -131,7 +132,7 @@ export default function OrderDetailPage() {
   }
 
   const primary = primaryActionOf(order)
-  const classify = () => navigate(`/classify?order=${order.id}`)
+  const classify = () => navigate(`${PATHS.classify}?order=${order.id}`)
   const startProcessing = () =>
     start.mutate(order.id, {
       onSuccess: () => notify.success('Đã chuyển sang Đang xử lý'),
@@ -211,7 +212,7 @@ export default function OrderDetailPage() {
       {sibling && (
         <>
           {` · đơn ${ORDER_TYPE_LABEL[sibling.orderType].toLowerCase()} cùng lượt `}
-          <Anchor component={Link} to={`/orders/${sibling.id}`}>
+          <Anchor component={Link} to={PATHS.orderDetail(sibling.id)}>
             <EntityCode code={sibling.orderCode} size="sm" />
           </Anchor>
         </>
@@ -323,7 +324,7 @@ export default function OrderDetailPage() {
   return (
     <>
       <Breadcrumbs mb="xs">
-        <Anchor component={Link} to="/orders" size="sm">
+        <Anchor component={Link} to={PATHS.orders} size="sm">
           Đơn hàng
         </Anchor>
         <EntityCode code={order.orderCode} size="sm" />

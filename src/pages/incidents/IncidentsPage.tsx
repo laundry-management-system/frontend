@@ -36,6 +36,7 @@ import {
   Money,
   StatusBadge,
 } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 // Không có `status` trên URL = tab Chờ duyệt (mặc định); `all` = Tất cả
 const TABS = ['approved', 'rejected', 'all'] as const
@@ -77,8 +78,8 @@ export default function IncidentsPage() {
       { replace: true },
     )
 
-  const goCreate = () => navigate('/incidents/new')
-  const open = (i: IncidentSummary) => navigate(`/incidents/${i.id}`)
+  const goCreate = () => navigate(PATHS.incidentNew)
+  const open = (i: IncidentSummary) => navigate(PATHS.incidentDetail(i.id))
   const handleRetry = () => refetch()
   const rowKey = (i: IncidentSummary) => i.id
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)

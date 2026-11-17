@@ -9,6 +9,7 @@ import { useStartProcessing } from '../application/mutations/useStartProcessing'
 import type { OrderListItem } from '../domain/types'
 import { nextAction, type WorkAction } from '../domain/workList'
 import { CompleteOrderLauncher } from './CompleteOrderLauncher'
+import { PATHS } from '@/shared/config/paths'
 
 const ACTIONS: Record<WorkAction, { label: string; icon: IconType }> = {
   classify: { label: 'Phân loại', icon: LuTags },
@@ -31,7 +32,7 @@ export function WorkActionButton({ order }: { order: OrderListItem }) {
   const closeComplete = () => setCompleting(false)
   const handleClick = (e: MouseEvent) => {
     e.stopPropagation()
-    if (action === 'classify') navigate(`/classify?order=${order.id}`)
+    if (action === 'classify') navigate(`${PATHS.classify}?order=${order.id}`)
     else if (action === 'complete') setCompleting(true)
     else
       startProcessing.mutate(order.id, {

@@ -24,6 +24,7 @@ import { useOrder, useOrders } from '@/features/orders'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
 import { CopyableCode, EmptyState, EntityCode, PageHeader, StatusBadge } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const dateTime = (iso: string) => formatDateTime(iso).slice(0, 16)
 
@@ -107,7 +108,7 @@ export default function IncidentDetailPage() {
     orderQuery.refetch()
   }
   const handleSaved = (saved: IncidentDetail) => {
-    if (isCreate) navigate(`/incidents/${saved.id}`, { replace: true })
+    if (isCreate) navigate(PATHS.incidentDetail(saved.id), { replace: true })
     else setEditing(false)
   }
   const [reviewing, setReviewing] = useState(false)
@@ -135,7 +136,7 @@ export default function IncidentDetailPage() {
         Thử lại
       </Button>
     ) : (
-      <Button variant="secondary" component={Link} to="/incidents">
+      <Button variant="secondary" component={Link} to={PATHS.incidents}>
         Về danh sách sự cố
       </Button>
     )
@@ -166,7 +167,7 @@ export default function IncidentDetailPage() {
         title="Không lập phiếu cho đơn đã hủy"
         description="Đơn đã hủy không lập được phiếu sự cố."
         action={
-          <Button variant="secondary" component={Link} to={`/orders/${orderId}`}>
+          <Button variant="secondary" component={Link} to={PATHS.orderDetail(orderQuery.data.id)}>
             Về đơn hàng
           </Button>
         }
@@ -184,7 +185,7 @@ export default function IncidentDetailPage() {
   const headerDescription = incident ? (
     <>
       Lập {dateTime(incident.createdAt)} bởi {incident.createdBy} · đơn{' '}
-      <Anchor component={Link} to={`/orders/${incident.orderId}`}>
+      <Anchor component={Link} to={PATHS.orderDetail(incident.orderId)}>
         <EntityCode code={incident.orderCode} size="sm" />
       </Anchor>
       {` · ${incident.order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'} · tiền hàng ${formatMoney(incident.order.subtotal)}`}
@@ -222,7 +223,7 @@ export default function IncidentDetailPage() {
   return (
     <>
       <Breadcrumbs mb="xs">
-        <Anchor component={Link} to="/incidents" size="sm">
+        <Anchor component={Link} to={PATHS.incidents} size="sm">
           Sự cố & bồi thường
         </Anchor>
         {incident ? <EntityCode code={incident.code} size="sm" /> : <span>Lập phiếu</span>}

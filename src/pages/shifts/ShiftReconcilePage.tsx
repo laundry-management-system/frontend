@@ -21,6 +21,7 @@ import { TransactionsSection } from './components/TransactionsSection'
 import { TransferStep } from './components/TransferStep'
 import { ShiftReconcileContext, useShiftReconcileContext } from './ShiftReconcileContext'
 import { type ShiftPageMode, useShiftReconcile } from './useShiftReconcile'
+import { PATHS } from '@/shared/config/paths'
 
 /** Kết ca (`close`, nhập liệu) và xem / duyệt ca (`approve`, chỉ đọc) dùng chung một bố cục. */
 export default function ShiftReconcilePage({ mode }: { mode: ShiftPageMode }) {
@@ -31,11 +32,11 @@ export default function ShiftReconcilePage({ mode }: { mode: ShiftPageMode }) {
   const handleRetry = () => refetch()
   const back =
     mode === 'close' ? (
-      <Button variant="secondary" component={Link} to="/work-list">
+      <Button variant="secondary" component={Link} to={PATHS.workList}>
         Về danh sách công việc
       </Button>
     ) : (
-      <Button variant="secondary" component={Link} to="/shifts">
+      <Button variant="secondary" component={Link} to={PATHS.shifts}>
         Về danh sách ca
       </Button>
     )
@@ -154,7 +155,7 @@ function ConfirmCloseModal() {
 /** Xem ca còn đang mở: chưa có số liệu kết ca, chỉ có giao dịch và nút Kết ca thay */
 function OpenShiftView({ shift }: { shift: ShiftDetail }) {
   const navigate = useNavigate()
-  const goCloseOnBehalf = () => navigate(`/shifts/${shift.id}/close`)
+  const goCloseOnBehalf = () => navigate(PATHS.shiftClose(shift.id))
   const actions = (
     <Button color="danger" leftSection={<LuLock size={16} />} onClick={goCloseOnBehalf}>
       Kết ca thay
@@ -189,7 +190,7 @@ function ClosedView({ shift }: { shift: ShiftDetail }) {
   const navigate = useNavigate()
   const { slip, print } = usePrintShiftSlip(shift)
   const reprint = () => print(shift)
-  const goWorkList = () => navigate('/work-list')
+  const goWorkList = () => navigate(PATHS.workList)
   const actions = (
     <Group gap="sm">
       <Button variant="secondary" onClick={goWorkList}>

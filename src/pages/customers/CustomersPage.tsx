@@ -15,6 +15,7 @@ import {
 } from '@/features/customers'
 import { useListParams } from '@/shared/hooks/useListParams'
 import { CopyableCode, type DataTableColumn, EmptyState, ListPage } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly CustomerStatus[]
 
@@ -45,7 +46,7 @@ export default function CustomersPage() {
     setModal(!term ? {} : looksLikePhone(term) ? { phone: term } : { fullName: term })
   }
 
-  const openDetail = (c: Customer) => navigate(`/customers/${c.id}`)
+  const openDetail = (c: Customer) => navigate(PATHS.customerDetail(c.id))
   const closeModal = () => setModal(null)
   const showAll = () => setStatus('ALL')
   const handleRetry = () => refetch()
