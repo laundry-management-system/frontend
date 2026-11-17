@@ -60,6 +60,7 @@ export const DOMAIN_STATUSES: DomainStatus[] = [
   { group: 'machine', key: 'maintenance', label: 'Bảo trì', tone: 'warning' },
   { group: 'machine', key: 'retired', label: 'Ngừng sử dụng', tone: 'neutral' },
   { group: 'voucher', key: 'active', label: 'Còn hạn', tone: 'success' },
+  { group: 'voucher', key: 'notStarted', label: 'Chưa hiệu lực', tone: 'info' },
   { group: 'voucher', key: 'expired', label: 'Hết hạn', tone: 'neutral' },
   { group: 'voucher', key: 'exhausted', label: 'Hết lượt', tone: 'warning' },
   { group: 'voucher', key: 'disabled', label: 'Đã tắt', tone: 'neutral' },

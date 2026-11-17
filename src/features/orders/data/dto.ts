@@ -65,6 +65,7 @@ export interface OrderDetailResponseDto extends Omit<
   shelfLocation: string | null
   subtotal: number | string | null
   discountAmount: number | string | null
+  voucherCode?: string | null
   expressFee: number | string | null
   totalAmount: number | string | null
   receiverName: string | null
@@ -226,9 +227,9 @@ export interface DeliveryResponseDto {
   customerPhone: string
   dueAt: string
   totalAmount: Amount
-  invoiceNo: string
-  paymentMethod: PaymentMethod
-  paidAt: string
+  invoiceNo: string | null
+  paymentMethod: PaymentMethod | null
+  paidAt: string | null
   status: string
   deliveredAt: string
   deliveredBy: string

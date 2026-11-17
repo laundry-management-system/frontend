@@ -9,13 +9,13 @@ export function InfoRow({
   children,
   strong,
 }: {
-  label: string
+  label: ReactNode
   children: ReactNode
   strong?: boolean
 }) {
   return (
     <Group justify="space-between" wrap="nowrap" align="flex-start" gap="md">
-      <Text size="sm" c={strong ? undefined : 'dimmed'}>
+      <Text size="sm" c={strong ? undefined : 'dimmed'} component="div">
         {label}
       </Text>
       <Text

@@ -65,9 +65,12 @@ function PaymentRow({ txn, onResolve }: { txn: PaymentTxn; onResolve?: (p: Payme
 export function PaymentHistoryList({
   orderCode,
   onResolve,
+  zeroTotal = false,
 }: {
   orderCode: string
   onResolve?: (p: PaymentTxn) => void
+  /** Voucher trừ hết tiền: đơn tự đã thanh toán, không có giao dịch */
+  zeroTotal?: boolean
 }) {
   const { data, isLoading, isError, refetch } = usePayments(orderCode)
   const handleRetry = () => refetch()
@@ -84,6 +87,14 @@ export function PaymentHistoryList({
             Thử lại
           </Button>
         }
+      />
+    )
+  if (!data?.length && zeroTotal)
+    return (
+      <EmptyState
+        icon={<LuReceiptText size={32} />}
+        title="Đơn 0đ"
+        description="Voucher đã trừ hết tiền, không cần thu."
       />
     )
   if (!data?.length)
