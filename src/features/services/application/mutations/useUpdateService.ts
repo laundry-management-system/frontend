@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UpdateServiceRequestDto } from '../data/dto'
-import { servicesApi } from '../data/servicesApi'
-import { serviceKeys } from './queryKeys'
+import type { UpdateServiceRequestDto } from '../../data/dto'
+import { servicesApi } from '../../data/servicesApi'
+import { serviceKeys } from '../queryKeys'
 
 /** Một PUT lưu cả thông tin, giá và trạng thái. */
 export function useUpdateService() {
