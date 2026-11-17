@@ -77,6 +77,10 @@ export interface OrderDetailResponseDto extends Omit<
   customerId?: number | null
   requestedServices?: { id: number; name: string | null; unit: ItemUnit | null }[] | null
   whitesFee?: number | string | null
+  incidentDiscount?: number | string | null
+  incidentCodes?: string[] | null
+  compensationMultiplier?: number | null
+  compensationCap?: number | string | null
 }
 
 export interface OrderReceiptResponseDto {
@@ -96,6 +100,8 @@ export interface OrderReceiptResponseDto {
   washWhitesSeparately?: boolean | null
   whitesFee?: number | string | null
   createdBy?: string | null
+  compensationMultiplier?: number | null
+  compensationCap?: number | string | null
   services?: {
     name: string
     unit: ItemUnit

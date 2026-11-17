@@ -35,6 +35,8 @@ export function buildInvoice(order: OrderDetail, txn: PaymentTxn, extra: Invoice
     }),
     subtotal: order.subtotal,
     discountAmount: order.discountAmount,
+    incidentDiscount: order.incidentDiscount,
+    incidentCodes: order.incidentCodes,
     expressFee: order.expressFee,
     whitesFee: order.whitesFee,
     totalAmount: order.totalAmount,

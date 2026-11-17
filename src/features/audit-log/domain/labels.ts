@@ -6,6 +6,7 @@ export const ACTION_LABEL: Record<AuditAction, string> = {
   CUSTOMER_PHONE_CHANGE: 'Đổi SĐT khách',
   DUE_DATE_CHANGE: 'Sửa ngày hẹn trả',
   INCIDENT_APPROVE: 'Duyệt sự cố',
+  INCIDENT_PAYOUT: 'Chi bồi thường',
   MACHINE_STATUS: 'Đổi trạng thái máy',
   ORDER_PRICE_EDIT: 'Sửa giá đơn',
   PAYMENT_CONFIRM: 'Xác nhận thanh toán',
@@ -29,6 +30,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
   PAYMENT: 'Thanh toán',
   SERVICE: 'Dịch vụ',
   SETTING: 'Tham số',
+  INCIDENT: 'Sự cố',
   SHIFT: 'Ca làm việc',
   MACHINE: 'Máy',
 }

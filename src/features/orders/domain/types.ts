@@ -207,6 +207,11 @@ export interface OrderDetail extends OrderSummary {
   washWhitesSeparately: boolean
   /** 0 tới khi phân loại (chốt lúc phân loại) */
   whitesFee: number
+  incidentDiscount: number
+  incidentCodes: string[]
+  /** Điều khoản bồi thường chốt theo đơn (đơn cũ: cấu hình hiện hành) */
+  compensationMultiplier: number
+  compensationCap: number
 }
 
 /** Nội dung in trên phiếu nhận đồ (khớp `OrderReceiptResponse`) */
@@ -227,6 +232,8 @@ export interface ReceiptData {
   whitesFee?: number
   /** Dịch vụ đã chọn kèm giá hiện hành (giá tham khảo) */
   services?: ReceiptService[]
+  compensationMultiplier: number
+  compensationCap: number
 }
 
 export interface ReceiptService {
@@ -330,6 +337,8 @@ export interface Invoice {
   lines: InvoiceLine[]
   subtotal: number
   discountAmount: number
+  incidentDiscount: number
+  incidentCodes: string[]
   expressFee: number
   whitesFee: number
   totalAmount: number

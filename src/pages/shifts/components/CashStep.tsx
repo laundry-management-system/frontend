@@ -7,7 +7,7 @@ import { CompareCell } from './CompareCell'
 import { ReasonText } from './ReasonText'
 import { StepCard } from './StepCard'
 
-const EXPECTED_INFO = 'Dự kiến = Tiền đầu ca + Đã thu − Đã hoàn trả trong ca.'
+const EXPECTED_INFO = 'Dự kiến = Tiền đầu ca + Đã thu − Đã hoàn trả và chi bồi thường trong ca.'
 
 /** Bước 1: đếm tiền mặt theo mệnh giá, so với dự kiến */
 export function CashStep() {

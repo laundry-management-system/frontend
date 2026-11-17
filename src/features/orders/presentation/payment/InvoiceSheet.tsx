@@ -37,6 +37,7 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
     : null
   const adjustments = [
     { label: 'Giảm giá', value: -inv.discountAmount },
+    { label: 'Giảm giá sự cố', value: -inv.incidentDiscount },
     { label: 'Phụ phí giặt nhanh', value: inv.expressFee },
     { label: 'Giặt riêng đồ trắng', value: inv.whitesFee },
   ].filter((a) => a.value !== 0)
@@ -90,6 +91,13 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
               {a.value < 0 ? `−${formatMoney(-a.value)}` : `+${formatMoney(a.value)}`}
             </Row>
           ))}
+          {inv.incidentCodes.length > 0 && (
+            <Row label="Mã sự cố liên quan">
+              {inv.incidentCodes.map((c) => (
+                <EntityCode key={c} code={c} size="sm" />
+              ))}
+            </Row>
+          )}
         </>
       )}
       <Group

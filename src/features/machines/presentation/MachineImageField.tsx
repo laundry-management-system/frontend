@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { LuImagePlus, LuTrash2 } from 'react-icons/lu'
 import { toApiError } from '@/shared/api/apiError'
 import { useUploadMachineImage } from '../application/useUploadMachineImage'
-import { imageFileError } from '../domain/rules'
+import { imageFileError } from '@/shared/lib/imageFile'
 import type { MachineImage, MachineType } from '../domain/types'
 import { MachinePhoto } from './MachinePhoto'
 

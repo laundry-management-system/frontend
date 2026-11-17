@@ -4,7 +4,6 @@ import {
   Card,
   Group,
   Image,
-  Modal,
   Stack,
   Table,
   Text,
@@ -12,9 +11,9 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { useState } from 'react'
-import { LuChevronLeft, LuChevronRight, LuPackageOpen } from 'react-icons/lu'
+import { LuPackageOpen } from 'react-icons/lu'
 import { UNIT_LABEL, useActiveServices } from '@/features/services'
-import { EmptyState, IconButton, Money } from '@/shared/ui'
+import { EmptyState, ImageLightbox, Money } from '@/shared/ui'
 import type { OrderImage, OrderLine, RequestedService } from '../../domain/types'
 
 const THUMB = {
@@ -47,12 +46,8 @@ export function OrderItemsCard({
   // shortcut: tên dịch vụ lấy từ danh sách đang hoạt động; dịch vụ đã ngừng hiện "—" (BE không trả tên trong dòng đồ)
   const { data: services = [] } = useActiveServices()
   const [preview, setPreview] = useState<{ images: OrderImage[]; index: number } | null>(null)
-  const closePreview = () => setPreview(null)
-  // Xoay vòng khi đi quá ảnh đầu / cuối
-  const step = (delta: number) =>
-    setPreview((p) => p && { ...p, index: (p.index + delta + p.images.length) % p.images.length })
-  const showPrev = () => step(-1)
-  const showNext = () => step(1)
+  const changePreview = (index: number | null) =>
+    setPreview((p) => (p && index !== null ? { ...p, index } : null))
 
   if (!items.length)
     return (
@@ -167,28 +162,11 @@ export function OrderItemsCard({
   )
 
   const imagePreview = (
-    <Modal
-      opened={!!preview}
-      onClose={closePreview}
-      size="lg"
-      title={
-        preview && preview.images.length > 1
-          ? `Ảnh tình trạng ${preview.index + 1}/${preview.images.length}`
-          : 'Ảnh tình trạng'
-      }
-    >
-      {preview && (
-        <Stack gap="sm">
-          <Image src={preview.images[preview.index].imageUrl} alt="Ảnh tình trạng" radius="sm" />
-          {preview.images.length > 1 && (
-            <Group justify="space-between">
-              <IconButton label="Ảnh trước" icon={<LuChevronLeft size={18} />} onClick={showPrev} />
-              <IconButton label="Ảnh sau" icon={<LuChevronRight size={18} />} onClick={showNext} />
-            </Group>
-          )}
-        </Stack>
-      )}
-    </Modal>
+    <ImageLightbox
+      images={preview?.images ?? []}
+      index={preview?.index ?? null}
+      onIndexChange={changePreview}
+    />
   )
 
   return (
