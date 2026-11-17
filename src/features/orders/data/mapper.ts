@@ -23,6 +23,9 @@ import type {
 } from './dto'
 
 const money = (v: number | string | null | undefined) => Number(v ?? 0)
+// BE luôn trả điều khoản đã quy đổi; giá trị mặc định chỉ đỡ cho response cũ
+const DEFAULT_COMPENSATION_MULTIPLIER = 10
+const DEFAULT_COMPENSATION_CAP = 500000
 
 // Jackson có thể đặt tên cờ boolean `isOverdue` thành `overdue`
 const overdueOf = (dto: { isOverdue?: boolean; overdue?: boolean }) =>
@@ -101,6 +104,11 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     requestedServices: dto.requestedServices ?? [],
     washWhitesSeparately: dto.washWhitesSeparately ?? false,
     whitesFee: money(dto.whitesFee),
+    incidentDiscount: money(dto.incidentDiscount),
+    incidentCodes: dto.incidentCodes ?? [],
+    compensationMultiplier: dto.compensationMultiplier ?? DEFAULT_COMPENSATION_MULTIPLIER,
+    compensationCap:
+      dto.compensationCap == null ? DEFAULT_COMPENSATION_CAP : Number(dto.compensationCap),
   }
 }
 
@@ -118,6 +126,9 @@ export const toReceiptData = (dto: OrderReceiptResponseDto): ReceiptData => ({
   intakeOrderCount: dto.intakeOrderCount,
   washWhitesSeparately: dto.washWhitesSeparately ?? false,
   whitesFee: money(dto.whitesFee),
+  compensationMultiplier: dto.compensationMultiplier ?? DEFAULT_COMPENSATION_MULTIPLIER,
+  compensationCap:
+    dto.compensationCap == null ? DEFAULT_COMPENSATION_CAP : Number(dto.compensationCap),
   services: dto.services?.map((s) => ({
     name: s.name,
     unit: s.unit,

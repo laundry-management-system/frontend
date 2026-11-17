@@ -6,12 +6,13 @@ export const SHIFT_STATUS_LABEL: Record<ShiftStatus, string> = {
   APPROVED: 'Đã duyệt',
 }
 
-export type ShiftTransactionType = 'COLLECT' | 'VOID' | 'REFUND'
+export type ShiftTransactionType = 'COLLECT' | 'VOID' | 'REFUND' | 'INCIDENT_PAYOUT'
 
 export const SHIFT_TRANSACTION_LABEL: Record<ShiftTransactionType, string> = {
   COLLECT: 'Thu',
   VOID: 'Hủy xác nhận',
   REFUND: 'Hoàn tiền',
+  INCIDENT_PAYOUT: 'Chi bồi thường',
 }
 
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER'
@@ -119,6 +120,7 @@ export interface ShiftTransaction {
   method: PaymentMethod
   amount: number
   actorName: string
+  incidentCode: string | null
 }
 
 export interface ShiftListParams {

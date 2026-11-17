@@ -30,6 +30,8 @@ const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswor
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
 const VouchersPage = lazy(() => import('@/pages/vouchers/VouchersPage'))
+const IncidentsPage = lazy(() => import('@/pages/incidents/IncidentsPage'))
+const IncidentDetailPage = lazy(() => import('@/pages/incidents/IncidentDetailPage'))
 
 const fallback = (
   <Center h="60vh">
@@ -74,6 +76,9 @@ export const router = createBrowserRouter([
           { path: '/shifts/:id/close', element: page(<ShiftReconcilePage mode="close" />) },
           { path: '/orders', element: page(<OrdersPage />) },
           { path: '/orders/:id', element: page(<OrderDetailPage />) },
+          { path: '/incidents', element: page(<IncidentsPage />) },
+          { path: '/incidents/new', element: page(<IncidentDetailPage />) },
+          { path: '/incidents/:id', element: page(<IncidentDetailPage />) },
           { path: '/stored-orders', element: page(<StoredOrdersPage />) },
           { path: '/machines', element: page(<MachinesPage />) },
           { path: '/intake', element: page(<IntakePage />) },

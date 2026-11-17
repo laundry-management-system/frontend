@@ -83,7 +83,9 @@ export function ShiftSlipSheet({ shift: s }: { shift: ShiftDetail }) {
       <Divider variant="dashed" my={4} />
       <Row label="Tiền đầu ca">{formatMoney(s.openingCash)}</Row>
       <Row label={`Tiền mặt đã thu (${s.cashInCount} GD)`}>{signed(s.cashIn)}</Row>
-      <Row label={`Tiền mặt đã hoàn trả (${s.cashOutCount} GD)`}>{signed(-s.cashOut)}</Row>
+      <Row label={`Tiền mặt đã hoàn trả và chi bồi thường (${s.cashOutCount} GD)`}>
+        {signed(-s.cashOut)}
+      </Row>
       <Row label="TIỀN MẶT DỰ KIẾN" strong>
         {formatMoney(s.expectedCash)}
       </Row>

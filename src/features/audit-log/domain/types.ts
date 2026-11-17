@@ -4,6 +4,7 @@ export type AuditAction =
   | 'CUSTOMER_PHONE_CHANGE'
   | 'DUE_DATE_CHANGE'
   | 'INCIDENT_APPROVE'
+  | 'INCIDENT_PAYOUT'
   | 'MACHINE_STATUS'
   | 'ORDER_PRICE_EDIT'
   | 'PAYMENT_CONFIRM'
@@ -19,7 +20,16 @@ export type AuditAction =
   | 'SHIFT_APPROVE'
 
 export type EntityType =
-  'AUTH' | 'USER' | 'CUSTOMER' | 'ORDER' | 'PAYMENT' | 'SERVICE' | 'SETTING' | 'SHIFT' | 'MACHINE'
+  | 'AUTH'
+  | 'USER'
+  | 'CUSTOMER'
+  | 'ORDER'
+  | 'PAYMENT'
+  | 'SERVICE'
+  | 'SETTING'
+  | 'SHIFT'
+  | 'MACHINE'
+  | 'INCIDENT'
 
 export interface AuditLogSummary {
   id: number

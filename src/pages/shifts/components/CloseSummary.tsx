@@ -63,7 +63,7 @@ export function CloseSummary() {
           sign={shift.cashIn ? '+' : undefined}
         />
         <Line
-          label={`Hoàn trả tiền mặt (${shift.cashOutCount})`}
+          label={`Tiền mặt đã hoàn trả và chi bồi thường (${shift.cashOutCount})`}
           value={formatMoney(shift.cashOut)}
           sign={shift.cashOut ? '−' : undefined}
         />

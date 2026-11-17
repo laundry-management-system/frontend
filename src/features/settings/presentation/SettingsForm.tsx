@@ -5,14 +5,15 @@ import { LuPencil } from 'react-icons/lu'
 import { useBlocker } from 'react-router-dom'
 import { formatDateTime } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
-import { ConfirmModal, PageHeader } from '@/shared/ui'
+import { compensationTermsText } from '@/shared/lib/compensationTerms'
+import { ConfirmModal, InfoLabel, PageHeader } from '@/shared/ui'
 import { useSaveSettings } from '../application/useSaveSettings'
 import { fieldOf, SETTING_FIELDS, SETTING_GROUP_TITLE } from '../domain/settingFields'
 import type { Setting, SettingGroup } from '../domain/types'
 import { validateOpeningHours, validateSetting } from '../domain/validate'
 import { SettingInput } from './SettingInput'
 
-const LEFT: SettingGroup[] = ['RECEIPT', 'VIETQR']
+const LEFT: SettingGroup[] = ['RECEIPT', 'COMPENSATION', 'VIETQR']
 const RIGHT: SettingGroup[] = ['OPERATION', 'SECURITY', 'OTHER']
 
 type Values = Record<string, string>
@@ -89,6 +90,18 @@ export function SettingsForm({ settings }: { settings: Setting[] }) {
       ? unknownKeys
       : SETTING_FIELDS.filter((f) => f.group === group && f.key in form.values).map((f) => f.key)
 
+  const termsPreview = () => {
+    const k = form.values.COMPENSATION_MULTIPLIER ?? ''
+    const cap = form.values.COMPENSATION_CAP_PER_ITEM ?? ''
+    if (errors.COMPENSATION_MULTIPLIER || errors.COMPENSATION_CAP_PER_ITEM || !k || !cap)
+      return null
+    return (
+      <Text size="sm" c="dimmed" fs="italic">
+        “{compensationTermsText(Number(k), Number(cap))}”
+      </Text>
+    )
+  }
+
   const renderGroup = (group: SettingGroup) => {
     const keys = keysOf(group)
     if (!keys.length) return null
@@ -102,7 +115,15 @@ export function SettingsForm({ settings }: { settings: Setting[] }) {
       <Card key={group}>
         <Stack gap={editing ? 'md' : 'sm'}>
           <Group justify="space-between" align="baseline" mb={4}>
-            <Title order={5}>{SETTING_GROUP_TITLE[group]}</Title>
+            <Title order={5}>
+              {group === 'COMPENSATION' ? (
+                <InfoLabel info="Chốt theo đơn lúc tạo, chỉ áp dụng cho đơn tạo sau. Câu bên dưới in trên phiếu nhận đồ.">
+                  {SETTING_GROUP_TITLE[group]}
+                </InfoLabel>
+              ) : (
+                SETTING_GROUP_TITLE[group]
+              )}
+            </Title>
             {lastUpdated && (
               <Text size="xs" c="dimmed">
                 Cập nhật {formatDateTime(lastUpdated).slice(0, 16)}
@@ -121,6 +142,7 @@ export function SettingsForm({ settings }: { settings: Setting[] }) {
               />
             </Fragment>
           ))}
+          {group === 'COMPENSATION' && termsPreview()}
         </Stack>
       </Card>
     )

@@ -112,7 +112,8 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
   const nameRef = useRef<HTMLInputElement>(null)
   const createIntake = useCreateIntake()
   const { data: services = [], isLoading: servicesLoading } = useActiveServices()
-  const whitesFee = useShopSettings().data?.whitesFee
+  const shopSettings = useShopSettings().data
+  const whitesFee = shopSettings?.whitesFee
   const [sel, setSel] = useState(emptySelection)
   const [requestId, setRequestId] = useState(() => crypto.randomUUID())
   const [orderErrors, setOrderErrors] = useState<Partial<Record<OrderType, string>>>({})
@@ -247,6 +248,8 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
     intakeOrderCount: plans.length,
     washWhitesSeparately: p?.whites ?? false,
     whitesFee: whitesFee ?? 0,
+    compensationMultiplier: shopSettings?.compensationMultiplier ?? 10,
+    compensationCap: shopSettings?.compensationCap ?? 500000,
     services: p?.services.map((s) => ({
       name: s.name,
       unit: s.unit ?? 'PIECE',

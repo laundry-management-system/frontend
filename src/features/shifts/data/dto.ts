@@ -88,4 +88,5 @@ export interface ShiftTransactionDto {
   method: PaymentMethod
   amount: Money
   actorName: string
+  incidentCode?: string | null
 }

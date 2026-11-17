@@ -1,6 +1,6 @@
 import { Anchor, Breadcrumbs, Button, Center, Group, Loader, SimpleGrid } from '@mantine/core'
 import { useState } from 'react'
-import { LuCloudOff, LuPlus, LuUserX } from 'react-icons/lu'
+import { LuCloudOff, LuPencil, LuPlus, LuUserX } from 'react-icons/lu'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { selectHasRole, useAuthStore } from '@/features/auth'
 import {
@@ -103,7 +103,9 @@ export default function CustomerDetailPage() {
       <Button leftSection={<LuPlus size={16} />} disabled={!active} onClick={createOrder}>
         Tạo đơn cho khách
       </Button>
-      <Button onClick={openEdit}>Sửa</Button>
+      <Button variant="secondary" leftSection={<LuPencil size={16} />} onClick={openEdit}>
+        Sửa
+      </Button>
     </Group>
   )
 
