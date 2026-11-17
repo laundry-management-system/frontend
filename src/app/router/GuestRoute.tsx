@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { homePathFor, useAuthStore } from '@/features/auth'
+import { useAuthStore } from '@/features/auth'
+import { homePathFor } from './homePath'
 import { SessionLoader } from './ProtectedRoute'
 
 /**

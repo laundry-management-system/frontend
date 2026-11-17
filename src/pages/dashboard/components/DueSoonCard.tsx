@@ -4,6 +4,7 @@ import { LuCloudOff, LuListTodo } from 'react-icons/lu'
 import { Link, useNavigate } from 'react-router-dom'
 import { dueHint, isLate, type OrderListItem, useNow, useWorkOrders } from '@/features/orders'
 import { CopyableCode, type DataTableColumn, DataTable, EmptyState, StatusBadge } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const PARAMS = { tab: 'ALL', q: '', page: 0, size: 5 } as const
 
@@ -11,7 +12,7 @@ export function DueSoonCard() {
   const navigate = useNavigate()
   const now = useNow()
   const { data, isLoading, isError, refetch } = useWorkOrders(PARAMS)
-  const openOrder = (o: OrderListItem) => navigate(`/orders/${o.id}`)
+  const openOrder = (o: OrderListItem) => navigate(PATHS.orderDetail(o.id))
   const handleRetry = () => refetch()
   const rowKey = (o: OrderListItem) => o.id
   const rowProps = (o: OrderListItem) => ({
@@ -70,7 +71,7 @@ export function DueSoonCard() {
     <Card>
       <Group justify="space-between" mb="sm">
         <Title order={5}>Đơn sắp đến hạn / trễ</Title>
-        <Anchor component={Link} to="/work-list" size="sm">
+        <Anchor component={Link} to={PATHS.workList} size="sm">
           Xem tất cả
         </Anchor>
       </Group>

@@ -22,6 +22,7 @@ import {
   Money,
   StatusBadge,
 } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 const shortDateTime = (iso: string) => formatDateTime(iso).slice(0, 16)
 
@@ -36,11 +37,11 @@ export default function OrdersPage() {
   })
   const { data: counts } = useOrderCounts()
   const total = data?.page.totalElements ?? 0
-  const open = (o: OrderListItem) => navigate(`/orders/${o.id}`)
+  const open = (o: OrderListItem) => navigate(PATHS.orderDetail(o.id))
   const withCount = (label: string, n: number | undefined) =>
     n == null ? label : `${label} (${n})`
 
-  const goIntake = () => navigate('/intake')
+  const goIntake = () => navigate(PATHS.intake)
   const handleRetry = () => refetch()
   const rowKey = (o: OrderListItem) => o.id
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)

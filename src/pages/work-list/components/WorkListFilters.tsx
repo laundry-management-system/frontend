@@ -11,6 +11,7 @@ import {
   type WorkTab,
 } from '@/features/orders'
 import { useWorkListParams } from '../useWorkListParams'
+import { PATHS } from '@/shared/config/paths'
 
 const TABS: WorkTab[] = ['ALL', ...WORK_TABS]
 const PICK_DATE = 'pick'
@@ -44,7 +45,7 @@ export function WorkListFilters() {
     if (e.key !== 'Enter' || !code) return
     commitSearch(code)
     const hit = await findByCode(code).catch(() => null)
-    if (hit) navigate(`/orders/${hit.id}`)
+    if (hit) navigate(PATHS.orderDetail(hit.id))
   }
   const handleDueChange = (v: string | null) => {
     setPicking(v === PICK_DATE)

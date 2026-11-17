@@ -1,5 +1,6 @@
 export { PageHeader } from './layout/PageHeader'
 export { ListPage, type ListPageProps } from './layout/ListPage'
+export { TabbedPage, type TabDef } from './layout/TabbedPage'
 export { DataTable, type DataTableColumn, type DataTableProps } from './data-display/DataTable'
 export { StatTile } from './data-display/StatTile'
 export { EmptyState } from './feedback/EmptyState'

@@ -1,12 +1,51 @@
-import { Button, Divider, Group, Skeleton, Stack, Text } from '@mantine/core'
+import { Badge, Button, Divider, Group, Skeleton, Stack, Text } from '@mantine/core'
 import { Fragment } from 'react'
-import { LuCloudOff, LuInfo } from 'react-icons/lu'
+import { LuArrowRight, LuCloudOff, LuInfo } from 'react-icons/lu'
 import { formatMoney } from '@/shared/lib/format'
 import { EmptyState } from '@/shared/ui'
 import { usePriceTimeline } from '../application/queries/usePriceTimeline'
+import { formatChangedAt, formatPriceValue, priceRowDelta } from '../domain/priceHistory'
+import { PRICE_FIELD_LABEL, type PriceHistoryRow } from '../domain/types'
 import { PriceLine } from './PriceLine'
 
-/** Diễn biến đơn giá của dịch vụ trên toàn bộ lịch sử, không theo bộ lọc ngày */
+const DELTA_COLOR = { up: 'success', down: 'warning', same: 'neutral' } as const
+
+function ChangeItem({ row }: { row: PriceHistoryRow }) {
+  const delta = priceRowDelta(row)
+  return (
+    <Stack gap={4} py={8}>
+      <Group justify="space-between" wrap="nowrap" gap="xs">
+        <Text size="sm" fw={500}>
+          {PRICE_FIELD_LABEL[row.field]}
+        </Text>
+        <Text size="xs" c="dimmed" ta="right">
+          {formatChangedAt(row.changedAt)} · {row.changedByName}
+        </Text>
+      </Group>
+      <Group gap={6} wrap="nowrap">
+        <Text size="sm" c="dimmed">
+          {formatPriceValue(row.field, row.oldValue)}
+        </Text>
+        <LuArrowRight size={14} aria-label="thành" />
+        <Text size="sm" fw={600}>
+          {formatPriceValue(row.field, row.newValue)}
+        </Text>
+        {delta && (
+          <Badge color={DELTA_COLOR[delta.direction]} variant="light" size="sm">
+            {delta.label}
+          </Badge>
+        )}
+      </Group>
+      {row.reason && (
+        <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>
+          {row.reason}
+        </Text>
+      )}
+    </Stack>
+  )
+}
+
+/** Diễn biến của một dịch vụ trên toàn bộ lịch sử, không theo bộ lọc ngày */
 export function PriceTimeline({ serviceId }: { serviceId: number }) {
   const { currentPrice, unitLabel, timeline, isLoading, isError, refetch } =
     usePriceTimeline(serviceId)
@@ -28,21 +67,14 @@ export function PriceTimeline({ serviceId }: { serviceId: number }) {
   if (!timeline || currentPrice == null)
     return (
       <Text size="sm" c="dimmed">
-        Chưa có thay đổi đơn giá.
+        Chưa có thay đổi nào.
       </Text>
     )
 
-  const periodList = timeline.periods.map((p, i) => (
-    <Fragment key={p.label}>
+  const changeList = timeline.changes.map((c, i) => (
+    <Fragment key={`${c.logId}-${c.field}`}>
       {i > 0 && <Divider />}
-      <Group justify="space-between" wrap="nowrap" py={8}>
-        <Text size="sm" c={p.current ? undefined : 'dimmed'} fw={p.current ? 500 : undefined}>
-          {p.label}
-        </Text>
-        <Text size="sm" className="text-money" fw={p.current ? 600 : undefined}>
-          {formatMoney(p.price)}
-        </Text>
-      </Group>
+      <ChangeItem row={c} />
     </Fragment>
   ))
 
@@ -58,19 +90,24 @@ export function PriceTimeline({ serviceId }: { serviceId: number }) {
         </Text>
       </Group>
       {timeline.points.length > 1 && <PriceLine points={timeline.points} />}
-      {timeline.points.length > 0 ? (
-        <Stack gap={0}>{periodList}</Stack>
-      ) : (
-        <Text size="sm" c="dimmed">
-          Chưa có thay đổi đơn giá.
-        </Text>
-      )}
       {timeline.reminder && (
         <Group gap={6} wrap="nowrap" align="flex-start" c="dimmed">
           <LuInfo size={14} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
           <Text size="xs">{timeline.reminder}</Text>
         </Group>
       )}
+      <Stack gap={0}>
+        <Text size="xs" fw={600} c="dimmed" tt="uppercase">
+          {`${timeline.changes.length} thay đổi`}
+        </Text>
+        {timeline.changes.length > 0 ? (
+          changeList
+        ) : (
+          <Text size="sm" c="dimmed" mt="xs">
+            Chưa có thay đổi nào.
+          </Text>
+        )}
+      </Stack>
     </Stack>
   )
 }

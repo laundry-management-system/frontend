@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ClassifyEditor, isUnclassified, useOrder } from '@/features/orders'
 import { toApiError } from '@/shared/api/apiError'
 import { EmptyState, PageHeader } from '@/shared/ui'
+import { PATHS } from '@/shared/config/paths'
 
 export default function ClassifyPage() {
   const [params] = useSearchParams()
@@ -13,10 +14,10 @@ export default function ClassifyPage() {
   const editable = !!order && isUnclassified({ ...order, totalItemsCount: order.items.length })
 
   const handleRetry = () => refetch()
-  const openDetail = () => order && navigate(`/orders/${order.id}`, { replace: true })
+  const openDetail = () => order && navigate(PATHS.orderDetail(order.id), { replace: true })
 
   const toOrders = (
-    <Button variant="secondary" component={Link} to="/orders?status=RECEIVED">
+    <Button variant="secondary" component={Link} to={`${PATHS.orders}?status=RECEIVED`}>
       Xem đơn Mới nhận
     </Button>
   )
@@ -66,7 +67,7 @@ export default function ClassifyPage() {
         title="Đơn đã được phân loại"
         description="Đơn này không còn ở trạng thái chờ phân loại."
         action={
-          <Button variant="secondary" component={Link} to={`/orders/${order.id}`}>
+          <Button variant="secondary" component={Link} to={PATHS.orderDetail(order.id)}>
             Xem chi tiết đơn
           </Button>
         }

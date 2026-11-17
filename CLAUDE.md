@@ -96,7 +96,7 @@ Thứ tự ưu tiên:
 
 ## Drawer hay Modal
 
-- **Xem** dữ liệu ít (chi tiết một dòng, một bản ghi nhật ký, một lần đổi giá) → `Drawer` bên phải (`position="right"`), mở bằng cách bấm dòng (`rowProps`). Mẫu: `AuditLogDrawer`, `PriceHistoryDrawer`.
+- **Xem** dữ liệu ít (chi tiết một dòng, một bản ghi nhật ký, diễn biến giá của một dịch vụ) → `Drawer` bên phải (`position="right"`), mở bằng cách bấm dòng (`rowProps`). Mẫu: `AuditLogDrawer`, `PriceTimelineDrawer`.
 - **Sửa / thêm** dữ liệu ít (form ngắn, xác nhận kèm lý do) → `Modal` (`ConfirmModal` cho xác nhận). Mẫu: `ServiceFormModal`.
 - Dữ liệu nhiều (nhiều card, nhiều thao tác) → trang chi tiết riêng, theo mục "Trang chi tiết: xem trước, sửa sau".
 
@@ -109,7 +109,7 @@ Thứ tự ưu tiên:
   - Phải xuống **hai hàng** (nhiều tab, tab có số đếm) → bọc `Stack`: tab trạng thái ở **hàng trên**, các bộ lọc còn lại ở hàng dưới (mẫu: `OrdersPage`, `WorkListPage`). Không để `Group` tự xuống dòng làm tab rơi xuống dưới.
 - Chỉ dựng layout riêng khi màn không phải danh sách (trang chi tiết, form nhiều bước, dashboard); khi đó vẫn dùng `PageHeader` cho tiêu đề.
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
-- Đăng ký page: lazy route trong `app/router/routes.tsx`, mục nav trong `app/layouts/MainLayout.tsx` (kèm `roles`).
+- Đăng ký page: thêm đường dẫn vào `PATHS` (`shared/config/paths.ts`), rồi khai route + mục menu trong `NAV_MODULES` (`app/router/modules.tsx`, kèm `roles`; trang chi tiết đặt `hideInMenu`). Không viết đường dẫn trần trong code.
 
 ## Khai báo props trước khi truyền
 

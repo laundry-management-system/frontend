@@ -2,6 +2,7 @@ import { Anchor, Card, Group, Stack, Text, Title } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
 import { RESOLUTION_LABEL, type IncidentDetail } from '../../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -19,7 +20,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export function ReviewResultCard({ incident }: { incident: IncidentDetail }) {
   const approved = incident.status === 'approved'
   const reviewer = `${incident.reviewedBy ?? '—'} · ${incident.reviewedAt ? formatDateTime(incident.reviewedAt).slice(0, 16) : ''}`
-  const orderLink = `/orders/${incident.orderId}`
+  const orderLink = PATHS.orderDetail(incident.orderId)
   const rewashOnCompleted =
     approved && incident.resolution === 'REWASH' && incident.order.status === 'COMPLETED'
 

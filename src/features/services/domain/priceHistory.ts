@@ -49,74 +49,34 @@ export function formatChangedAt(iso: string, now = new Date()) {
   return `${d.getFullYear() === now.getFullYear() ? dayMonth(d) : fullDate(d)} ${time(d)}`
 }
 
-export interface PricePeriod {
-  label: string
-  price: number
-  current: boolean
-}
-
-/** Nhiều lần đổi trong một ngày gộp thành một: giá cũ đầu ngày → giá mới cuối ngày; về lại giá cũ thì bỏ */
-function mergeSameDay(changes: PriceHistoryRow[]) {
-  const merged: PriceHistoryRow[] = []
-  for (const c of changes) {
-    const last = merged.at(-1)
-    if (last && fullDate(new Date(last.changedAt)) === fullDate(new Date(c.changedAt))) {
-      merged[merged.length - 1] = { ...c, oldValue: last.oldValue }
-    } else {
-      merged.push(c)
-    }
-  }
-  return merged.filter((c) => Number(c.oldValue) !== Number(c.newValue))
-}
-
 /**
- * Các mốc đơn giá của một dịch vụ từ các dòng PRICE (thứ tự bất kỳ) và giá hiện tại, mỗi ngày tối đa một mốc.
+ * Diễn biến của một dịch vụ: `points` là đơn giá sau từng lần đổi (không gộp, bỏ lần đổi không làm giá khác đi)
+ * để vẽ bậc thang; `changes` là mọi thay đổi (cả trạng thái, giờ xử lý, phụ phí), mới nhất trước.
  * Lần đổi trước khi có tính năng không được ghi: giá cũ của lần đổi đầu tiên coi là giá trước đó.
  */
-export function buildPricePeriods(rows: PriceHistoryRow[], currentPrice: number) {
-  const changes = mergeSameDay(
-    rows
-      .filter((r) => r.field === 'PRICE')
-      .toSorted((a, b) => a.changedAt.localeCompare(b.changedAt) || a.logId - b.logId),
+export function buildPriceTimeline(rows: PriceHistoryRow[], currentPrice: number) {
+  const byTime = rows.toSorted(
+    (a, b) => a.changedAt.localeCompare(b.changedAt) || a.logId - b.logId,
   )
-  if (changes.length === 0) {
-    return {
-      periods: [{ label: 'Hiện tại', price: currentPrice, current: true }] as PricePeriod[],
-      points: [] as { at: string; price: number }[],
-      reminder: null,
-    }
-  }
-
-  const at = changes.map((c) => new Date(c.changedAt))
-  const last = changes.length - 1
-  const periods: PricePeriod[] = [
-    { label: `Từ ${fullDate(at[last])}`, price: currentPrice, current: true },
-  ]
-  for (let i = last; i >= 1; i--) {
-    const end = new Date(at[i].getTime() - 24 * 60 * 60 * 1000)
-    const label =
-      fullDate(end) === fullDate(at[i - 1]) || end < at[i - 1]
-        ? fullDate(at[i - 1])
-        : `${dayMonth(at[i - 1])} – ${fullDate(end)}`
-    periods.push({ label, price: Number(changes[i].oldValue), current: false })
-  }
-  periods.push({
-    label: `Trước ${fullDate(at[0])}`,
-    price: Number(changes[0].oldValue),
-    current: false,
-  })
+  const priceChanges = byTime.filter(
+    (r) => r.field === 'PRICE' && Number(r.oldValue) !== Number(r.newValue),
+  )
+  const changes = byTime.toReversed()
+  if (priceChanges.length === 0) return { points: [], changes, reminder: null }
 
   const points = [
-    { at: changes[0].changedAt, price: Number(changes[0].oldValue) },
-    ...changes.map((c) => ({ at: c.changedAt, price: Number(c.newValue) })),
+    { at: priceChanges[0].changedAt, price: Number(priceChanges[0].oldValue) },
+    ...priceChanges.map((c) => ({ at: c.changedAt, price: Number(c.newValue) })),
   ]
-  // Điểm đầu là giá cũ ngay tại mốc đầu; biểu đồ vẽ bậc thang nên giá trị cuối kéo tới hiện tại
+  // Biểu đồ vẽ bậc thang nên giá trị cuối kéo tới hiện tại
   points[points.length - 1] = { ...points[points.length - 1], price: currentPrice }
 
+  const last = priceChanges[priceChanges.length - 1]
+  const lastAt = new Date(last.changedAt)
   return {
-    periods,
     points,
-    reminder: `Đơn nhận trước ${dayMonth(at[last])} vẫn tính ${money(Number(changes[last].oldValue))}.`,
+    changes,
+    reminder: `Đơn nhận trước ${dayMonth(lastAt)} ${time(lastAt)} vẫn tính ${money(Number(last.oldValue))}.`,
   }
 }
 

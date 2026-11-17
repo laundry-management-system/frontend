@@ -6,6 +6,7 @@ import { formatDateTime, formatMoney } from '@/shared/lib/format'
 import { CopyableCode, DataTable, type DataTableColumn, EmptyState, OrderCode } from '@/shared/ui'
 import { useShiftTransactions } from '../application/queries/useShiftTransactions'
 import { SHIFT_TRANSACTION_LABEL, type ShiftTransaction } from '../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 const PAGE_SIZE = 10
 const METHOD_LABEL = { CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản' } as const
@@ -62,7 +63,7 @@ export const ShiftTransactionsTable = memo(function ShiftTransactionsTable({
   const { data, isLoading } = useShiftTransactions(shiftId, { page: page - 1, size: PAGE_SIZE })
 
   const rowProps = (t: ShiftTransaction) => ({
-    onClick: () => navigate(`/orders/${t.orderId}`),
+    onClick: () => navigate(PATHS.orderDetail(t.orderId)),
     style: { cursor: 'pointer' },
   })
   const empty = (

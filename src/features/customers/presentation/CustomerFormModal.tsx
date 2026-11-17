@@ -20,6 +20,7 @@ import {
   validateCustomerForm,
 } from '../domain/rules'
 import type { Customer, CustomerFormValues } from '../domain/types'
+import { PATHS } from '@/shared/config/paths'
 
 interface CustomerFormModalProps {
   opened: boolean
@@ -128,7 +129,7 @@ function CustomerForm({ onClose, mode, initial, prefill, onSaved }: CustomerForm
                   {' · '}
                   <Anchor
                     component={Link}
-                    to={`/customers/${duplicateOwner.id}`}
+                    to={PATHS.customerDetail(duplicateOwner.id)}
                     size="xs"
                     onClick={onClose}
                   >

@@ -15,6 +15,7 @@ import {
 import { useListParams } from '@/shared/hooks/useListParams'
 import { type DataTableColumn, EmptyState, ListPage, RowActions } from '@/shared/ui'
 import { STORED_COLUMNS } from './components/storedColumns'
+import { PATHS } from '@/shared/config/paths'
 
 const NO_STATUSES = [] as const
 
@@ -43,7 +44,7 @@ export default function StoredOrdersPage() {
   const printList = () => window.print()
   const rowKey = (o: StoredOrder) => o.orderId
   const rowProps = (o: StoredOrder) => ({
-    onClick: () => navigate(`/orders/${o.orderId}`),
+    onClick: () => navigate(PATHS.orderDetail(o.orderId)),
     style: { cursor: 'pointer' },
   })
 

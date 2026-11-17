@@ -10,6 +10,7 @@ import {
 import { type Dashboard, type DashboardPreset, delta } from '@/features/reports'
 import { formatMoney, formatNumber } from '@/shared/lib/format'
 import { KpiCard } from './KpiCard'
+import { PATHS } from '@/shared/config/paths'
 
 const COMPARE_LABEL: Record<DashboardPreset, string> = {
   today: 'so với hôm qua',
@@ -75,7 +76,7 @@ export function KpiRow({ data, preset, onStoredClick }: KpiRowProps) {
         label="Đơn nhận"
         value={formatNumber(orders.received)}
         note={receivedNote}
-        to="/orders"
+        to={PATHS.orders}
       />
       <KpiCard
         icon={<LuWallet size={16} />}
@@ -96,7 +97,7 @@ export function KpiRow({ data, preset, onStoredClick }: KpiRowProps) {
         value={formatNumber(late)}
         note={late > 0 ? 'Quá giờ hẹn, cần xử lý ngay' : 'Không có đơn trễ'}
         tone={late > 0 ? 'danger' : 'neutral'}
-        to="/work-list?status=LATE"
+        to={`${PATHS.workList}?status=LATE`}
       />
       <KpiCard
         icon={<LuPackage size={16} />}

@@ -4,9 +4,11 @@ import { LuLock } from 'react-icons/lu'
 import { EntityCode } from '@/shared/ui'
 import type { CurrentShift } from '../domain/types'
 
+// Cùng tông đỏ với nút Kết ca
 const CARD = {
-  border: '1px solid var(--tone-success-border)',
-  background: 'var(--tone-success-bg)',
+  '--live-dot-color': 'var(--tone-danger-solid)',
+  border: '1px solid var(--tone-danger-border)',
+  background: 'var(--tone-danger-bg)',
   borderRadius: 'var(--radius-control)',
   padding: '3px 3px 3px 10px',
 }
@@ -29,11 +31,11 @@ export function CurrentShiftCard({ shift, onClose }: CurrentShiftCardProps) {
     >
       <Group gap={6} wrap="nowrap">
         <span className="ds-live-dot" aria-hidden />
-        <Text size="xs" fw={700} c="var(--tone-success-fg)" tt="uppercase" lts="0.04em">
+        <Text size="xs" fw={700} c="var(--tone-danger-fg)" tt="uppercase" lts="0.04em">
           Đang mở
         </Text>
       </Group>
-      <Group gap={4} wrap="nowrap" c="var(--tone-success-fg)">
+      <Group gap={4} wrap="nowrap" c="var(--tone-danger-fg)">
         <EntityCode code={shift.code} size="sm" />
         {/* Màn hẹp: bỏ tên và giờ mở để header không xuống dòng (vẫn có trong aria-label) */}
         <Text size="sm" c="inherit" visibleFrom="lg" style={{ whiteSpace: 'nowrap' }}>
