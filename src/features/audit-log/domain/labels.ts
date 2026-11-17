@@ -30,6 +30,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
   SERVICE: 'Dịch vụ',
   SETTING: 'Tham số',
   SHIFT: 'Ca làm việc',
+  MACHINE: 'Máy',
 }
 
 export const AUDIT_ACTIONS = Object.keys(ACTION_LABEL) as AuditAction[]
