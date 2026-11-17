@@ -198,6 +198,10 @@ export const ordersApi = {
     return detail(httpClient.post<OrderDetailResponseDto>(`/orders/${id}/revert-status`, dto))
   },
 
+  /** Áp / đổi / gỡ (null) voucher ở bước thanh toán; BE tự kiểm tra, tính giảm, giữ lượt, đơn 0đ tự PAID */
+  applyVoucher: (id: number, voucherCode: string | null) =>
+    detail(httpClient.put<OrderDetailResponseDto>(`/orders/${id}/voucher`, { voucherCode })),
+
   adjustPrice: (id: number, newTotalAmount: number, reason: string) => {
     const dto: AdjustPriceRequestDto = { newTotalAmount, reason }
     return detail(httpClient.patch<OrderDetailResponseDto>(`/orders/${id}/price`, dto))

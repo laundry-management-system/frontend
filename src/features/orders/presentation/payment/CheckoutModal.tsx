@@ -12,21 +12,24 @@ import {
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { formatPhone } from '@/features/customers'
 import { UNIT_LABEL } from '@/features/services'
 import { invalidateShifts, NoShiftBanner, useCurrentShift } from '@/features/shifts'
 import { useMe, useUserName } from '@/features/users'
+import { VoucherTag } from '@/features/vouchers'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime, formatMoney, formatNumber } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
 import { InfoLabel, ModalFooter, OrderCode, StatusBadge } from '@/shared/ui'
+import { useApplyOrderVoucher } from '../../application/mutations/useApplyOrderVoucher'
 import { CheckoutError, useCheckout } from '../../application/mutations/useCheckout'
 import { usePayments } from '../../application/queries/usePayments'
 import { useVietQr } from '../../application/queries/useVietQr'
 import { deliverySchema, type DeliveryValues } from '../../application/schemas'
 import { changeDue, confirmedTxn, PAYMENT_METHOD_KEY } from '../../domain/payment'
 import type { CheckoutMode, DeliveryResult, OrderDetail, PaymentTxn } from '../../domain/types'
+import { VoucherField } from './VoucherField'
 import { InfoSection } from '../InfoRow'
 import { PaymentFields, type PaymentValue } from './PaymentFields'
 
@@ -40,11 +43,13 @@ export interface CheckoutDone {
 const SUMMARY_BOX = { borderRadius: 'var(--radius-md)' }
 const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const
 
-function SummaryRow({ label, hint, value }: { label: string; hint?: string; value: string }) {
+function SummaryRow({ label, hint, value }: { label: ReactNode; hint?: string; value: string }) {
   return (
     <Group justify="space-between" wrap="nowrap" align="flex-start" gap="md">
       <Stack gap={0}>
-        <Text size="sm">{label}</Text>
+        <Text size="sm" component="div">
+          {label}
+        </Text>
         {hint && (
           <Text size="xs" c="dimmed" style={TABULAR}>
             {hint}
@@ -120,14 +125,25 @@ export function CheckoutModal({
       : null
 
   const adjustments = [
-    { label: 'Giảm giá', value: -order.discountAmount },
-    { label: 'Phụ phí giặt nhanh', value: order.expressFee },
-    { label: 'Giặt riêng đồ trắng', value: order.whitesFee },
+    {
+      key: 'discount',
+      label: order.voucherCode ? (
+        <Group gap={6} wrap="nowrap">
+          Giảm giá
+          <VoucherTag code={order.voucherCode} />
+        </Group>
+      ) : (
+        'Giảm giá'
+      ),
+      value: -order.discountAmount,
+    },
+    { key: 'express', label: 'Phụ phí giặt nhanh', value: order.expressFee },
+    { key: 'whites', label: 'Giặt riêng đồ trắng', value: order.whitesFee },
   ]
     .filter((a) => a.value !== 0)
     .map((a) => (
       <SummaryRow
-        key={a.label}
+        key={a.key}
         label={a.label}
         value={a.value < 0 ? `−${formatMoney(-a.value)}` : `+${formatMoney(a.value)}`}
       />
@@ -198,6 +214,26 @@ export function CheckoutModal({
     </Stack>
   )
 
+  // Còn đổi được voucher khi chưa thu tiền, kể cả đơn đã thành 0đ (tự PAID) nhờ voucher
+  const voucherEditable = paying || (order.totalAmount === 0 && !!order.voucherCode)
+  const applyVoucher = useApplyOrderVoucher()
+  const handleVoucherApply = (voucherCode: string | null) =>
+    applyVoucher.mutate(
+      { orderId: order.id, voucherCode },
+      { onError: (e) => notify.error(toApiError(e).message) },
+    )
+  const voucherSection = voucherEditable && (
+    <InfoSection title="Voucher">
+      <VoucherField
+        key={order.voucherCode ?? ''}
+        appliedCode={order.voucherCode}
+        subtotal={order.subtotal}
+        onApply={handleVoucherApply}
+        pending={applyVoucher.isPending || checkout.isPending}
+      />
+    </InfoSection>
+  )
+
   const paymentSection = (
     <InfoSection title="Thanh toán">
       {noShift && <NoShiftBanner staffName={me?.fullName ?? ''} />}
@@ -209,6 +245,8 @@ export function CheckoutModal({
           qr={qr}
           onDiscrepancy={onDiscrepancy}
         />
+      ) : order.totalAmount === 0 ? (
+        <Text size="sm">Đơn 0đ – voucher đã trừ hết tiền, không cần thu</Text>
       ) : (
         <PaidLine txn={confirmedTxn(payments.data ?? [])} />
       )}
@@ -265,6 +303,7 @@ export function CheckoutModal({
           <Grid.Col span={{ base: 12, md: 5 }}>{orderSummary}</Grid.Col>
           <Grid.Col span={{ base: 12, md: 7 }}>
             <Stack gap="lg">
+              {voucherSection}
               {paymentSection}
               {receiverSection}
             </Stack>
