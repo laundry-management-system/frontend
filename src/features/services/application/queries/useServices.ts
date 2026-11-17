@@ -1,20 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { DEFAULT_PAGE_SIZE } from '@/shared/config/constants'
-import { servicesApi } from '../data/servicesApi'
-import type { ServiceStatus } from '../domain/types'
-import { serviceKeys } from './queryKeys'
+import { servicesApi } from '../../data/servicesApi'
+import type { ServiceStatus } from '../../domain/types'
+import { serviceKeys } from '../queryKeys'
 
 /** `page` bắt đầu từ 0. */
 export function useServices({
   search,
   status,
   page,
+  size = DEFAULT_PAGE_SIZE,
 }: {
   search: string
   status?: ServiceStatus
   page: number
+  size?: number
 }) {
-  const params = { search: search.trim(), status, page, size: DEFAULT_PAGE_SIZE }
+  const params = { search: search.trim(), status, page, size }
   return useQuery({
     queryKey: serviceKeys.list(params),
     queryFn: () => servicesApi.list(params),

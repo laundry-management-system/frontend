@@ -1,6 +1,6 @@
 import { httpClient } from '@/shared/api/httpClient'
 import { fromSpringPage, type SpringPage } from '@/shared/api/page'
-import { toInstantRange } from '../domain/dateRange'
+import { toInstantRange } from '@/shared/lib/instantRange'
 import type { AuditLogFilter } from '../domain/types'
 import type { AuditLogDetailDto, AuditLogSummaryDto } from './dto'
 import { toAuditLogDetail, toAuditLogSummary } from './mapper'

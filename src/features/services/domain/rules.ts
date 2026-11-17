@@ -1,4 +1,4 @@
-import { UNIT_LABEL, type Service, type ServiceFormValues } from './types.ts'
+import { UNIT_LABEL, type PriceField, type Service, type ServiceFormValues } from './types.ts'
 
 export const SERVICE_NAME_MAX = 100
 
@@ -43,8 +43,32 @@ export const toFormValues = (s?: Service): ServiceFormValues => ({
   status: s?.status ?? 'ACTIVE',
 })
 
-export const isPriceChanged = (initial: Service | undefined, values: ServiceFormValues) =>
-  !!initial && values.price !== '' && Number(values.price) !== initial.price
+export interface TrackedChange {
+  field: PriceField
+  oldValue: string | null
+  newValue: string | null
+}
+
+const asText = (v: number | string | null) => (v == null ? null : String(v))
+
+/** Các trường sẽ ghi vào lịch sử giá nếu lưu form; tắt giặt nhanh làm phụ phí và thời gian giặt nhanh thành rỗng. */
+export function trackedChanges(
+  initial: Service | undefined,
+  values: ServiceFormValues,
+): TrackedChange[] {
+  if (!initial) return []
+  const next = toServicePayload(values)
+  const pairs: [PriceField, number | string | null, number | string | null][] = [
+    ['PRICE', initial.price, next.currentPrice],
+    ['EXPRESS_SURCHARGE', initial.expressSurcharge, next.expressSurcharge],
+    ['STANDARD_HOURS', initial.standardHours, next.standardHours],
+    ['EXPRESS_HOURS', initial.expressHours, next.expressHours],
+    ['STATUS', initial.status, values.status],
+  ]
+  return pairs
+    .filter(([, before, after]) => before !== after)
+    .map(([field, before, after]) => ({ field, oldValue: asText(before), newValue: asText(after) }))
+}
 
 const percentFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
 

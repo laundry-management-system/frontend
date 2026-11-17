@@ -1,5 +1,5 @@
-import type { Service } from '../domain/types'
-import type { ServiceResponseDto } from './dto'
+import type { PriceHistoryRow, Service } from '../domain/types'
+import type { PriceHistoryRowResponseDto, ServiceResponseDto } from './dto'
 
 export const toService = (dto: ServiceResponseDto): Service => ({
   id: dto.id,
@@ -14,4 +14,9 @@ export const toService = (dto: ServiceResponseDto): Service => ({
   minQuantity: Number(dto.minQuantity ?? 0),
   whitesApplicable: dto.whitesApplicable ?? false,
   status: dto.status,
+})
+
+export const toPriceHistoryRow = (dto: PriceHistoryRowResponseDto): PriceHistoryRow => ({
+  ...dto,
+  reason: dto.reason ?? '',
 })

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { CreateServiceRequestDto } from '../data/dto'
-import { servicesApi } from '../data/servicesApi'
-import { serviceKeys } from './queryKeys'
+import type { CreateServiceRequestDto } from '../../data/dto'
+import { servicesApi } from '../../data/servicesApi'
+import { serviceKeys } from '../queryKeys'
 
 export function useCreateService() {
   const queryClient = useQueryClient()
