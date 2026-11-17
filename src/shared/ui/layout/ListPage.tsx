@@ -14,6 +14,8 @@ export interface ListPageProps<T> extends DataTableProps<T> {
   filters?: ReactNode
   /** Cảnh báo cần chú ý ngay, hiện giữa tiêu đề và khối lọc */
   notice?: ReactNode
+  /** Dải tóm tắt kết quả lọc, đặt giữa khối lọc và bảng */
+  summary?: ReactNode
   error?: boolean
   onRetry?: () => void
   children?: ReactNode
@@ -26,6 +28,7 @@ export function ListPage<T>({
   primaryAction,
   actions,
   filters,
+  summary,
   notice,
   error,
   onRetry,
@@ -57,6 +60,7 @@ export function ListPage<T>({
           <Group>{filters}</Group>
         </Card>
       )}
+      {summary}
       {/* Tải lại lỗi nhưng vẫn còn dữ liệu cũ: DataTable không hiện `empty`, nên báo lỗi riêng */}
       {error && table.data.length > 0 && (
         <Alert color="danger" title="Không tải được dữ liệu mới" mb="md">

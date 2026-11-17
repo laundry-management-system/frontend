@@ -1,7 +1,8 @@
 export type SettingKey =
   | 'STORE_NAME'
   | 'STORE_ADDRESS'
-  | 'COMPENSATION_TERMS'
+  | 'COMPENSATION_MULTIPLIER'
+  | 'COMPENSATION_CAP_PER_ITEM'
   | 'STORAGE_DAYS'
   | 'BANK_BIN'
   | 'BANK_ACCOUNT_NO'
@@ -16,7 +17,8 @@ export type SettingKey =
 /** BANK chỉ có ở FE (ô chọn ngân hàng); BE coi BANK_BIN là số nguyên dương */
 export type SettingType = 'TIME' | 'POSITIVE_INT' | 'NON_NEGATIVE_INT' | 'STRING' | 'BANK'
 
-export type SettingGroup = 'RECEIPT' | 'VIETQR' | 'OPERATION' | 'SECURITY' | 'OTHER'
+export type SettingGroup =
+  'RECEIPT' | 'COMPENSATION' | 'VIETQR' | 'OPERATION' | 'SECURITY' | 'OTHER'
 
 export interface Setting {
   /** string chứ không phải SettingKey: BE có thể thêm key mới */
@@ -39,4 +41,6 @@ export interface SettingField {
 export interface ShopSettings {
   /** Phụ phí giặt riêng đồ trắng (đ/đơn) */
   whitesFee: number
+  compensationMultiplier: number
+  compensationCap: number
 }

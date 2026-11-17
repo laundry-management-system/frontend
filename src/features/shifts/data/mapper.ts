@@ -60,4 +60,5 @@ export const toShiftSummary = (dto: ShiftSummaryDto): ShiftSummary => ({
 export const toShiftTransaction = (dto: ShiftTransactionDto): ShiftTransaction => ({
   ...dto,
   amount: Number(dto.amount),
+  incidentCode: dto.incidentCode ?? null,
 })

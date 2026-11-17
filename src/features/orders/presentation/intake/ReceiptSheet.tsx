@@ -1,4 +1,5 @@
 import { Badge, Box, Divider, Group, Stack, Text } from '@mantine/core'
+import { compensationTermsText } from '@/shared/lib/compensationTerms'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
 import { OrderCode } from '@/shared/ui'
 import { UNIT_LABEL } from '@/features/services'
@@ -131,8 +132,8 @@ function Copy({ data, qrSvg, label }: { data: ReceiptData; qrSvg?: string | null
         hoặc tin nhắn Zalo.
       </Text>
       <Text className="text-print-small" c="dimmed">
-        Điều khoản: bồi thường tối đa 5 lần giá dịch vụ của món hư hỏng/thất lạc. Lưu đồ tối đa 30
-        ngày kể từ ngày hẹn.
+        Điều khoản: {compensationTermsText(data.compensationMultiplier, data.compensationCap)}. Lưu
+        đồ tối đa 30 ngày kể từ ngày hẹn.
       </Text>
       <Group justify="space-between" pt="xs" pb="lg">
         <Text className="text-print-small">Nhân viên ký</Text>

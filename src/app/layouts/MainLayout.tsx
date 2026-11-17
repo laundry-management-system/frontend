@@ -1,5 +1,6 @@
 import {
   AppShell,
+  Badge,
   Burger,
   Button,
   Group,
@@ -27,12 +28,14 @@ import {
   LuSun,
   LuTags,
   LuTicketPercent,
+  LuTriangleAlert,
   LuUsers,
   LuWallet,
   LuWashingMachine,
 } from 'react-icons/lu'
 import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
+import { useIncidentStats } from '@/features/incidents'
 import { CurrentShiftCard, OpenShiftModal, useCurrentShift } from '@/features/shifts'
 import { useMe } from '@/features/users'
 import { APP_NAME } from '@/shared/config/constants'
@@ -45,6 +48,12 @@ const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; rol
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
   { to: '/orders', label: 'Đơn hàng', icon: LuReceiptText, roles: ['ADMIN', 'STAFF'] },
   { to: '/stored-orders', label: 'Đồ tồn', icon: LuArchive, roles: ['ADMIN', 'STAFF'] },
+  {
+    to: '/incidents',
+    label: 'Sự cố & bồi thường',
+    icon: LuTriangleAlert,
+    roles: ['ADMIN', 'STAFF'],
+  },
   { to: '/machines', label: 'Máy giặt & sấy', icon: LuWashingMachine, roles: ['ADMIN', 'STAFF'] },
   { to: '/intake', label: 'Tạo đơn', icon: LuPackagePlus, roles: ['STAFF'] },
   { to: '/classify', label: 'Phân loại đồ', icon: LuPackageSearch, roles: ['STAFF'] },
@@ -88,6 +97,13 @@ export function MainLayout() {
   const navigate = useNavigate()
   const roles = user?.roles ?? []
   const { data: shiftState } = useCurrentShift()
+  const pendingIncidents = useIncidentStats().data?.pending ?? 0
+  const incidentBadge =
+    pendingIncidents > 0 ? (
+      <Badge size="sm" circle color="warning">
+        {pendingIncidents}
+      </Badge>
+    ) : null
   const [shiftPrompted, setShiftPrompted] = useState(readShiftPrompted)
   const [openShiftRequested, setOpenShiftRequested] = useState(false)
   const currentShift = shiftState?.current
@@ -180,6 +196,7 @@ export function MainLayout() {
               end={to === '/'}
               label={label}
               leftSection={<Icon size={18} />}
+              rightSection={to === '/incidents' ? incidentBadge : null}
             />
           ))}
       </AppShell.Navbar>

@@ -37,7 +37,6 @@ import {
   NotifyModal,
   OrderCustomerCard,
   OrderHistoryCard,
-  OrderIncidentCard,
   OrderItemsCard,
   OrderNotifyCard,
   OrderPaymentCard,
@@ -55,6 +54,7 @@ import {
   useShopInfo,
   useStartProcessing,
 } from '@/features/orders'
+import { OrderIncidentsCard } from '@/features/incidents'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
@@ -352,7 +352,7 @@ export default function OrderDetailPage() {
             <OrderCustomerCard order={order} />
             <OrderPaymentCard order={order} onResolve={isAdmin ? openResolve : undefined} />
             <OrderNotifyCard last={lastNotification} />
-            <OrderIncidentCard />
+            <OrderIncidentsCard orderId={order.id} cancelled={order.status === 'CANCELLED'} />
             {isAdmin && <AdminActionsCard status={order.status} onAction={onAdminAction} />}
           </Stack>
         </Grid.Col>

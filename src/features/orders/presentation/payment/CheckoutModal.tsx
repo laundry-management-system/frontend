@@ -21,7 +21,7 @@ import { VoucherTag } from '@/features/vouchers'
 import { toApiError } from '@/shared/api/apiError'
 import { formatDateTime, formatMoney, formatNumber } from '@/shared/lib/format'
 import { notify } from '@/shared/lib/notify'
-import { InfoLabel, ModalFooter, OrderCode, StatusBadge } from '@/shared/ui'
+import { EntityCode, InfoLabel, ModalFooter, OrderCode, StatusBadge } from '@/shared/ui'
 import { useApplyOrderVoucher } from '../../application/mutations/useApplyOrderVoucher'
 import { CheckoutError, useCheckout } from '../../application/mutations/useCheckout'
 import { usePayments } from '../../application/queries/usePayments'
@@ -136,6 +136,18 @@ export function CheckoutModal({
         'Giảm giá'
       ),
       value: -order.discountAmount,
+    },
+    {
+      key: 'incident',
+      label: (
+        <Group gap={6} wrap="nowrap">
+          Giảm giá sự cố
+          {order.incidentCodes.map((c) => (
+            <EntityCode key={c} code={c} size="sm" />
+          ))}
+        </Group>
+      ),
+      value: -order.incidentDiscount,
     },
     { key: 'express', label: 'Phụ phí giặt nhanh', value: order.expressFee },
     { key: 'whites', label: 'Giặt riêng đồ trắng', value: order.whitesFee },

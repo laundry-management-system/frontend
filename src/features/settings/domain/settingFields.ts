@@ -4,17 +4,24 @@ export const SETTING_FIELDS: (SettingField & { key: SettingKey })[] = [
   { key: 'STORE_NAME', group: 'RECEIPT', label: 'Tên cửa hàng', type: 'STRING' },
   { key: 'STORE_ADDRESS', group: 'RECEIPT', label: 'Địa chỉ', type: 'STRING' },
   {
-    key: 'COMPENSATION_TERMS',
-    group: 'RECEIPT',
-    label: 'Điều khoản bồi thường',
-    type: 'STRING',
-    multiline: true,
-  },
-  {
     key: 'STORAGE_DAYS',
     group: 'RECEIPT',
     label: 'Thời hạn lưu giữ đồ',
     unit: 'ngày',
+    type: 'POSITIVE_INT',
+  },
+  {
+    key: 'COMPENSATION_MULTIPLIER',
+    group: 'COMPENSATION',
+    label: 'Hệ số bồi thường K',
+    unit: 'lần',
+    type: 'POSITIVE_INT',
+  },
+  {
+    key: 'COMPENSATION_CAP_PER_ITEM',
+    group: 'COMPENSATION',
+    label: 'Mức trần mỗi món',
+    unit: 'đ',
     type: 'POSITIVE_INT',
   },
   { key: 'BANK_BIN', group: 'VIETQR', label: 'Ngân hàng', type: 'BANK' },
@@ -54,6 +61,7 @@ export const SETTING_FIELDS: (SettingField & { key: SettingKey })[] = [
 
 export const SETTING_GROUP_TITLE: Record<SettingGroup, string> = {
   RECEIPT: 'Thông tin in trên phiếu',
+  COMPENSATION: 'Điều khoản bồi thường',
   VIETQR: 'Tài khoản nhận chuyển khoản (VietQR)',
   OPERATION: 'Vận hành',
   SECURITY: 'Bảo mật',

@@ -1,9 +1,9 @@
-import { Text } from '@mantine/core'
+import { Stack, Text } from '@mantine/core'
 import { memo, useState } from 'react'
 import { LuReceiptText } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { formatDateTime, formatMoney } from '@/shared/lib/format'
-import { DataTable, type DataTableColumn, EmptyState, OrderCode } from '@/shared/ui'
+import { CopyableCode, DataTable, type DataTableColumn, EmptyState, OrderCode } from '@/shared/ui'
 import { useShiftTransactions } from '../application/queries/useShiftTransactions'
 import { SHIFT_TRANSACTION_LABEL, type ShiftTransaction } from '../domain/types'
 
@@ -14,12 +14,24 @@ const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const
 const columns: DataTableColumn<ShiftTransaction>[] = [
   { name: 'at', label: 'Giờ', width: 70, render: (t) => formatDateTime(t.at).slice(11, 16) },
   { name: 'order', label: 'Mã đơn', render: (t) => <OrderCode code={t.orderCode} /> },
-  { name: 'type', label: 'Loại', render: (t) => SHIFT_TRANSACTION_LABEL[t.type] },
+  {
+    name: 'type',
+    label: 'Loại',
+    render: (t) =>
+      t.incidentCode ? (
+        <Stack gap={4} align="flex-start">
+          <Text size="sm">{SHIFT_TRANSACTION_LABEL[t.type]}</Text>
+          <CopyableCode code={t.incidentCode} size="sm" />
+        </Stack>
+      ) : (
+        SHIFT_TRANSACTION_LABEL[t.type]
+      ),
+  },
   { name: 'method', label: 'Phương thức', render: (t) => METHOD_LABEL[t.method] },
   {
     name: 'amount',
     label: 'Số tiền',
-    // Hủy / hoàn là tiền đi ra khỏi két hoặc trừ khỏi tổng chuyển khoản
+    // Hủy / hoàn / chi bồi thường là tiền đi ra khỏi két hoặc trừ khỏi tổng chuyển khoản
     render: (t) => (
       <Text
         size="sm"
@@ -34,10 +46,10 @@ const columns: DataTableColumn<ShiftTransaction>[] = [
   { name: 'actor', label: 'NV thao tác', render: (t) => t.actorName },
 ]
 
-const rowKey = (t: ShiftTransaction) => `${t.type}-${t.orderId}-${t.at}`
+const rowKey = (t: ShiftTransaction) => `${t.type}-${t.orderId}-${t.at}-${t.incidentCode ?? ''}`
 
 /**
- * Thu / hủy xác nhận / hoàn tiền trong ca, mới nhất trước; bấm dòng mở đơn.
+ * Thu / hủy xác nhận / hoàn tiền / chi bồi thường trong ca, mới nhất trước; bấm dòng mở đơn.
  * memo: chỉ phụ thuộc shiftId, không cần render lại theo từng phím gõ của form kết ca.
  */
 export const ShiftTransactionsTable = memo(function ShiftTransactionsTable({
@@ -57,7 +69,7 @@ export const ShiftTransactionsTable = memo(function ShiftTransactionsTable({
     <EmptyState
       icon={<LuReceiptText size={32} />}
       title="Chưa có giao dịch trong ca"
-      description="Các lần thu tiền, hủy xác nhận và hoàn tiền trong ca sẽ hiện ở đây."
+      description="Các lần thu tiền, hủy xác nhận, hoàn tiền và chi bồi thường trong ca sẽ hiện ở đây."
     />
   )
 

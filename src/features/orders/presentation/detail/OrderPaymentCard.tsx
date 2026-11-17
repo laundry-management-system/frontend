@@ -1,7 +1,7 @@
 import { Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { formatMoney } from '@/shared/lib/format'
 import { VoucherTag } from '@/features/vouchers'
-import { StatusBadge } from '@/shared/ui'
+import { EntityCode, StatusBadge } from '@/shared/ui'
 import { isUnclassified } from '../../domain/rules'
 import type { OrderDetail, PaymentTxn } from '../../domain/types'
 import { InfoRow, InfoSection } from '../InfoRow'
@@ -25,8 +25,17 @@ export function OrderPaymentCard({
   ) : (
     'Giảm giá'
   )
+  const incidentLabel = (
+    <Group gap={6} wrap="nowrap">
+      Giảm giá sự cố
+      {order.incidentCodes.map((c) => (
+        <EntityCode key={c} code={c} size="sm" />
+      ))}
+    </Group>
+  )
   const adjustments = [
     { key: 'discount', label: discountLabel, value: -order.discountAmount },
+    { key: 'incident', label: incidentLabel, value: -order.incidentDiscount },
     { key: 'express', label: 'Phụ phí giặt nhanh', value: order.expressFee },
     { key: 'whites', label: 'Giặt riêng đồ trắng', value: order.whitesFee },
   ].filter((a) => a.value !== 0)
