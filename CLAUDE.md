@@ -86,6 +86,14 @@ Thứ tự ưu tiên:
 - Không ghi mã spec làm nội dung chính (`WF-…`, `BR-…`, `FR-…`, `US…`, `research R…`, ngày làm rõ): comment phải đọc hiểu được khi không mở spec. Chỉ kèm mã khi câu đã tự đủ nghĩa.
 - Không để comment lịch sử / tạm (`v3 mới thêm`, `trước đây…`, `TODO` không có chủ). Sửa code thì sửa hoặc xóa luôn comment đã sai.
 
+## Trang chi tiết: xem trước, sửa sau
+
+- Mở một trang chi tiết (bấm dòng ở danh sách, link từ màn khác) luôn vào **chế độ xem**: dữ liệu hiện dạng chữ, không có ô nhập. Không cho sửa thẳng trên trang chi tiết.
+- Muốn sửa phải bấm nút **"Sửa"** ở góc phải `PageHeader` → vào chế độ sửa (form ngay trên trang, hoặc modal nếu form ngắn). Ở chế độ sửa có **Hủy** (bỏ thay đổi, quay về chế độ xem) và **Lưu**; lưu xong tự quay về chế độ xem. Nút "Sửa" ẩn khi đang sửa hoặc khi bản ghi không còn sửa được.
+- Thứ tự nút trong `actions` của `PageHeader`: **`<các nút khác>` trước, `Sửa` luôn ở cuối**. Nút "Sửa" dùng `variant="secondary"` (xám) + `leftSection={<LuPencil size={16} />}`; nút thao tác chính của màn (VD "Duyệt", "Tạo đơn cho khách") giữ kiểu mặc định (filled).
+- Thao tác nghiệp vụ trên bản ghi (duyệt, từ chối, ghi nhận…) mở **modal** từ nút ở đầu trang, không dựng thành card cố định trong trang.
+- Mẫu: `CustomerDetailPage` (Tạo đơn cho khách · Sửa), `IncidentDetailPage` (Duyệt · Sửa).
+
 ## Tạo page mới
 
 - Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
