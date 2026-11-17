@@ -28,6 +28,7 @@ import {
   LuTags,
   LuUsers,
   LuWallet,
+  LuWashingMachine,
 } from 'react-icons/lu'
 import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout, ROLE_LABEL, type Role, useAuthStore } from '@/features/auth'
@@ -43,6 +44,7 @@ const navItems: { to: string; label: string; icon: typeof LuLayoutDashboard; rol
   { to: '/work-list', label: 'Danh sách công việc', icon: LuListTodo, roles: ['ADMIN', 'STAFF'] },
   { to: '/orders', label: 'Đơn hàng', icon: LuReceiptText, roles: ['ADMIN', 'STAFF'] },
   { to: '/stored-orders', label: 'Đồ tồn', icon: LuArchive, roles: ['ADMIN', 'STAFF'] },
+  { to: '/machines', label: 'Máy giặt & sấy', icon: LuWashingMachine, roles: ['ADMIN', 'STAFF'] },
   { to: '/intake', label: 'Tạo đơn', icon: LuPackagePlus, roles: ['STAFF'] },
   { to: '/classify', label: 'Phân loại đồ', icon: LuPackageSearch, roles: ['STAFF'] },
   { to: '/customers', label: 'Khách hàng', icon: LuContact, roles: ['ADMIN', 'STAFF'] },
