@@ -86,6 +86,7 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     isOverdue: overdueOf(dto),
     subtotal: money(dto.subtotal),
     discountAmount: money(dto.discountAmount),
+    voucherCode: dto.voucherCode ?? null,
     expressFee: money(dto.expressFee),
     totalAmount: money(dto.totalAmount),
     receiverName: dto.receiverName,

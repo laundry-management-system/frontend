@@ -29,6 +29,7 @@ const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
 const SetupPasswordPage = lazy(() => import('@/pages/setup-password/SetupPasswordPage'))
 const WorkListPage = lazy(() => import('@/pages/work-list/WorkListPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
+const VouchersPage = lazy(() => import('@/pages/vouchers/VouchersPage'))
 
 const fallback = (
   <Center h="60vh">
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
               { path: '/shifts', element: page(<ShiftsPage />) },
               { path: '/shifts/:id', element: page(<ShiftReconcilePage mode="approve" />) },
               { path: '/settings', element: page(<SettingsPage />) },
+              { path: '/vouchers', element: page(<VouchersPage />) },
             ],
           },
           { path: '/work-list', element: page(<WorkListPage />) },

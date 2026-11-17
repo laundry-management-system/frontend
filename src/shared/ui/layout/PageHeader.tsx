@@ -1,4 +1,4 @@
-import { Group, Stack, Text, Title } from '@mantine/core'
+import { Box, Group, Stack, Text, Title } from '@mantine/core'
 import type { ReactNode } from 'react'
 import { InfoTooltip } from '../feedback/InfoTooltip'
 
@@ -20,7 +20,8 @@ export function PageHeader({ title, description, info, actions }: PageHeaderProp
         </Group>
         {description && <Text c="dimmed">{description}</Text>}
       </Stack>
-      {actions}
+      {/* Xuống dòng khi hẹp vẫn giữ nút bên phải */}
+      {actions && <Box ml="auto">{actions}</Box>}
     </Group>
   )
 }

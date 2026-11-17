@@ -31,7 +31,6 @@ import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, EntityCode, InfoLabel } from '@/shared/ui'
 import { useOrderDraft } from '../../application/useOrderDraft'
 import { useSaveClassification } from '../../application/mutations/useSaveClassification'
-import { checkVoucherCode } from '../../application/voucherCheck'
 import { computeTotals, lineExpressSurcharge } from '../../domain/pricing'
 import { isV3, splitImages, validateLine } from '../../domain/rules'
 import {
@@ -45,7 +44,6 @@ import { ItemLineEditor } from './ItemLineEditor'
 import { RescheduleModal } from '../modals/RescheduleModal'
 import { FIT_VIEWPORT, STICKY_ASIDE, TWO_COLUMNS_QUERY } from '../stickyAside'
 import { TotalsCard } from './TotalsCard'
-import { VoucherField } from './VoucherField'
 
 const emptyLine = (): OrderLine => ({
   itemType: '',
@@ -71,10 +69,9 @@ const withServicePrice = (line: OrderLine, s: Service): OrderLine => ({
 })
 
 /** So sánh để biết có thay đổi chưa lưu (ảnh tính riêng vì File không serialize được). */
-const snapshot = (orderType: OrderType, lines: OrderLine[], voucherCode: string | null) =>
+const snapshot = (orderType: OrderType, lines: OrderLine[]) =>
   JSON.stringify({
     orderType,
-    voucherCode,
     lines: lines.map((l) => ({ ...l, localImages: l.localImages.length })),
   })
 
@@ -125,13 +122,11 @@ function ClassifyEditorBody({
     const base = {
       orderType: order.orderType,
       lines: order.items.length ? priced(order.items) : v3 ? suggested : [emptyLine()],
-      voucherCode: null as string | null,
     }
     const fromDraft = draft && {
       // Loại đơn v3 cố định từ lúc tạo
       orderType: v3 ? order.orderType : draft.orderType,
       lines: priced(draft.lines.map((l) => ({ ...l, localImages: [] }))),
-      voucherCode: draft.voucherCode,
     }
     return { base, start: fromDraft ?? base, draftSavedAt: draft?.savedAt ?? null }
   })
@@ -140,24 +135,20 @@ function ClassifyEditorBody({
   const whitesFee = v3 && order.washWhitesSeparately ? settingsFee : 0
   const [orderType, setOrderType] = useState(initial.start.orderType)
   const [lines, setLines] = useState<OrderLine[]>(initial.start.lines)
-  const [voucherCode, setVoucherCode] = useState(initial.start.voucherCode)
   const [bagImages, setBagImages] = useState<File[]>([])
   const [savedSnapshot, setSavedSnapshot] = useState(() =>
-    snapshot(initial.base.orderType, initial.base.lines, initial.base.voucherCode),
+    snapshot(initial.base.orderType, initial.base.lines),
   )
   const [submitted, setSubmitted] = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
 
   const save = useSaveClassification()
 
-  const subtotalOnly = computeTotals(lines, orderType, serviceMap).subtotal
-  const voucher = voucherCode ? checkVoucherCode(voucherCode, subtotalOnly) : null
-  const discount = voucher?.check.ok ? voucher.check.discount : 0
-  const totals = computeTotals(lines, orderType, serviceMap, discount, whitesFee)
+  const totals = computeTotals(lines, orderType, serviceMap, 0, whitesFee)
   const lineErrors = lines.map(validateLine)
   const hasErrors = lineErrors.some((e) => Object.keys(e).length > 0)
 
-  const dirty = snapshot(orderType, lines, voucherCode) !== savedSnapshot || bagImages.length > 0
+  const dirty = snapshot(orderType, lines) !== savedSnapshot || bagImages.length > 0
 
   // Rời trang khi còn thay đổi chưa lưu
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
@@ -185,13 +176,12 @@ function ClassifyEditorBody({
   const saveDraft = () => {
     const ok = draftStore.save(order.id, {
       orderType,
-      voucherCode,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- bỏ ảnh khỏi nháp
       lines: lines.map(({ localImages, ...rest }) => rest),
       savedAt: new Date().toISOString(),
     })
     if (!ok) return notify.error('Trình duyệt không cho lưu nháp')
-    setSavedSnapshot(snapshot(orderType, lines, voucherCode))
+    setSavedSnapshot(snapshot(orderType, lines))
     notify.success('Ảnh chưa được lưu kèm nháp', 'Đã lưu nháp trên máy này')
   }
 
@@ -201,7 +191,6 @@ function ClassifyEditorBody({
     save.mutate(
       {
         orderId: order.id,
-        discountAmount: v3 ? discount : undefined,
         items: lines.map((line) => ({
           line,
           expressSurcharge: lineExpressSurcharge(orderType, serviceMap.get(line.serviceId)),
@@ -210,7 +199,7 @@ function ClassifyEditorBody({
       {
         onSuccess: ({ failedImages }) => {
           draftStore.clear(order.id)
-          setSavedSnapshot(snapshot(orderType, lines, voucherCode))
+          setSavedSnapshot(snapshot(orderType, lines))
           setBagImages([])
           notify.success('Đơn đã chuyển sang Đang xử lý', 'Đã lưu phân loại')
           if (failedImages)
@@ -384,11 +373,6 @@ function ClassifyEditorBody({
             />
           </Stack>
         )}
-        <VoucherField
-          appliedCode={voucherCode}
-          subtotal={totals.subtotal}
-          onApply={setVoucherCode}
-        />
       </Stack>
     </Card>
   )
@@ -434,7 +418,7 @@ function ClassifyEditorBody({
           {/* Ghim tổng quan đơn + nút lưu; cột cao hơn màn hình thì cuộn bên trong */}
           <Stack gap="lg" style={twoColumns ? { ...FIT_VIEWPORT, overflowY: 'auto' } : undefined}>
             {orderSummary}
-            <TotalsCard totals={totals} voucherCode={discount ? voucherCode : null} />
+            <TotalsCard totals={totals} />
             {saveActions}
           </Stack>
         </Grid.Col>

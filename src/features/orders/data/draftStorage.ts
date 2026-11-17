@@ -3,7 +3,6 @@ import type { OrderLine, OrderType } from '../domain/types'
 export interface OrderDraft {
   orderType: OrderType
   lines: Omit<OrderLine, 'localImages'>[]
-  voucherCode: string | null
   savedAt: string
 }
 

@@ -190,6 +190,7 @@ export interface OrderDetail extends OrderSummary {
   isOverdue: boolean
   subtotal: number
   discountAmount: number
+  voucherCode: string | null
   expressFee: number
   totalAmount: number
   receiverName: string | null
@@ -206,19 +207,6 @@ export interface OrderDetail extends OrderSummary {
   washWhitesSeparately: boolean
   /** 0 tới khi phân loại (chốt lúc phân loại) */
   whitesFee: number
-}
-
-export interface Voucher {
-  code: string
-  discountType: 'PERCENT' | 'AMOUNT'
-  discountValue: number
-  /** YYYY-MM-DD, tính cả hai đầu */
-  startDate: string
-  endDate: string
-  minOrderValue: number
-  maxUses: number
-  usedCount: number
-  status: 'ACTIVE' | 'DISABLED'
 }
 
 /** Nội dung in trên phiếu nhận đồ (khớp `OrderReceiptResponse`) */
@@ -305,9 +293,10 @@ export interface VietQr {
 export interface DeliveryResult {
   orderCode: string
   customerName: string
-  invoiceNo: string
-  paymentMethod: PaymentMethod
-  paidAt: string
+  /** null: đơn 0đ (voucher giảm hết) trả đồ không cần giao dịch */
+  invoiceNo: string | null
+  paymentMethod: PaymentMethod | null
+  paidAt: string | null
   deliveredAt: string
   /** Username */
   deliveredBy: string

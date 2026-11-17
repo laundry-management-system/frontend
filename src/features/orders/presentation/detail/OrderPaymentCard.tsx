@@ -1,5 +1,6 @@
 import { Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { formatMoney } from '@/shared/lib/format'
+import { VoucherTag } from '@/features/vouchers'
 import { StatusBadge } from '@/shared/ui'
 import { isUnclassified } from '../../domain/rules'
 import type { OrderDetail, PaymentTxn } from '../../domain/types'
@@ -16,10 +17,18 @@ export function OrderPaymentCard({
 }) {
   const pending = isUnclassified({ ...order, totalItemsCount: order.items.length })
   // Chỉ liệt kê khoản điều chỉnh khác 0; không có thì tổng tiền hàng chính là tổng thanh toán
+  const discountLabel = order.voucherCode ? (
+    <Group gap={6} wrap="nowrap">
+      Giảm giá
+      <VoucherTag code={order.voucherCode} />
+    </Group>
+  ) : (
+    'Giảm giá'
+  )
   const adjustments = [
-    { label: 'Giảm giá', value: -order.discountAmount },
-    { label: 'Phụ phí giặt nhanh', value: order.expressFee },
-    { label: 'Giặt riêng đồ trắng', value: order.whitesFee },
+    { key: 'discount', label: discountLabel, value: -order.discountAmount },
+    { key: 'express', label: 'Phụ phí giặt nhanh', value: order.expressFee },
+    { key: 'whites', label: 'Giặt riêng đồ trắng', value: order.whitesFee },
   ].filter((a) => a.value !== 0)
   const signed = (v: number) => (v < 0 ? `−${formatMoney(-v)}` : `+${formatMoney(v)}`)
 
@@ -35,7 +44,7 @@ export function OrderPaymentCard({
         <>
           <InfoRow label="Tổng tiền hàng">{formatMoney(order.subtotal)}</InfoRow>
           {adjustments.map((a) => (
-            <InfoRow key={a.label} label={a.label}>
+            <InfoRow key={a.key} label={a.label}>
               {signed(a.value)}
             </InfoRow>
           ))}
@@ -61,7 +70,11 @@ export function OrderPaymentCard({
         <InfoSection title="Chi phí">{costs}</InfoSection>
 
         <InfoSection title="Giao dịch">
-          <PaymentHistoryList orderCode={order.orderCode} onResolve={onResolve} />
+          <PaymentHistoryList
+            orderCode={order.orderCode}
+            onResolve={onResolve}
+            zeroTotal={order.totalAmount === 0}
+          />
         </InfoSection>
 
         {order.note && (

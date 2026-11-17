@@ -57,7 +57,7 @@ export function CancelOrderModal({ order, onClose }: { order: OrderDetail; onClo
                 </>
               }
             >
-              Ghi nhận hoàn tiền ở màn Thanh toán. Hệ thống chưa tự trả lượt voucher.
+              Ghi nhận hoàn tiền ở màn Thanh toán.
             </Alert>
           )}
           <Autocomplete
