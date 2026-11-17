@@ -42,6 +42,8 @@ export function ConfirmModal({
             required
             autosize
             minRows={3}
+            // Nhật ký lưu lý do tối đa 500 ký tự
+            maxLength={500}
             value={reason}
             onChange={(e) => setReason(e.currentTarget.value)}
           />

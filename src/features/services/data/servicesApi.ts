@@ -1,8 +1,15 @@
 import { httpClient } from '@/shared/api/httpClient'
 import { fromSpringPage, type SpringPage } from '@/shared/api/page'
-import type { ServiceStatus } from '../domain/types'
-import type { CreateServiceRequestDto, ServiceResponseDto, UpdateServiceRequestDto } from './dto'
-import { toService } from './mapper'
+import { toInstantRange } from '@/shared/lib/instantRange'
+import type { PriceHistoryFilter, ServiceStatus } from '../domain/types'
+import type {
+  CreateServiceRequestDto,
+  PriceHistoryRowResponseDto,
+  PriceIssuedResponseDto,
+  ServiceResponseDto,
+  UpdateServiceRequestDto,
+} from './dto'
+import { toPriceHistoryRow, toService } from './mapper'
 
 export interface ServiceListParams {
   search?: string
@@ -27,4 +34,15 @@ export const servicesApi = {
 
   update: async (id: number, dto: UpdateServiceRequestDto) =>
     toService((await httpClient.put<ServiceResponseDto>(`/services/${id}`, dto)).data),
+
+  priceHistory: async ({ from, to, ...rest }: PriceHistoryFilter) => {
+    const { data } = await httpClient.get<SpringPage<PriceHistoryRowResponseDto>>(
+      '/services/price-history',
+      { params: { ...rest, ...toInstantRange(from, to) } },
+    )
+    return fromSpringPage(data, toPriceHistoryRow)
+  },
+
+  priceIssued: async () =>
+    (await httpClient.get<PriceIssuedResponseDto>('/services/price-issued')).data,
 }

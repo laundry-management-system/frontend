@@ -1,4 +1,4 @@
-import type { ServiceStatus, ServiceUnit } from '../domain/types'
+import type { PriceField, ServiceStatus, ServiceUnit } from '../domain/types'
 
 export interface ServiceResponseDto {
   id: number
@@ -31,7 +31,27 @@ export interface CreateServiceRequestDto {
 }
 
 export type UpdateServiceRequestDto = CreateServiceRequestDto & {
-  // BE chưa đọc trường này (BE-S1, tính năng nhật ký giá chưa làm); Spring bỏ qua trường lạ
+  /** Bắt buộc khi đổi đơn giá, phụ phí, thời gian hoặc trạng thái (BR-C02) */
   priceChangeReason?: string
   status: ServiceStatus
+}
+
+export interface PriceHistoryRowResponseDto {
+  logId: number
+  changedAt: string
+  serviceId: number
+  serviceCode: string | null
+  serviceName: string
+  unit: ServiceUnit | null
+  field: PriceField
+  oldValue: string | null
+  newValue: string | null
+  changedById: number
+  changedByName: string
+  reason: string | null
+}
+
+export interface PriceIssuedResponseDto {
+  effectiveFrom: string | null
+  issuedBy: string | null
 }

@@ -1,6 +1,7 @@
 import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
-import { LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
+import { LuHistory, LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
+import { Link } from 'react-router-dom'
 import { selectHasRole, useAuthStore } from '@/features/auth'
 import {
   expressParts,
@@ -10,10 +11,11 @@ import {
   ServiceFormModal,
   ServiceStatusBadge,
   UNIT_LABEL,
+  usePriceIssued,
   useServices,
 } from '@/features/services'
 import { useListParams } from '@/shared/hooks/useListParams'
-import { formatNumber } from '@/shared/lib/format'
+import { formatDate, formatNumber } from '@/shared/lib/format'
 import {
   type DataTableColumn,
   EmptyState,
@@ -41,6 +43,7 @@ export default function ServicesPage() {
     status: status === 'ALL' ? undefined : status,
     page: page - 1,
   })
+  const { data: issued } = usePriceIssued()
   const [modal, setModal] = useState<ModalState>(null)
   const openCreate = () => setModal({ mode: 'create' })
   const closeModal = () => setModal(null)
@@ -144,6 +147,19 @@ export default function ServicesPage() {
   ]
 
   const primaryAction = canManage ? { label: 'Thêm dịch vụ', onClick: openCreate } : undefined
+  const headerActions = canManage && (
+    <Button
+      variant="secondary"
+      leftSection={<LuHistory size={16} />}
+      component={Link}
+      to="/services/price-history"
+    >
+      Lịch sử đổi giá
+    </Button>
+  )
+  const issuedText = issued?.effectiveFrom
+    ? ` · Áp dụng từ ${formatDate(issued.effectiveFrom)} · ban hành bởi ${issued.issuedBy}`
+    : ''
 
   const filters = (
     <>
@@ -189,8 +205,9 @@ export default function ServicesPage() {
     <>
       <ListPage<Service>
         title="Bảng giá dịch vụ"
-        description={`${data?.page.totalElements ?? 0} dịch vụ`}
+        description={`${data?.page.totalElements ?? 0} dịch vụ${issuedText}`}
         primaryAction={primaryAction}
+        actions={headerActions}
         info="Đổi giá không ảnh hưởng đơn đã tạo – đơn giá được chốt trên từng dòng đơn."
         filters={filters}
         columns={columns}

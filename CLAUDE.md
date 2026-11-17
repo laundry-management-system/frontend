@@ -94,6 +94,12 @@ Thứ tự ưu tiên:
 - Thao tác nghiệp vụ trên bản ghi (duyệt, từ chối, ghi nhận…) mở **modal** từ nút ở đầu trang, không dựng thành card cố định trong trang.
 - Mẫu: `CustomerDetailPage` (Tạo đơn cho khách · Sửa), `IncidentDetailPage` (Duyệt · Sửa).
 
+## Drawer hay Modal
+
+- **Xem** dữ liệu ít (chi tiết một dòng, một bản ghi nhật ký, một lần đổi giá) → `Drawer` bên phải (`position="right"`), mở bằng cách bấm dòng (`rowProps`). Mẫu: `AuditLogDrawer`, `PriceHistoryDrawer`.
+- **Sửa / thêm** dữ liệu ít (form ngắn, xác nhận kèm lý do) → `Modal` (`ConfirmModal` cho xác nhận). Mẫu: `ServiceFormModal`.
+- Dữ liệu nhiều (nhiều card, nhiều thao tác) → trang chi tiết riêng, theo mục "Trang chi tiết: xem trước, sửa sau".
+
 ## Tạo page mới
 
 - Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.

@@ -19,10 +19,18 @@ import { toApiError } from '@/shared/api/apiError'
 import { notify } from '@/shared/lib/notify'
 import { ConfirmModal, EntityCode, InfoLabel, ModalFooter, MoneyInput } from '@/shared/ui'
 import { serviceFormSchema } from '../application/schemas'
-import { useCreateService } from '../application/useCreateService'
-import { useUpdateService } from '../application/useUpdateService'
-import { isPriceChanged, SERVICE_NAME_MAX, toFormValues, toServicePayload } from '../domain/rules'
+import { useCreateService } from '../application/mutations/useCreateService'
+import { useUpdateService } from '../application/mutations/useUpdateService'
+import { formatPriceValue } from '../domain/priceHistory'
 import {
+  SERVICE_NAME_MAX,
+  toFormValues,
+  toServicePayload,
+  trackedChanges,
+  type TrackedChange,
+} from '../domain/rules'
+import {
+  PRICE_FIELD_LABEL,
   SERVICE_STATUS_LABEL,
   type Service,
   type ServiceFormValues,
@@ -45,6 +53,15 @@ interface ServiceFormModalProps {
   /** Bắt buộc khi mode = edit */
   initial?: Service
 }
+
+const changeLine = (c: TrackedChange) => (
+  <Text key={c.field} size="sm">
+    {PRICE_FIELD_LABEL[c.field]}: {formatPriceValue(c.field, c.oldValue)} →{' '}
+    <Text span fw={500}>
+      {formatPriceValue(c.field, c.newValue)}
+    </Text>
+  </Text>
+)
 
 const UNIT_OPTIONS = (Object.keys(UNIT_LABEL) as ServiceUnit[]).map((u) => ({
   value: u,
@@ -83,7 +100,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
   const update = useUpdateService()
   const pending = create.isPending || update.isPending
   const [confirmDiscard, setConfirmDiscard] = useState(false)
-  const [pricePending, setPricePending] = useState<ServiceFormValues | null>(null)
+  const [reasonPending, setReasonPending] = useState<ServiceFormValues | null>(null)
 
   const form = useForm<ServiceFormValues>({
     initialValues: toFormValues(initial),
@@ -122,10 +139,18 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
   }
 
   const submit = form.onSubmit((values) =>
-    isPriceChanged(initial, values) ? setPricePending(values) : save(values),
+    trackedChanges(initial, values).length > 0 ? setReasonPending(values) : save(values),
   )
 
   const close = () => (form.isDirty() ? setConfirmDiscard(true) : onClose())
+  const changes = reasonPending ? trackedChanges(initial, reasonPending) : []
+  const priceChange = changes.find((c) => c.field === 'PRICE')
+  const otherChanges = changes.filter((c) => c.field !== 'PRICE')
+  const closeReason = () => setReasonPending(null)
+  const confirmReason = (reason?: string) => {
+    save(reasonPending!, reason)
+    setReasonPending(null)
+  }
   const toggleExpress = () => form.setFieldValue('expressSupported', !v.expressSupported)
   const toggleWhites = () => form.setFieldValue('whitesApplicable', !v.whitesApplicable)
 
@@ -151,11 +176,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
         <MoneyInput
           label={
             <InfoLabel
-              info={
-                mode === 'edit' &&
-                // Không hứa ghi nhật ký: BE chưa lưu lịch sử giá (BE-S1)
-                'Đổi giá phải nhập lý do.'
-              }
+              info={mode === 'edit' && 'Đổi giá phải nhập lý do và được ghi vào lịch sử giá.'}
             >
               {`Đơn giá (mỗi ${unitLabel})`}
             </InfoLabel>
@@ -274,19 +295,22 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
         Các thông tin vừa nhập sẽ không được lưu.
       </ConfirmModal>
       <ConfirmModal
-        opened={!!pricePending}
-        onClose={() => setPricePending(null)}
-        onConfirm={(reason) => {
-          save(pricePending!, reason)
-          setPricePending(null)
-        }}
+        opened={!!reasonPending}
+        onClose={closeReason}
+        onConfirm={confirmReason}
         kind="reason"
-        title={`Đổi giá ${initial?.name ?? ''}`}
-        confirmLabel="Lưu giá mới"
+        title={`${priceChange ? 'Đổi giá' : 'Cập nhật'} ${initial?.name ?? ''}`}
+        confirmLabel={priceChange ? 'Lưu giá mới' : 'Lưu thay đổi'}
       >
-        {pricePending && initial && (
-          <PriceChange oldPrice={initial.price} newPrice={Number(pricePending.price)} />
-        )}
+        <Stack gap="sm">
+          {priceChange && (
+            <PriceChange
+              oldPrice={Number(priceChange.oldValue)}
+              newPrice={Number(priceChange.newValue)}
+            />
+          )}
+          {otherChanges.map(changeLine)}
+        </Stack>
       </ConfirmModal>
     </>
   )
