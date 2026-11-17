@@ -19,7 +19,7 @@ export type AuditAction =
   | 'SHIFT_APPROVE'
 
 export type EntityType =
-  'AUTH' | 'USER' | 'CUSTOMER' | 'ORDER' | 'PAYMENT' | 'SERVICE' | 'SETTING' | 'SHIFT'
+  'AUTH' | 'USER' | 'CUSTOMER' | 'ORDER' | 'PAYMENT' | 'SERVICE' | 'SETTING' | 'SHIFT' | 'MACHINE'
 
 export interface AuditLogSummary {
   id: number
