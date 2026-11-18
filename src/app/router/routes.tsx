@@ -1,6 +1,7 @@
 import { Center, Loader } from '@mantine/core'
 import { lazy, type ReactNode, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { PATHS } from '@/shared/config/paths'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { MainLayout } from '../layouts/MainLayout'
 import { GuestRoute } from './GuestRoute'
@@ -8,6 +9,7 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { LegacyRedirect } from './LegacyRedirect'
 import { LEGACY_REDIRECTS, NAV_MODULES } from './modules'
 import { ModuleIndex } from './ModuleIndex'
+import { PublicLanding } from './PublicLanding'
 import { RoleGuard } from './RoleGuard'
 
 const DesignSystemPage = lazy(() => import('@/pages/design-system/DesignSystemPage'))
@@ -33,6 +35,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [{ path: '/setup-password', element: page(<SetupPasswordPage />) }],
   },
+  { path: PATHS.landing, element: <PublicLanding /> },
   {
     element: <ProtectedRoute />,
     children: [

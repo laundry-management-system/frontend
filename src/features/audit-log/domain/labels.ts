@@ -20,6 +20,7 @@ export const ACTION_LABEL: Record<AuditAction, string> = {
   SHIFT_CLOSE: 'Kết ca',
   SHIFT_CLOSE_ON_BEHALF: 'Kết ca thay',
   SHIFT_APPROVE: 'Duyệt ca',
+  SERVICE_AREA_MANAGE: 'Quản lý khu vực',
 }
 
 export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
@@ -33,6 +34,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
   INCIDENT: 'Sự cố',
   SHIFT: 'Ca làm việc',
   MACHINE: 'Máy',
+  SERVICE_AREA: 'Khu vực',
 }
 
 export const AUDIT_ACTIONS = Object.keys(ACTION_LABEL) as AuditAction[]

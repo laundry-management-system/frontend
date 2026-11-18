@@ -1,10 +1,12 @@
 import { Group, NumberInput, Select, Text, Textarea, TextInput } from '@mantine/core'
 import { TimeInput } from '@mantine/dates'
 import type { ChangeEvent } from 'react'
+import { formatPhone } from '@/features/customers'
 import { formatMoney } from '@/shared/lib/format'
 import { MoneyInput } from '@/shared/ui'
 import { bankOptions } from '../domain/banks'
 import type { SettingField } from '../domain/types'
+import { normalizeStorePhone } from '../domain/validate'
 
 interface SettingInputProps {
   field: SettingField
@@ -29,6 +31,8 @@ function displayValue(field: SettingField, value: string) {
       return field.unit ? `${value} ${field.unit}` : value
     case 'BANK':
       return bankOptions(value).find((o) => o.value === value)?.label ?? value
+    case 'PHONE':
+      return formatPhone(value)
     default:
       return value
   }
@@ -39,6 +43,7 @@ export function SettingInput({ field, value, error, editing, onChange }: Setting
     onChange(e.currentTarget.value)
   const handleNumber = (v: number | string) => onChange(v === '' ? '' : String(v))
   const handleSelect = (v: string | null) => onChange(v ?? '')
+  const handlePhoneBlur = () => onChange(normalizeStorePhone(value))
 
   const common = { label: field.label, error, required: true }
   const numberValue = value === '' ? '' : Number(value)
@@ -50,7 +55,7 @@ export function SettingInput({ field, value, error, editing, onChange }: Setting
         {field.label}
       </Text>
       <Text fw={500} ta="right" maw="60%" style={VALUE_STYLE}>
-        {value ? displayValue(field, value) : '—'}
+        {value ? displayValue(field, value) : field.type === 'PHONE' ? 'Chưa có' : '—'}
       </Text>
     </Group>
   )
@@ -89,6 +94,19 @@ export function SettingInput({ field, value, error, editing, onChange }: Setting
             data={bankOptions(value)}
             value={value || null}
             onChange={handleSelect}
+          />
+        )
+      case 'PHONE':
+        return (
+          <TextInput
+            {...common}
+            required={false}
+            type="tel"
+            inputMode="tel"
+            placeholder="0901 234 567"
+            value={value}
+            onChange={handleText}
+            onBlur={handlePhoneBlur}
           />
         )
       case 'STRING':

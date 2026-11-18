@@ -13,9 +13,10 @@ export type SettingKey =
   | 'WHITES_FEE'
   | 'MAX_LOGIN_FAIL'
   | 'LOCK_MINUTES'
+  | 'STORE_PHONE'
 
 /** BANK chỉ có ở FE (ô chọn ngân hàng); BE coi BANK_BIN là số nguyên dương */
-export type SettingType = 'TIME' | 'POSITIVE_INT' | 'NON_NEGATIVE_INT' | 'STRING' | 'BANK'
+export type SettingType = 'TIME' | 'POSITIVE_INT' | 'NON_NEGATIVE_INT' | 'STRING' | 'BANK' | 'PHONE'
 
 export type SettingGroup =
   'RECEIPT' | 'COMPENSATION' | 'VIETQR' | 'OPERATION' | 'SECURITY' | 'OTHER'
@@ -43,4 +44,19 @@ export interface ShopSettings {
   whitesFee: number
   compensationMultiplier: number
   compensationCap: number
+}
+
+export interface ServiceArea {
+  id: number
+  name: string
+  pickupFee: number
+  deliveryFee: number
+  active: boolean
+}
+
+/** NumberInput của Mantine trả '' khi ô trống */
+export interface ServiceAreaFormValues {
+  name: string
+  pickupFee: number | ''
+  deliveryFee: number | ''
 }

@@ -1,15 +1,15 @@
 import { Button, Card, Flex, Skeleton, Stack } from '@mantine/core'
 import { LuCloudOff } from 'react-icons/lu'
-import { SettingsForm, useSettings } from '@/features/settings'
+import { ServiceAreasCard, SettingsForm, useSettings } from '@/features/settings'
 import { EmptyState, PageHeader } from '@/shared/ui'
 
 export default function SettingsPage() {
   const { data, isLoading, isError, refetch } = useSettings()
   const handleRetry = () => refetch()
 
-  if (data) return <SettingsForm settings={data} />
-
-  const body = isError ? (
+  const body = data ? (
+    <SettingsForm settings={data} />
+  ) : isError ? (
     <Card>
       <EmptyState
         icon={<LuCloudOff size={32} />}
@@ -33,10 +33,12 @@ export default function SettingsPage() {
     )
   )
 
+  // Card khu vực tải riêng: lỗi của nó không chặn form cài đặt và ngược lại
   return (
     <>
-      <PageHeader title="Cài đặt cửa hàng" description="Áp dụng cho toàn hệ thống" />
+      {!data && <PageHeader title="Cài đặt cửa hàng" description="Áp dụng cho toàn hệ thống" />}
       {body}
+      <ServiceAreasCard />
     </>
   )
 }

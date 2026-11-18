@@ -15,6 +15,7 @@ const M = MODULE_PATHS
 export const PATHS = {
   dashboard: '/',
   login: '/login',
+  landing: '/gioi-thieu',
 
   workList: `${M.operations}/work-list`,
   intake: `${M.operations}/intake`,
