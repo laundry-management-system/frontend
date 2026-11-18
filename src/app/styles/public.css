@@ -320,6 +320,59 @@
     transform: none;
   }
 
+  /* Nền bản đồ minh hoạ của Khu vực phục vụ: ô phố nhạt trên nền xanh */
+  .pub-map {
+    background-color: var(--pub-primary-soft);
+    background-image:
+      linear-gradient(#ffffff99 1px, transparent 1px),
+      linear-gradient(90deg, #ffffff99 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Danh sách khu vực dạng các điểm dừng trên tuyến giao */
+  .pub-stop {
+    position: relative;
+    padding-block: 0.875rem;
+    padding-left: 2rem;
+    border-bottom: 1px solid var(--pub-border);
+  }
+  .pub-stop:last-child {
+    border-bottom: 0;
+  }
+  .pub-stop::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0.4375rem;
+    border-left: 2px dashed var(--pub-border);
+  }
+  .pub-stop:first-child::before {
+    top: 50%;
+  }
+  .pub-stop:last-child::before {
+    bottom: 50%;
+  }
+  .pub-stop:only-child::before {
+    display: none;
+  }
+  .pub-stop::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0.125rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: -0.4375rem;
+    border: 3px solid var(--pub-accent);
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-surface);
+    transition: background-color var(--pub-duration) var(--pub-ease-out);
+  }
+  .pub-stop:hover::after {
+    background: var(--pub-accent);
+  }
+
   /* Tên tiệm cỡ lớn cuối footer: cỡ chữ theo số ký tự để vừa một dòng, tên dài thì xuống dòng */
   .pub-wordmark {
     font-family: var(--pub-font-display);
