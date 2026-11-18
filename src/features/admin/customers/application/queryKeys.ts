@@ -1,5 +1,10 @@
 import type { CustomerListParams } from '../data/customersApi'
 
+export const registrationKeys = {
+  all: ['customer-registrations'] as const,
+  count: () => [...registrationKeys.all, 'pending-count'] as const,
+}
+
 export const customerKeys = {
   all: ['customers'] as const,
   list: (params: CustomerListParams) => [...customerKeys.all, 'list', params] as const,

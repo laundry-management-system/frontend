@@ -5,6 +5,10 @@ export interface CustomerResponseDto {
   customerCode: string
   fullName: string
   phone: string
+  email: string | null
+  source: 'COUNTER' | 'SELF_REGISTERED'
+  hasAccount: boolean
+  pendingRegistrationId: number | null
   address: string | null
   note: string | null
   isVip: boolean | null
@@ -12,6 +16,10 @@ export interface CustomerResponseDto {
   createdBy: string | null
   createdAt: string
   updatedAt: string
+  /** Chỉ có ở API danh sách; các API khác trả null */
+  orderCount: number | null
+  totalSpent: number | string | null
+  lastOrderAt: string | null
 }
 
 export interface CreateCustomerRequestDto {
@@ -35,4 +43,10 @@ export interface CustomerOrderDto {
   status: OrderStatus
   paymentStatus: PaymentStatus
   receivedAt: string
+}
+
+export interface ActivateRegistrationResponseDto {
+  customerId: number
+  customerCode: string
+  linked: boolean
 }

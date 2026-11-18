@@ -1,6 +1,7 @@
 export type AuditAction =
   | 'ACCOUNT_MANAGE'
   | 'ACCOUNT_LOCKED'
+  | 'CUSTOMER_ACCOUNT'
   | 'CUSTOMER_PHONE_CHANGE'
   | 'DUE_DATE_CHANGE'
   | 'INCIDENT_APPROVE'
@@ -24,6 +25,7 @@ export type EntityType =
   | 'AUTH'
   | 'USER'
   | 'CUSTOMER'
+  | 'CUSTOMER_REGISTRATION'
   | 'ORDER'
   | 'PAYMENT'
   | 'SERVICE'

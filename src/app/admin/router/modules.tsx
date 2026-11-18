@@ -53,7 +53,7 @@ export interface NavRoute {
   menuRoles?: Role[]
   element: ReactNode
   hideInMenu?: boolean
-  badge?: 'incidents'
+  badge?: 'incidents' | 'registrations'
 }
 
 export interface NavModule {
@@ -157,7 +157,12 @@ export const NAV_MODULES: NavModule[] = [
     key: 'customers',
     label: 'Khách hàng',
     icon: LuContact,
-    route: { path: PATHS.customers, roles: ALL, element: <CustomersPage /> },
+    route: {
+      path: PATHS.customers,
+      roles: ALL,
+      element: <CustomersPage />,
+      badge: 'registrations',
+    },
     children: [
       {
         path: PATHS.customerDetail(':id'),

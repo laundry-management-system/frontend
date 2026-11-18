@@ -42,6 +42,7 @@
   --pub-font-body: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --pub-font-display:
     'Fraunces', 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pub-font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --pub-text-sm: 0.875rem;
   --pub-text-md: 1rem;
   --pub-text-lg: 1.125rem;
@@ -482,5 +483,47 @@ html:has(body [data-surface='public']) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Khung đăng nhập / đăng ký: thẻ form bên trái, ảnh tiệm cao bằng thẻ bên phải (ẩn trên điện thoại) */
+@layer components {
+  .pub-auth-card {
+    padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    border: 1px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+    box-shadow: var(--pub-shadow-md);
+  }
+  .pub-auth-photo {
+    display: none;
+    position: relative;
+    min-height: 32rem;
+    margin: 0;
+    overflow: hidden;
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface-alt);
+  }
+  .pub-auth-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms var(--pub-ease-out);
+  }
+  .pub-auth-photo:hover img {
+    transform: scale(1.02);
+  }
+  @media (min-width: 48rem) {
+    .pub-auth-photo {
+      display: block;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-surface='public'] .pub-auth-card[data-enter] {
+    animation: pub-rise 480ms var(--pub-ease-out) both;
   }
 }

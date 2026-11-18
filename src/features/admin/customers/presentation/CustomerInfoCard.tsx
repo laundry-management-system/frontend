@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { LuUserCheck, LuUserX } from 'react-icons/lu'
 import { StatusBadge } from '@/shared/admin/ui'
 import type { Customer } from '../domain/types'
-import { CustomerStatusText } from './CustomerCell'
+import { AccountTags, CustomerStatusText } from './CustomerCell'
 
 interface CustomerInfoCardProps {
   customer: Customer
@@ -37,6 +37,7 @@ export function CustomerInfoCard({
         <Title order={4}>Thông tin</Title>
         <Field label="Họ và tên">{customer.fullName}</Field>
         <Field label="Số điện thoại">{formatPhone(customer.phone)}</Field>
+        <Field label="Email">{customer.email || '—'}</Field>
         <Field label="Địa chỉ">{customer.address || '—'}</Field>
         <Field label="Ghi chú">
           <Text style={{ whiteSpace: 'pre-wrap' }}>{customer.note || '—'}</Text>
@@ -47,6 +48,11 @@ export function CustomerInfoCard({
         <Field label="Trạng thái">
           <CustomerStatusText status={customer.status} />
         </Field>
+        {(customer.hasAccount || customer.pendingRegistrationId) && (
+          <Field label="Tài khoản">
+            <AccountTags customer={customer} />
+          </Field>
+        )}
         {canManage && (
           <>
             <Divider />

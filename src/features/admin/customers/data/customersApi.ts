@@ -12,6 +12,7 @@ import { toCustomer, toCustomerOrder } from './mapper'
 export interface CustomerListParams {
   search?: string
   status?: CustomerStatus
+  pendingAccount?: boolean
   page: number
   size: number
 }
@@ -26,10 +27,16 @@ export interface CustomerOrdersParams {
 const OPEN_STATUSES: OrderStatus[] = ['RECEIVED', 'PROCESSING', 'COMPLETED']
 
 export const customersApi = {
-  list: async ({ search, status, page, size }: CustomerListParams) => {
+  list: async ({ search, status, pendingAccount, page, size }: CustomerListParams) => {
     const { data } = await httpClient.get<SpringPage<CustomerResponseDto>>('/customers', {
-      // shortcut: BE chưa lọc theo `status` (BE-2) nên kết quả chưa đúng bộ lọc, bỏ ghi chú khi BE hỗ trợ
-      params: { search: search || undefined, status, page, size, sort: 'createdAt,desc' },
+      params: {
+        search: search || undefined,
+        status,
+        pendingAccount: pendingAccount || undefined,
+        page,
+        size,
+        sort: 'createdAt,desc',
+      },
     })
     return fromSpringPage(data, toCustomer)
   },
