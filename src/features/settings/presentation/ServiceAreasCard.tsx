@@ -8,6 +8,7 @@ import {
   type DataTableColumn,
   DataTable,
   EmptyState,
+  InfoLabel,
   Money,
   RowActions,
 } from '@/shared/ui'
@@ -129,12 +130,7 @@ export function ServiceAreasCard() {
   )
 
   const table = (
-    <>
-      <DataTable<ServiceArea> columns={columns} data={data ?? []} rowKey={rowKey} empty={empty} />
-      <Text size="sm" c="dimmed">
-        Khu vực đã dùng không bị xoá, chỉ ngừng phục vụ.
-      </Text>
-    </>
+    <DataTable<ServiceArea> columns={columns} data={data ?? []} rowKey={rowKey} empty={empty} />
   )
 
   const body = isLoading ? loading : isError && !data ? loadError : table
@@ -144,7 +140,11 @@ export function ServiceAreasCard() {
     <Card mt="lg">
       <Stack>
         <Group justify="space-between" wrap="nowrap">
-          <Title order={5}>Khu vực và phí giao nhận</Title>
+          <Title order={5}>
+            <InfoLabel info="Khu vực đã dùng không bị xoá, chỉ ngừng phục vụ.">
+              Khu vực và phí giao nhận
+            </InfoLabel>
+          </Title>
           <Button leftSection={<LuPlus size={16} />} onClick={openCreate} disabled={isLoading}>
             Thêm khu vực
           </Button>
