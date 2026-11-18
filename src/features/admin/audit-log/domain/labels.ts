@@ -3,6 +3,7 @@ import type { AuditAction, AuditLogSummary, EntityType } from './types'
 export const ACTION_LABEL: Record<AuditAction, string> = {
   ACCOUNT_MANAGE: 'Quản lý tài khoản',
   ACCOUNT_LOCKED: 'Khóa tài khoản',
+  CUSTOMER_ACCOUNT: 'Tài khoản khách',
   CUSTOMER_PHONE_CHANGE: 'Đổi SĐT khách',
   DUE_DATE_CHANGE: 'Sửa ngày hẹn trả',
   INCIDENT_APPROVE: 'Duyệt sự cố',
@@ -27,6 +28,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
   AUTH: 'Xác thực',
   USER: 'Tài khoản',
   CUSTOMER: 'Khách hàng',
+  CUSTOMER_REGISTRATION: 'Yêu cầu tài khoản khách',
   ORDER: 'Đơn hàng',
   PAYMENT: 'Thanh toán',
   SERVICE: 'Dịch vụ',

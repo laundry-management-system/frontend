@@ -14,8 +14,13 @@ const M = MODULE_PATHS
 /** Mọi đường dẫn trong app; đổi URL chỉ sửa ở đây. */
 export const PATHS = {
   dashboard: '/',
-  login: '/login',
+  login: '/private/login',
   landing: '/gioi-thieu',
+  customerLogin: '/login',
+  customerRegister: '/register',
+  customerForgotPassword: '/forgot-password',
+  customerResetPassword: '/reset-password',
+  customerAccount: '/account',
 
   workList: `${M.operations}/work-list`,
   intake: `${M.operations}/intake`,

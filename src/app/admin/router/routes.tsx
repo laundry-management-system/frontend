@@ -9,6 +9,7 @@ import { LegacyRedirect } from './LegacyRedirect'
 import { LEGACY_REDIRECTS, NAV_MODULES } from './modules'
 import { ModuleIndex } from './ModuleIndex'
 import { RoleGuard } from './RoleGuard'
+import { PATHS } from '@/shared/common/config/paths'
 
 const DesignSystemPage = lazy(() => import('@/pages/admin/design-system/DesignSystemPage'))
 const LoginPage = lazy(() => import('@/pages/admin/login/LoginPage'))
@@ -27,7 +28,7 @@ export const adminRoutes = (landing: ReactNode): RouteObject[] => [
   {
     element: <GuestRoute />,
     children: [
-      { element: <AuthLayout />, children: [{ path: '/login', element: page(<LoginPage />) }] },
+      { element: <AuthLayout />, children: [{ path: PATHS.login, element: page(<LoginPage />) }] },
     ],
   },
   {

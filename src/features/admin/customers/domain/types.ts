@@ -9,12 +9,18 @@ export interface Customer {
   code: string
   fullName: string
   phone: string
+  email: string | null
+  hasAccount: boolean
+  pendingRegistrationId: number | null
   address: string | null
   note: string | null
   isVip: boolean
   status: CustomerStatus
   createdBy: string | null
   createdAt: string
+  orderCount: number | null
+  totalSpent: number | null
+  lastOrderAt: string | null
 }
 
 export interface CustomerOrder {
