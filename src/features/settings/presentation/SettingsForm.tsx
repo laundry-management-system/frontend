@@ -10,7 +10,7 @@ import { ConfirmModal, InfoLabel, PageHeader } from '@/shared/ui'
 import { useSaveSettings } from '../application/useSaveSettings'
 import { fieldOf, SETTING_FIELDS, SETTING_GROUP_TITLE } from '../domain/settingFields'
 import type { Setting, SettingGroup } from '../domain/types'
-import { validateOpeningHours, validateSetting } from '../domain/validate'
+import { normalizeStorePhone, validateOpeningHours, validateSetting } from '../domain/validate'
 import { SettingInput } from './SettingInput'
 
 const LEFT: SettingGroup[] = ['RECEIPT', 'COMPENSATION', 'VIETQR']
@@ -59,7 +59,10 @@ export function SettingsForm({ settings }: { settings: Setting[] }) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!dirty || hasErrors) return
-    const changes = dirtyKeys.map((key) => ({ key, value: form.values[key] }))
+    const changes = dirtyKeys.map((key) => {
+      const value = form.values[key]
+      return { key, value: fieldOf(key).type === 'PHONE' ? normalizeStorePhone(value) : value }
+    })
     save.mutate(changes, {
       onSuccess: ({ saved, failed }) => {
         form.setInitialValues({

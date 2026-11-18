@@ -18,6 +18,7 @@ export type AuditAction =
   | 'SHIFT_CLOSE'
   | 'SHIFT_CLOSE_ON_BEHALF'
   | 'SHIFT_APPROVE'
+  | 'SERVICE_AREA_MANAGE'
 
 export type EntityType =
   | 'AUTH'
@@ -30,6 +31,7 @@ export type EntityType =
   | 'SHIFT'
   | 'MACHINE'
   | 'INCIDENT'
+  | 'SERVICE_AREA'
 
 export interface AuditLogSummary {
   id: number

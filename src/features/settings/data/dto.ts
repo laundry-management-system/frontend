@@ -9,3 +9,9 @@ export interface SettingResponseDto {
 export interface SettingUpdateRequestDto {
   value: string
 }
+
+export interface ServiceAreaRequestDto {
+  name: string
+  pickupFee: number
+  deliveryFee: number
+}

@@ -3,6 +3,7 @@ import type { SettingField, SettingGroup, SettingKey } from './types'
 export const SETTING_FIELDS: (SettingField & { key: SettingKey })[] = [
   { key: 'STORE_NAME', group: 'RECEIPT', label: 'Tên cửa hàng', type: 'STRING' },
   { key: 'STORE_ADDRESS', group: 'RECEIPT', label: 'Địa chỉ', type: 'STRING' },
+  { key: 'STORE_PHONE', group: 'RECEIPT', label: 'Số điện thoại', type: 'PHONE' },
   {
     key: 'STORAGE_DAYS',
     group: 'RECEIPT',
