@@ -1,0 +1,486 @@
+/*
+ * Token trang công khai (landing). Chỉ có hiệu lực dưới [data-surface='public'] nên admin (teal, --ds-*) không đổi.
+ * Màu lấy mẫu từ design-refs/palette-*.jpg: nền trắng ngà ấm, chữ và nút tối xanh navy, nút gọi xanh bạc hà
+ * (chữ navy trên nền bạc hà để đạt AA), tím phong lan chỉ làm mảng trang trí. Nút gần vuông, thẻ bo 8 px.
+ */
+[data-surface='public'] {
+  /* Màu: mọi cặp chữ/nền đạt AA (≥ 4.5:1) */
+  --pub-bg: #f6f2ef;
+  --pub-surface: #ffffff;
+  --pub-surface-alt: #efe9e3;
+  --pub-ink: #01082a; /* 17.6:1 trên nền */
+  --pub-ink-muted: #41465c; /* ≥ 7.7:1 trên mọi nền sáng của landing */
+  --pub-border: #e3dcd4;
+
+  --pub-primary: #01082a; /* nút tối, liên kết; chữ trắng 19.6:1 */
+  --pub-primary-hover: #1a2150;
+  --pub-primary-soft: #e2edf3;
+  --pub-on-primary: #ffffff;
+
+  --pub-accent: #5bb8a8; /* nút "Gọi cho tiệm"; chữ navy 8.3:1 (chữ trắng chỉ 2.4:1) */
+  --pub-accent-hover: #4aa898;
+  --pub-accent-soft: #ddf1ec;
+  --pub-on-accent: #01082a;
+  --pub-accent-ink: #1b7465; /* chữ màu bạc hà: 5.0:1 trên nền */
+
+  --pub-orchid: #c680c1; /* mảng trang trí, không mang chữ */
+  --pub-orchid-ink: #9a4a95; /* chữ nhấn trong tiêu đề, 5.0:1 trên nền */
+  --pub-dot: #7baafc; /* chấm trang trí */
+  --pub-wordmark: #5b6294; /* tên tiệm cỡ lớn ở footer, 3.4:1 trên navy (chữ lớn) */
+
+  --pub-success: #1b7465;
+  --pub-danger: #b91c1c;
+  --pub-danger-soft: #fee2e2;
+
+  /* Nền mở đầu: trắng ngà với quầng xanh nhạt và hồng nhạt như bản mẫu */
+  --pub-hero-gradient:
+    radial-gradient(60% 55% at 45% 0%, #e2edf3 0%, transparent 70%),
+    radial-gradient(45% 60% at 0% 85%, #ece0ec 0%, transparent 70%),
+    radial-gradient(40% 50% at 100% 100%, #dde8f3 0%, transparent 70%), #f6f2ef;
+
+  /* Chữ: mọi family kết thúc bằng font hệ thống để vẫn đọc được khi Google Fonts lỗi */
+  --pub-font-body: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pub-font-display:
+    'Fraunces', 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pub-text-sm: 0.875rem;
+  --pub-text-md: 1rem;
+  --pub-text-lg: 1.125rem;
+  --pub-text-xl: 1.375rem;
+  --pub-text-2xl: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);
+  --pub-text-hero: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
+  --pub-leading-body: 1.6;
+  --pub-leading-tight: 1.12;
+
+  /* Nút gần vuông, thẻ bo mềm */
+  --pub-radius-btn: 4px;
+  --pub-radius-md: 6px;
+  --pub-radius-lg: 8px;
+  --pub-radius-xl: 12px;
+  --pub-radius-pill: 9999px;
+
+  --pub-shadow-sm: 0 1px 2px #01082a0f;
+  --pub-shadow-md: 0 12px 28px -14px #01082a33;
+  --pub-shadow-lg: 0 28px 56px -24px #01082a47;
+
+  /* Khoảng cách nhịp 8 px, rộng (marketing) */
+  --pub-space-1: 0.5rem;
+  --pub-space-2: 1rem;
+  --pub-space-3: 1.5rem;
+  --pub-space-4: 2rem;
+  --pub-space-6: 3rem;
+  --pub-space-8: 4rem;
+  --pub-section-y: clamp(4rem, 2.5rem + 5vw, 7.5rem);
+  --pub-container: 80rem;
+  --pub-gutter: clamp(1.5rem, 0.5rem + 4vw, 5rem);
+  --pub-touch: 2.75rem; /* vùng chạm tối thiểu 44 px */
+
+  --pub-focus: #01082a;
+
+  --pub-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --pub-duration: 200ms;
+
+  font-family: var(--pub-font-body);
+  font-size: var(--pub-text-md);
+  line-height: var(--pub-leading-body);
+  color: var(--pub-ink);
+  background: var(--pub-bg);
+  overflow-wrap: anywhere;
+}
+
+@layer components {
+  [data-surface='public'] :is(h1, h2, h3) {
+    font-family: var(--pub-font-display);
+    line-height: var(--pub-leading-tight);
+    text-wrap: balance;
+  }
+  [data-surface='public'] :is(h1, h2) {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .pub-container {
+    width: 100%;
+    max-width: var(--pub-container);
+    margin-inline: auto;
+    padding-inline: var(--pub-gutter);
+  }
+
+  /* Nút gần vuông, vùng chạm ≥ 44 px; rê chuột thì nhích lên, nhấn thì lún (tắt khi giảm chuyển động) */
+  .pub-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pub-space-1);
+    min-height: var(--pub-touch);
+    padding: 0.625rem 1.25rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--pub-radius-btn);
+    font-family: var(--pub-font-body);
+    font-weight: 600;
+    font-size: var(--pub-text-md);
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+      background-color var(--pub-duration) var(--pub-ease-out),
+      border-color var(--pub-duration) var(--pub-ease-out),
+      color var(--pub-duration) var(--pub-ease-out),
+      box-shadow var(--pub-duration) var(--pub-ease-out),
+      transform var(--pub-duration) var(--pub-ease-out);
+  }
+  .pub-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--pub-shadow-md);
+  }
+  .pub-btn:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: none;
+  }
+  .pub-btn--lg {
+    min-height: 3.25rem;
+    padding-inline: 1.75rem;
+  }
+  .pub-btn--accent {
+    background: var(--pub-accent);
+    color: var(--pub-on-accent);
+  }
+  .pub-btn--accent:hover {
+    background: var(--pub-accent-hover);
+  }
+  .pub-btn--primary {
+    background: var(--pub-primary);
+    color: var(--pub-on-primary);
+  }
+  .pub-btn--primary:hover {
+    background: var(--pub-primary-hover);
+  }
+  .pub-btn--ghost {
+    background: transparent;
+    color: var(--pub-ink);
+    border-color: var(--pub-ink);
+  }
+  .pub-btn--ghost:hover {
+    background: var(--pub-surface);
+  }
+  /* Nút viền trên nền navy */
+  .pub-btn--on-dark {
+    background: transparent;
+    color: #ffffff;
+    border-color: #ffffff;
+  }
+  .pub-btn--on-dark:hover {
+    background: #ffffff1a;
+  }
+
+  .pub-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: var(--pub-touch);
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    border-radius: var(--pub-radius-btn);
+    transition: text-decoration-color var(--pub-duration) var(--pub-ease-out);
+  }
+  .pub-link:hover {
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--pub-accent);
+  }
+
+  .pub-card {
+    background: var(--pub-surface);
+    border: 1px solid var(--pub-border);
+    border-radius: var(--pub-radius-lg);
+  }
+  /* Thẻ rê chuột thì nhích 2 px */
+  .pub-card--lift {
+    transition:
+      transform var(--pub-duration) var(--pub-ease-out),
+      box-shadow var(--pub-duration) var(--pub-ease-out);
+  }
+  .pub-card--lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--pub-shadow-md);
+  }
+
+  /* Viền nhiều màu theo bảng màu landing, xoay quanh thẻ khi rê chuột */
+  .pub-card--shine {
+    position: relative;
+  }
+  .pub-card--shine::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    padding: 2px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--pub-shine-angle),
+      var(--pub-accent),
+      var(--pub-dot),
+      var(--pub-orchid),
+      var(--pub-orchid-ink),
+      var(--pub-dot),
+      var(--pub-accent)
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    opacity: 0;
+    transition: opacity var(--pub-duration) var(--pub-ease-out);
+    pointer-events: none;
+  }
+  .pub-card--shine:hover::before {
+    opacity: 1;
+  }
+
+  .pub-icon-tile {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-accent-soft);
+    color: var(--pub-accent-ink);
+  }
+
+  /* Ảnh trong khung: rê chuột thì phóng nhẹ trong khung */
+  .pub-photo {
+    overflow: hidden;
+  }
+  .pub-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms var(--pub-ease-out);
+  }
+  .pub-photo:hover img,
+  .pub-card--lift:hover .pub-photo img {
+    transform: scale(1.03);
+  }
+
+  /* Tiêu đề section không bị header dính che khi cuộn tới bằng neo */
+  .pub-section {
+    padding-block: var(--pub-section-y);
+    scroll-margin-top: 5rem;
+  }
+  .pub-section-head {
+    max-width: 44rem;
+    margin-bottom: var(--pub-space-6);
+  }
+  /* Nhãn dạng viên thuốc có vạch nhấn bên trái, như bản mẫu */
+  .pub-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: var(--pub-space-2);
+    padding: 0.25rem 0.875rem;
+    border-left: 2px solid var(--pub-accent);
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-surface);
+    color: var(--pub-ink);
+    font-size: var(--pub-text-sm);
+    font-weight: 500;
+    box-shadow: var(--pub-shadow-sm);
+  }
+  .pub-h2 {
+    font-size: var(--pub-text-2xl);
+    color: var(--pub-ink);
+  }
+  .pub-h2:focus {
+    outline: none;
+  }
+  .pub-accent-word {
+    color: var(--pub-orchid-ink);
+  }
+  .pub-lead {
+    margin-top: var(--pub-space-2);
+    color: var(--pub-ink-muted);
+    font-size: var(--pub-text-lg);
+  }
+
+  .pub-skip-link {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 300;
+    padding: 0.75rem 1rem;
+    border-radius: var(--pub-radius-btn);
+    background: var(--pub-ink);
+    color: #ffffff;
+    font-weight: 600;
+    transform: translateY(-200%);
+  }
+  .pub-skip-link:focus {
+    transform: none;
+  }
+
+  /* Nền bản đồ minh hoạ của Khu vực phục vụ: ô phố nhạt trên nền xanh */
+  .pub-map {
+    background-color: var(--pub-primary-soft);
+    background-image:
+      linear-gradient(#ffffff99 1px, transparent 1px),
+      linear-gradient(90deg, #ffffff99 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Danh sách khu vực dạng các điểm dừng trên tuyến giao */
+  .pub-stop {
+    position: relative;
+    padding-block: 0.875rem;
+    padding-left: 2rem;
+    border-bottom: 1px solid var(--pub-border);
+  }
+  .pub-stop:last-child {
+    border-bottom: 0;
+  }
+  .pub-stop::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0.4375rem;
+    border-left: 2px dashed var(--pub-border);
+  }
+  .pub-stop:first-child::before {
+    top: 50%;
+  }
+  .pub-stop:last-child::before {
+    bottom: 50%;
+  }
+  .pub-stop:only-child::before {
+    display: none;
+  }
+  .pub-stop::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0.125rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: -0.4375rem;
+    border: 3px solid var(--pub-accent);
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-surface);
+    transition: background-color var(--pub-duration) var(--pub-ease-out);
+  }
+  .pub-stop:hover::after {
+    background: var(--pub-accent);
+  }
+
+  /* Tên tiệm cỡ lớn cuối footer: cỡ chữ theo số ký tự để vừa một dòng, tên dài thì xuống dòng */
+  .pub-wordmark {
+    font-family: var(--pub-font-display);
+    font-size: min(
+      12rem,
+      calc((min(100vw, var(--pub-container)) - 2 * var(--pub-gutter)) * 1.7 / var(--chars))
+    );
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--pub-wordmark);
+    background: linear-gradient(
+      100deg,
+      var(--pub-wordmark) 10%,
+      var(--pub-orchid) 55%,
+      var(--pub-accent) 95%
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Dải chữ chạy ngang trên nền navy */
+  .pub-marquee {
+    display: flex;
+    width: max-content;
+  }
+  .pub-marquee[data-paused] {
+    animation-play-state: paused !important;
+  }
+}
+
+/* Ngoài @layer và đặc hiệu cao hơn để thắng các rule `:focus { outline: none }` của Mantine */
+[data-surface='public'][data-surface] :focus-visible {
+  outline: 2px solid var(--pub-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px #ffffff;
+}
+[data-surface='public'][data-surface] :is(footer, .pub-on-dark) :focus-visible {
+  outline-color: #ffffff;
+  box-shadow: none;
+}
+
+/* Header dính trên, thanh gọi dính đáy (dưới md): mục đang focus hay neo không nằm dưới chúng */
+html:has(body [data-surface='public']) {
+  scroll-padding-top: 5rem;
+}
+@media (max-width: 47.99em) {
+  html:has(body [data-surface='public'][data-call-bar]) {
+    scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@property --pub-shine-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pub-shine {
+    to {
+      --pub-shine-angle: 360deg;
+    }
+  }
+  [data-surface='public'] .pub-card--shine:hover::before {
+    animation: pub-shine 2.4s linear infinite;
+  }
+  @keyframes pub-rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+  @keyframes pub-slide-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes pub-marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  [data-surface='public'] .pub-rise {
+    animation: pub-rise 640ms var(--pub-ease-out) both;
+  }
+  [data-surface='public'] .pub-rise--late {
+    animation-delay: 140ms;
+  }
+  [data-surface='public'] .pub-slide-up {
+    animation: pub-slide-up 260ms var(--pub-ease-out) both;
+  }
+  [data-surface='public'] .pub-marquee {
+    animation: pub-marquee 36s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface='public'] {
+    --pub-duration: 0ms;
+  }
+
+  [data-surface='public'] *,
+  [data-surface='public'] *::before,
+  [data-surface='public'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
