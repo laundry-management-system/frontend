@@ -6,12 +6,18 @@ export const toCustomer = (dto: CustomerResponseDto): Customer => ({
   code: dto.customerCode,
   fullName: dto.fullName,
   phone: dto.phone,
+  email: dto.email,
+  hasAccount: dto.hasAccount,
+  pendingRegistrationId: dto.pendingRegistrationId,
   address: dto.address,
   note: dto.note,
   isVip: dto.isVip ?? false,
   status: dto.status,
   createdBy: dto.createdBy,
   createdAt: dto.createdAt,
+  orderCount: dto.orderCount,
+  totalSpent: dto.totalSpent === null ? null : Number(dto.totalSpent),
+  lastOrderAt: dto.lastOrderAt,
 })
 
 export const toCustomerOrder = (dto: CustomerOrderDto): CustomerOrder => ({

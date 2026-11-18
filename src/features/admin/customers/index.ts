@@ -8,6 +8,11 @@ export {
   useCreateCustomer,
   useUpdateCustomer,
 } from './application/useCustomerMutations'
+export {
+  useActivateRegistration,
+  usePendingRegistrationCount,
+  useRejectRegistration,
+} from './application/useRegistrations'
 export { looksLikePhone, normalizePhone } from './domain/rules'
 export { CUSTOMER_STATUS_LABEL } from './domain/types'
 export type { Customer, CustomerStats, CustomerStatus } from './domain/types'

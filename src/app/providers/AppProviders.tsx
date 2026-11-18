@@ -4,6 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { ReactNode } from 'react'
 import '@/app/admin/session'
+import '@/app/client/session'
+import '@/app/client/session'
 import { queryClient } from '@/shared/common/api/queryClient'
 import { cssVariablesResolver, theme } from '../theme'
 

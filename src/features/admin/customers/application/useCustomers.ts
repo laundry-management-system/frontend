@@ -8,16 +8,19 @@ import { customerKeys } from './queryKeys'
 export function useCustomers({
   search,
   status,
+  pendingAccount,
   page,
 }: {
   search: string
   status?: CustomerStatus
+  pendingAccount?: boolean
   page: number
 }) {
   const term = search.trim()
   const params = {
     search: looksLikePhone(term) ? normalizePhone(term) : term,
     status,
+    pendingAccount,
     page,
     size: DEFAULT_PAGE_SIZE,
   }

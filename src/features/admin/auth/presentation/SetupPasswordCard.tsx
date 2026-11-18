@@ -5,6 +5,7 @@ import { notify } from '@/shared/common/lib/notify'
 import { useSetupPassword } from '../application/useSetupPassword'
 import { validateConfirmPassword, validateNewPassword } from '../domain/rules'
 import { AuthCard } from './AuthCard'
+import { PATHS } from '@/shared/common/config/paths'
 
 /** Màn đặt mật khẩu lần đầu, mở từ link trong email kích hoạt. */
 export function SetupPasswordCard({ token }: { token: string | null }) {
@@ -17,7 +18,7 @@ export function SetupPasswordCard({ token }: { token: string | null }) {
       confirm: (v, values) => validateConfirmPassword(v, values.password),
     },
   })
-  const goLogin = () => navigate('/login', { replace: true })
+  const goLogin = () => navigate(PATHS.login, { replace: true })
 
   if (!token || failure === 'invalid-link') {
     return (

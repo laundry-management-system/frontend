@@ -2,6 +2,7 @@ import { Badge, Group, NavLink } from '@mantine/core'
 import { useState } from 'react'
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/admin/auth'
+import { usePendingRegistrationCount } from '@/features/admin/customers'
 import { useIncidentStats } from '@/features/admin/incidents'
 import { canSeeModule, type NavModule, NAV_MODULES, visibleMenuItems } from '../router/modules'
 
@@ -17,6 +18,16 @@ function IncidentBadge() {
   return (
     <Badge size="sm" circle color="warning">
       {pending}
+    </Badge>
+  )
+}
+
+function RegistrationBadge() {
+  const count = usePendingRegistrationCount().data ?? 0
+  if (count === 0) return null
+  return (
+    <Badge size="sm" circle color="warning">
+      {count}
     </Badge>
   )
 }
@@ -86,6 +97,7 @@ export function SidebarNav() {
             end={m.route.path === '/'}
             label={m.label}
             leftSection={<Icon size={18} />}
+            rightSection={m.route.badge === 'registrations' ? <RegistrationBadge /> : null}
           />
         )
       })}

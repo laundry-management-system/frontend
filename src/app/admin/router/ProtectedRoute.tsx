@@ -2,6 +2,7 @@ import { Center, Loader } from '@mantine/core'
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { hasSessionHint, useAuthStore } from '@/features/admin/auth'
+import { PATHS } from '@/shared/common/config/paths'
 
 /** Hiện trong lúc đang khôi phục phiên lúc mở app. */
 export function SessionLoader() {
@@ -23,6 +24,6 @@ export function ProtectedRoute({ landing }: { landing: ReactNode }) {
   if (isRoot && (status === 'anonymous' || (status === 'unknown' && !hasSessionHint())))
     return landing
   if (status === 'unknown') return <SessionLoader />
-  if (status === 'anonymous') return <Navigate to="/login" replace state={{ from: location }} />
+  if (status === 'anonymous') return <Navigate to={PATHS.login} replace state={{ from: location }} />
   return <Outlet />
 }
