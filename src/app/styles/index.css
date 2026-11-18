@@ -6,7 +6,7 @@
 @import '@mantine/dates/styles.layer.css';
 @import '@mantine/notifications/styles.layer.css';
 @import './tokens.css';
-@import './public.css';
+@import '../client/styles/public.css';
 
 @custom-variant dark (&:where([data-mantine-color-scheme=dark], [data-mantine-color-scheme=dark] *));
 

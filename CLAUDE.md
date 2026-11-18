@@ -1,23 +1,45 @@
 # Frontend – quy tắc cho Claude
 
-Kiến trúc gốc: `architecture-2.html` (FE: `app → pages → features → shared`; mỗi feature 4 layer `presentation → application → data → domain`, `index.ts` là public API). Các mục dưới đây là quy tắc chi tiết theo kiến trúc đó.
+Kiến trúc gốc: `architecture-2.html` (FE: `app → pages → features → shared`, mỗi tầng chia hai khu `admin` / `client` — xem mục "Hai khu"; mỗi feature 4 layer `presentation → application → data → domain`, `index.ts` là public API). Các mục dưới đây là quy tắc chi tiết theo kiến trúc đó.
 
 - `application/`: mỗi hook một file (`useXxx.ts`, `useCreateXxx.ts`, `useUpdateXxx.ts`), `queryKeys.ts`, `schemas.ts` (zod schema của form).
 - `domain/`: TS thuần (type, hàm tính toán), không import React / axios / zod.
-- Page không gọi API trực tiếp; chỉ dùng hook từ `@/features/<x>`.
+- Page không gọi API trực tiếp; chỉ dùng hook từ `@/features/<khu>/<x>`.
+
+## Hai khu: admin và client
+
+`app`, `pages`, `features`, `shared` đều chia thành `admin/` (màn quản trị) và `client/` (trang công khai cho khách).
+
+- **admin và client không import bất cứ thứ gì của nhau** (component, hook, api, type, hàm). Cần dùng ở cả hai → đưa vào `shared/common` (http client, `queryClient`, `notify`, `format`, `paths`, env, type API) hoặc chép riêng cho từng khu nếu gắn với nghiệp vụ một bên.
+- `shared/common` chỉ import trong `shared/common`.
+- Chỉ app gốc (`app/App.tsx`, `app/routes.tsx`, `app/providers`, `app/theme.ts`, `app/styles`) được ghép hai khu, và chỉ qua `app/admin` / `app/client`.
+- Luật được `eslint-plugin-boundaries` kiểm (`npm run lint`); import sai khu là lỗi lint.
+
+Đặt file mới ở đâu:
+
+| Loại | Admin (màn quản trị, cần đăng nhập) | Client (trang công khai) |
+|---|---|---|
+| Page | `pages/admin/<page>/` | `pages/client/<page>/` |
+| Feature | `features/admin/<x>/` | `features/client/<x>/` |
+| Component / hook / store dùng chung trong khu | `shared/admin/` (`ui`, `hooks`, `store`, `lib`, `config`) | `shared/client/` (tạo khi cần) |
+| Layout, route, menu | `app/admin/` (`layouts`, `router`) | `app/client/` (`layouts`, `router`) |
+| Hạ tầng dùng cả hai khu | `shared/common/` | `shared/common/` |
+
+- Không có sẵn ở khu mình mà khu kia có → **không import sang**. Hàm thuần không gắn nghiệp vụ (định dạng, gọi API) → chuyển vào `shared/common` và đổi chỗ dùng cũ sang đó; gắn nghiệp vụ một bên (VD `UNIT_LABEL`, `expressParts`) → chép bản riêng cho khu mình.
+- Không thêm component UI, hook, store vào `shared/common`; giao diện mỗi khu tự giữ.
 
 ## Hiển thị mã định danh
 
 Mọi mã định danh do hệ thống cấp (mã đơn `LD-…`, mã khách `KH…`, mã nhân viên `NV…`, mã dịch vụ `DV…`, mã voucher, mã phiếu sự cố…) **phải dùng cùng một font mono** của Design System, ở mọi nơi hiển thị: cột bảng, breadcrumb, tiêu đề, dòng phụ, toast, modal.
 
-- Dùng component `EntityCode` từ `@/shared/ui` (`size="md"` mặc định, `size="sm"` cho chỗ chữ nhỏ như breadcrumb). Riêng mã đơn có thể dùng `OrderCode` (bọc `EntityCode`).
+- Dùng component `EntityCode` từ `@/shared/admin/ui` (`size="md"` mặc định, `size="sm"` cho chỗ chữ nhỏ như breadcrumb). Riêng mã đơn có thể dùng `OrderCode` (bọc `EntityCode`).
 - Cột mã trong bảng listing dùng `CopyableCode` (mã kèm nút sao chép, tự chặn click lan ra dòng); nơi khác dùng `EntityCode` / `OrderCode`.
 - Không render mã bằng chuỗi trần (`{customer.code}`, `` `${code} · …` ``) và không tự gắn class `text-code-*` lẻ. Cột `DataTable` chứa mã phải có `render` trả về `CopyableCode` (hoặc `EntityCode` ngoài trang listing).
 - Khi prop chỉ nhận `string` mà cần chèn mã (VD `description` của `PageHeader`), đổi prop đó sang `ReactNode` thay vì nối chuỗi.
 
 ## Empty state
 
-Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiết) **phải xử lý đủ các trạng thái không có dữ liệu**, mỗi trạng thái một `EmptyState` (`@/shared/ui`) riêng, không để trống trắng hay chỉ một dòng chữ:
+Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiết) **phải xử lý đủ các trạng thái không có dữ liệu**, mỗi trạng thái một `EmptyState` (`@/shared/admin/ui`) riêng, không để trống trắng hay chỉ một dòng chữ:
 
 | Trạng thái | Icon gợi ý (`react-icons/lu`, `size={32}`) | Nội dung |
 |---|---|---|
@@ -39,7 +61,7 @@ Mọi vùng hiển thị dữ liệu (bảng, danh sách, thẻ, trang chi tiế
 
 ## Thao tác trên từng dòng bảng
 
-Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/ui` (nút ⋯ mở menu), giống trang Nhân viên.
+Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao tác**: cột cuối, `label: ''`, `width: 40`, `align: 'right'`, `fixed: 'right'`, render `RowActions` từ `@/shared/admin/ui` (nút ⋯ mở menu), giống trang Nhân viên.
 
 - Cột cố định khi bảng cuộn ngang (`DataTableColumn.fixed`): cột **Mã** và cột **Tên** `fixed: 'left'`, cột thao tác `fixed: 'right'`. Các cột cố định liền kề phải có `width` để tính vị trí (riêng cột cố định trong cùng có thể bỏ trống).
 - Không đặt nút chữ/icon rời ("Sửa", bút chì…) trực tiếp trong dòng, kể cả khi chỉ có một thao tác.
@@ -52,7 +74,7 @@ Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao 
 
 1. **Mọi câu giải thích đưa vào tooltip (i), đặt cạnh label / title mà nó giải thích**, không render thành dòng chữ trên trang hay dưới ô nhập:
    - Cả trang → prop `info` của `PageHeader` / `ListPage` (cạnh tiêu đề trang).
-   - Ô nhập / nhóm / tiêu đề nhỏ → `InfoLabel` (`@/shared/ui`): `label={<InfoLabel info="…">Đơn giá</InfoLabel>}`.
+   - Ô nhập / nhóm / tiêu đề nhỏ → `InfoLabel` (`@/shared/admin/ui`): `label={<InfoLabel info="…">Đơn giá</InfoLabel>}`.
    - Không dùng `description` của input, `Alert` hay `Text c="dimmed"` để giải thích. `Alert` chỉ cho cảnh báo / lỗi cần chú ý ngay.
 2. **Chỉ giải thích khi thật cần**: hệ quả không tự thấy được (đổi giá không ảnh hưởng đơn cũ, ngừng hoạt động thì không chọn được nữa, thao tác bị ghi nhật ký). Không giải thích:
    - điều đã có lỗi validate nói rõ (VD "Ngắn hơn thời gian chuẩn"),
@@ -64,13 +86,13 @@ Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao 
 
 Thứ tự ưu tiên:
 
-1. Đã có trong `@/shared/ui` → dùng lại.
+1. Đã có trong `@/shared/admin/ui` → dùng lại.
 2. Mantine có sẵn → bọc component Mantine, chỉ custom phần DS cần (props mặc định, nhãn tiếng Việt, a11y). Mẫu: `IconButton` (ActionIcon + Tooltip), `RowActions` (Menu), `InfoTooltip` (Tooltip), `ConfirmModal` (Modal), `MoneyInput` (NumberInput).
 3. Mantine không có → mới tự dựng, vẫn dùng token / class DS (VD `EmptyState`, `EntityCode`).
 
 - Muốn đổi giao diện cho **mọi** chỗ dùng một component Mantine → sửa ở `app/theme.ts` (`Component.extend`: `defaultProps`, `styles`, `vars`) thay vì bọc thêm một lớp (VD badge không cắt chữ, tooltip có mũi tên).
 - Không tự viết lại hành vi Mantine đã có: focus trap, portal, phím tắt, aria của Menu / Modal / Tooltip / Select.
-- Đặt trong `src/shared/ui/<nhóm>/` (`buttons`, `feedback`, `layout`, `data-display`, `domain`) và export qua `src/shared/ui/index.ts`.
+- Đặt trong `src/shared/admin/ui/<nhóm>/` (`buttons`, `feedback`, `layout`, `data-display`, `domain`) và export qua `src/shared/admin/ui/index.ts`.
 
 ## Tổ chức file trong một layer
 
@@ -102,14 +124,14 @@ Thứ tự ưu tiên:
 
 ## Tạo page mới
 
-- Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
+- Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/admin/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
 - Truyền `empty` cho trạng thái rỗng / tìm không ra (mục Empty state); cột thao tác theo mục "Thao tác trên từng dòng bảng"; ghi chú dưới bảng qua `children`.
 - Thứ tự trong khối `filters` có tab trạng thái (`SegmentedControl`):
   - Vừa **một hàng** → ô tìm / Select / bộ lọc khác **trước**, tab trạng thái **sau** (mẫu: `CustomersPage`, `UsersPage`, `ServicesPage`).
   - Phải xuống **hai hàng** (nhiều tab, tab có số đếm) → bọc `Stack`: tab trạng thái ở **hàng trên**, các bộ lọc còn lại ở hàng dưới (mẫu: `OrdersPage`, `WorkListPage`). Không để `Group` tự xuống dòng làm tab rơi xuống dưới.
 - Chỉ dựng layout riêng khi màn không phải danh sách (trang chi tiết, form nhiều bước, dashboard); khi đó vẫn dùng `PageHeader` cho tiêu đề.
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
-- Đăng ký page: thêm đường dẫn vào `PATHS` (`shared/config/paths.ts`), rồi khai route + mục menu trong `NAV_MODULES` (`app/router/modules.tsx`, kèm `roles`; trang chi tiết đặt `hideInMenu`). Không viết đường dẫn trần trong code.
+- Đăng ký page: thêm đường dẫn vào `PATHS` (`shared/common/config/paths.ts`), rồi khai route + mục menu trong `NAV_MODULES` (`app/admin/router/modules.tsx`, kèm `roles`; trang chi tiết đặt `hideInMenu`). Không viết đường dẫn trần trong code.
 
 ## Khai báo props trước khi truyền
 
@@ -164,14 +186,14 @@ Mọi form phải báo lỗi **cùng một kiểu**: chữ đỏ ngay dưới ô
 
 | Loại state | Giữ ở đâu | Ví dụ |
 |---|---|---|
-| Dữ liệu từ backend | TanStack Query (`useQuery` / `useMutation` trong `features/<x>/application`). Không copy vào zustand hay `useState` | `useCustomers`, `useServices` |
-| Bộ lọc / tìm kiếm / trang của màn danh sách | URL, qua hook `useListParams(STATUSES)` (`shared/hooks`): `q` (ô gõ), `search` (đã debounce), `status`, `page`, `filtered`, `reset`. Không tự viết lại `useSearchParams` cho việc này | `CustomersPage`, `UsersPage`, `ServicesPage` |
+| Dữ liệu từ backend | TanStack Query (`useQuery` / `useMutation` trong `features/<khu>/<x>/application`). Không copy vào zustand hay `useState` | `useCustomers`, `useServices` |
+| Bộ lọc / tìm kiếm / trang của màn danh sách | URL, qua hook `useListParams(STATUSES)` (`shared/admin/hooks`): `q` (ô gõ), `search` (đã debounce), `status`, `page`, `filtered`, `reset`. Không tự viết lại `useSearchParams` cho việc này | `CustomersPage`, `UsersPage`, `ServicesPage` |
 | Trạng thái UI của một component / page (mở modal, dòng đang sửa, tab) | `useState` trong page; nhiều modal → một union `ModalState` | `ServicesPage` |
-| Giá trị form | `@mantine/form` `useForm` + `validate: schemaResolver(xxxFormSchema, { sync: true })`, schema zod đặt ở `features/<x>/application/schemas.ts`; modal remount khi mở (`{opened && <Form/>}`); `isDirty` → `ConfirmModal` "Bỏ thay đổi?" | `ServiceFormModal` |
-| State chia sẻ giữa các component trong **một page** | React context (`createContext` + `useContext`) đặt cạnh page | chưa có trang nào cần; đặt tên theo `pages/<page>/<Page>Context.tsx` |
-| State dùng chung toàn app, không đến từ backend | zustand: `shared/store` (UI) hoặc `features/<x>/application` (theo feature) | `useUiStore`, `useAuthStore` |
+| Giá trị form | `@mantine/form` `useForm` + `validate: schemaResolver(xxxFormSchema, { sync: true })`, schema zod đặt ở `features/<khu>/<x>/application/schemas.ts`; modal remount khi mở (`{opened && <Form/>}`); `isDirty` → `ConfirmModal` "Bỏ thay đổi?" | `ServiceFormModal` |
+| State chia sẻ giữa các component trong **một page** | React context (`createContext` + `useContext`) đặt cạnh page | chưa có trang nào cần; đặt tên theo `pages/<khu>/<page>/<Page>Context.tsx` |
+| State dùng chung toàn app, không đến từ backend | zustand: `shared/admin/store` (UI) hoặc `features/<khu>/<x>/application` (theo feature) | `useUiStore`, `useAuthStore` |
 
-- **Context trong page** (theo mẫu `pages/<page>/<Page>Context.tsx`):
+- **Context trong page** (theo mẫu `pages/<khu>/<page>/<Page>Context.tsx`):
   - Provider bọc nội dung page; `value` bọc `useMemo`.
   - Export hook `use<Page>()` dùng `useContext` và `throw` khi gọi ngoài Provider; component con dùng hook này, không gọi `useContext` trực tiếp.
   - Chỉ chứa state UI của page đó. Dữ liệu backend vẫn lấy bằng Query hook, không nhét vào context.
