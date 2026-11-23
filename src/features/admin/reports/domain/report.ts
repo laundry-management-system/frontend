@@ -53,13 +53,6 @@ export const periodLabel = (period: string, mode: ReportMode) =>
     ? `${period.slice(5, 7)}/${period.slice(0, 4)}`
     : `${period.slice(8, 10)}/${period.slice(5, 7)}`
 
-/** Kỳ trước không có doanh thu thì không có % tăng trưởng. */
-export const growthPct = (curr: number, prev: number) =>
-  prev <= 0 ? null : ((curr - prev) / prev) * 100
-
-export const avgOrderValue = (total: number, count: number) =>
-  count === 0 ? 0 : Math.round(total / count)
-
 export function serviceShare(rows: ServiceRow[]) {
   const sum = rows.reduce((s, r) => s + r.revenue, 0)
   return rows.map((r) => ({ ...r, pct: sum > 0 ? (r.revenue * 100) / sum : 0 }))
@@ -104,5 +97,14 @@ export const serviceCsvRows = (rows: ServiceRow[]) => [
   ]),
 ]
 
-export const csvFileName = (kind: 'doanh-thu' | 'don-dich-vu', p: DateRange) =>
-  `bao-cao-${kind}_${p.from}_${p.to}.csv`
+export const csvFileName = (
+  kind:
+    | 'doanh-thu'
+    | 'don-dich-vu'
+    | 'don-huy'
+    | 'hinh-thuc-giat'
+    | 'khach-hang'
+    | 'khuyen-mai'
+    | 'nhan-vien',
+  p: DateRange,
+) => `bao-cao-${kind}_${p.from}_${p.to}.csv`

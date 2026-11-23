@@ -1,8 +1,8 @@
-import { Group, Select, SimpleGrid, Stack, Text } from '@mantine/core'
+import { Anchor, Group, Select, SimpleGrid, Stack, Text } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { LuCalendar, LuSearchX, LuWalletCards } from 'react-icons/lu'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   diffColor,
   differenceLabel,
@@ -140,7 +140,7 @@ export default function ShiftsPage() {
     page: page - 1,
     size: DEFAULT_PAGE_SIZE,
   })
-  const { data: summary } = useShiftSummary({ from, to })
+  const { data: summary } = useShiftSummary()
 
   const handleRetry = () => refetch()
   const handleStatusChange = (value: string | null) => setStatus(value as ShiftStatus | 'ALL')
@@ -165,7 +165,7 @@ export default function ShiftsPage() {
 
   const open = summary?.openShift
   const tiles = (
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md" mb="md">
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mb="md">
       <StatTile
         label="Ca đang mở"
         value={open ? open.openedByName : 'Không có'}
@@ -173,20 +173,9 @@ export default function ShiftsPage() {
         trend={open?.overdue ? 'down' : 'flat'}
       />
       <StatTile label="Chờ duyệt" value={summary ? `${summary.pendingApproval} ca` : ''} />
-      <StatTile
-        label="Tổng chênh lệch tiền mặt"
-        value={
-          summary ? (
-            <span style={{ color: diffColor(summary.differenceTotal) }}>
-              {differenceLabel(summary.differenceTotal)}
-            </span>
-          ) : (
-            ''
-          )
-        }
-        delta={summary ? `${summary.shortCount} ca thiếu · ${summary.overCount} ca dư` : undefined}
-      />
-      <StatTile label="Tiền nộp chủ tiệm" value={summary ? formatMoney(summary.handInTotal) : ''} />
+      <Anchor component={Link} to={PATHS.reportOperations} size="sm">
+        Xem báo cáo vận hành
+      </Anchor>
     </SimpleGrid>
   )
 

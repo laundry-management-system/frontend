@@ -31,7 +31,10 @@ const IntakeDonePage = lazy(() => import('@/pages/admin/intake/IntakeDonePage'))
 const IntakePage = lazy(() => import('@/pages/admin/intake/IntakePage'))
 const OrderDetailPage = lazy(() => import('@/pages/admin/orders/OrderDetailPage'))
 const OrderTabsPage = lazy(() => import('@/pages/admin/orders/OrderTabsPage'))
-const ReportsPage = lazy(() => import('@/pages/admin/reports/ReportsPage'))
+const CustomerReportPage = lazy(() => import('@/pages/admin/reports/CustomerReportPage'))
+const OperationsReportPage = lazy(() => import('@/pages/admin/reports/OperationsReportPage'))
+const OrderReportPage = lazy(() => import('@/pages/admin/reports/OrderReportPage'))
+const RevenueReportPage = lazy(() => import('@/pages/admin/reports/RevenueReportPage'))
 const ServiceTabsPage = lazy(() => import('@/pages/admin/services/ServiceTabsPage'))
 const MachinesPage = lazy(() => import('@/pages/admin/machines/MachinesPage'))
 const SettingsPage = lazy(() => import('@/pages/admin/settings/SettingsPage'))
@@ -64,6 +67,8 @@ export interface NavModule {
   path?: string
   route?: NavRoute
   children?: NavRoute[]
+  /** Query giữ lại khi chuyển giữa các trang con từ `/reports/*` hoặc Tổng quan */
+  keepQuery?: string[]
 }
 
 export const NAV_MODULES: NavModule[] = [
@@ -196,9 +201,46 @@ export const NAV_MODULES: NavModule[] = [
     ],
   },
   {
-    key: 'finance',
-    label: 'Tài chính & báo cáo',
+    key: 'reports',
+    label: 'Báo cáo',
     icon: LuChartColumn,
+    path: MODULE_PATHS.reports,
+    keepQuery: ['from', 'to', 'mode', 'channel'],
+    children: [
+      {
+        path: PATHS.reportRevenue,
+        label: 'Doanh thu',
+        icon: LuChartColumn,
+        roles: ADMIN,
+        element: <RevenueReportPage />,
+      },
+      {
+        path: PATHS.reportOrders,
+        label: 'Đơn hàng & dịch vụ',
+        icon: LuChartColumn,
+        roles: ADMIN,
+        element: <OrderReportPage />,
+      },
+      {
+        path: PATHS.reportCustomers,
+        label: 'Khách hàng',
+        icon: LuChartColumn,
+        roles: ADMIN,
+        element: <CustomerReportPage />,
+      },
+      {
+        path: PATHS.reportOperations,
+        label: 'Vận hành',
+        icon: LuChartColumn,
+        roles: ADMIN,
+        element: <OperationsReportPage />,
+      },
+    ],
+  },
+  {
+    key: 'finance',
+    label: 'Tài chính',
+    icon: LuWallet,
     path: MODULE_PATHS.finance,
     children: [
       {
@@ -220,13 +262,6 @@ export const NAV_MODULES: NavModule[] = [
         roles: ALL,
         element: <ShiftReconcilePage mode="close" />,
         hideInMenu: true,
-      },
-      {
-        path: PATHS.reports,
-        label: 'Báo cáo',
-        icon: LuChartColumn,
-        roles: ADMIN,
-        element: <ReportsPage />,
       },
     ],
   },
@@ -277,7 +312,7 @@ export const firstAllowedPath = (m: NavModule, userRoles: Role[]) =>
 type Params = Record<string, string | undefined>
 
 /** URL trước khi chia module; giữ để bookmark / link cũ vẫn mở đúng trang. */
-export const LEGACY_REDIRECTS: { from: string; to: (p: Params) => string }[] = [
+export const LEGACY_REDIRECTS: { from: string; to: (p: Params, q: URLSearchParams) => string }[] = [
   { from: '/work-list', to: () => PATHS.workList },
   { from: '/intake', to: () => PATHS.intake },
   { from: '/intake/:orderId/done', to: (p) => PATHS.intakeDone(p.orderId!) },
@@ -295,8 +330,11 @@ export const LEGACY_REDIRECTS: { from: string; to: (p: Params) => string }[] = [
   { from: '/shifts', to: () => PATHS.shifts },
   { from: '/shifts/:id', to: (p) => PATHS.shiftDetail(p.id!) },
   { from: '/shifts/:id/close', to: (p) => PATHS.shiftClose(p.id!) },
-  { from: '/reports/revenue', to: () => `${PATHS.reports}?tab=revenue` },
-  { from: '/reports/orders', to: () => `${PATHS.reports}?tab=orders` },
+  {
+    from: '/finance/reports',
+    to: (_, q) => (q.get('tab') === 'orders' ? PATHS.reportOrders : PATHS.reportRevenue),
+  },
+  { from: '/finance/reports/*', to: () => PATHS.reportRevenue },
   { from: '/users', to: () => PATHS.users },
   { from: '/audit-log', to: () => PATHS.auditLog },
   { from: '/settings', to: () => PATHS.settings },

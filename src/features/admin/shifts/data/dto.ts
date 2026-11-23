@@ -74,10 +74,6 @@ export interface ShiftSummaryDto {
     overdue: boolean
   } | null
   pendingApproval: number
-  differenceTotal: Money
-  shortCount: number
-  overCount: number
-  handInTotal: Money
 }
 
 export interface ShiftTransactionDto {

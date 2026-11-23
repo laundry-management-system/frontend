@@ -106,10 +106,6 @@ export interface ShiftRow {
 export interface ShiftSummary {
   openShift: Pick<CurrentShift, 'id' | 'code' | 'openedByName' | 'openedAt' | 'overdue'> | null
   pendingApproval: number
-  differenceTotal: number
-  shortCount: number
-  overCount: number
-  handInTotal: number
 }
 
 export interface ShiftTransaction {

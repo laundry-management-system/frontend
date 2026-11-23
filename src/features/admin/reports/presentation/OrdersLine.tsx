@@ -2,7 +2,7 @@ import { Tooltip } from '@mantine/core'
 import { LuChartLine } from 'react-icons/lu'
 import { formatNumber } from '@/shared/common/lib/format'
 import { EmptyState } from '@/shared/admin/ui'
-import { niceTicks } from '../domain/dashboard'
+import { niceTicks } from '../domain/metrics'
 import { periodLabel } from '../domain/report'
 import type { ReportMode } from '../domain/types'
 
@@ -14,18 +14,20 @@ const PLOT_H = H - PAD.top - PAD.bottom
 const LINE_COLOR = 'var(--ds-primary)'
 
 interface OrdersLineProps {
-  rows: { period: string; received: number }[]
+  rows: { period: string; count: number }[]
   mode: ReportMode
+  /** Đơn vị trong tooltip, VD "đơn", "sự cố" */
+  label?: string
 }
 
-export function OrdersLine({ rows, mode }: OrdersLineProps) {
-  const max = Math.max(0, ...rows.map((r) => r.received))
+export function OrdersLine({ rows, mode, label = 'đơn' }: OrdersLineProps) {
+  const max = Math.max(0, ...rows.map((r) => r.count))
   if (max === 0)
     return (
       <EmptyState
         icon={<LuChartLine size={32} />}
-        title="Chưa có đơn trong kỳ"
-        description="Số đơn nhận theo từng mốc sẽ hiện ở đây."
+        title={`Chưa có ${label} trong kỳ`}
+        description={`Số ${label} theo từng mốc sẽ hiện ở đây.`}
       />
     )
 
@@ -34,12 +36,12 @@ export function OrdersLine({ rows, mode }: OrdersLineProps) {
   const x = (i: number) =>
     PAD.left + (rows.length === 1 ? PLOT_W / 2 : (i * PLOT_W) / (rows.length - 1))
   const y = (v: number) => PAD.top + PLOT_H - (v / top) * PLOT_H
-  const points = rows.map((r, i) => `${x(i)},${y(r.received)}`).join(' ')
+  const points = rows.map((r, i) => `${x(i)},${y(r.count)}`).join(' ')
   // Nhiều mốc thì chỉ ghi nhãn cách quãng cho khỏi chồng chữ
   const step = Math.ceil(rows.length / 12)
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Số đơn theo mốc">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Số ${label} theo mốc`}>
       {ticks.map((t) => (
         <g key={t}>
           <line
@@ -65,8 +67,8 @@ export function OrdersLine({ rows, mode }: OrdersLineProps) {
       <polyline points={points} fill="none" stroke={LINE_COLOR} strokeWidth={2} />
       {rows.map((r, i) => (
         <g key={r.period}>
-          <Tooltip label={`${periodLabel(r.period, mode)}: ${formatNumber(r.received)} đơn`}>
-            <circle cx={x(i)} cy={y(r.received)} r={4} fill={LINE_COLOR} />
+          <Tooltip label={`${periodLabel(r.period, mode)}: ${formatNumber(r.count)} ${label}`}>
+            <circle cx={x(i)} cy={y(r.count)} r={4} fill={LINE_COLOR} />
           </Tooltip>
           {i % step === 0 && (
             <text

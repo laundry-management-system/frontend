@@ -5,11 +5,12 @@ import { useAuthStore } from '@/features/admin/auth'
 import { usePendingRegistrationCount } from '@/features/admin/customers'
 import { useIncidentStats } from '@/features/admin/incidents'
 import { useWorkCounts } from '@/features/admin/orders'
+import { PATHS } from '@/shared/common/config/paths'
 import { canSeeModule, type NavModule, NAV_MODULES, visibleMenuItems } from '../router/modules'
 
 // Trang chi tiết (VD /order-management/orders/12) vẫn sáng mục cha; riêng '/' phải khớp đúng
 const isUnder = (pathname: string, path: string) =>
-  path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`)
+  path === PATHS.dashboard ? pathname === PATHS.dashboard : pathname === path || pathname.startsWith(`${path}/`)
 
 const useRoles = () => useAuthStore((s) => s.user?.roles) ?? []
 
@@ -45,8 +46,15 @@ function RegistrationBadge() {
 
 /** Module có trang con: mở/đóng độc lập; tự mở khi người dùng đi tới một trang của nó. */
 function ModuleNavLink({ module }: { module: NavModule }) {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const roles = useRoles()
+  // Giữ kỳ báo cáo khi đi từ Tổng quan hoặc giữa các báo cáo
+  const carry = new URLSearchParams()
+  if (module.keepQuery && (pathname === PATHS.dashboard || isUnder(pathname, module.path ?? ''))) {
+    const cur = new URLSearchParams(search)
+    module.keepQuery.forEach((k) => cur.has(k) && carry.set(k, cur.get(k)!))
+  }
+  const carryQs = carry.toString()
   const isActive = !!module.path && isUnder(pathname, module.path)
   const [opened, setOpened] = useState(isActive)
   // Vừa đi vào module (bấm link, Back) → mở ra; chỉnh state ngay trong render, không dùng effect
@@ -84,7 +92,7 @@ function ModuleNavLink({ module }: { module: NavModule }) {
         <NavLink
           key={c.path}
           component={RouterNavLink}
-          to={c.path}
+          to={carryQs ? `${c.path}?${carryQs}` : c.path}
           label={c.label}
           active={isUnder(pathname, c.path)}
           rightSection={

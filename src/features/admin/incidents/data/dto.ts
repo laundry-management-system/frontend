@@ -74,8 +74,6 @@ export interface IncidentStatsDto {
   approved: number
   rejected: number
   all: number
-  paidCash: Decimal
-  paidTransfer: Decimal
 }
 
 export interface SaveIncidentRequestDto {
