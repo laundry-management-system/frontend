@@ -1,4 +1,10 @@
-import type { ReportChannel } from '../domain/types'
+import type {
+  OperationsReport,
+  OrderReport,
+  OverviewReport,
+  ReportChannel,
+  ShiftRow,
+} from '../domain/types'
 
 /** Tiền là BigDecimal của BE: có thể về dạng số hoặc chuỗi */
 type Money = number | string
@@ -8,27 +14,23 @@ interface RevenueSummaryDto {
   bankTransfer: Money
   total: Money
   paymentCount: number
-  /** Chỉ có ở báo cáo doanh thu mới; dashboard cũ có thể thiếu */
   cashCount?: number
   bankTransferCount?: number
 }
 
-export interface DashboardResponseDto {
+interface OverviewTotalsDto {
+  receivedOrders: number
+  revenueTotal: Money
+  newCustomers: number
+  newIncidents: number
+}
+
+export interface OverviewResponseDto {
   from: string
   to: string
-  orders: {
-    received: number
-    cancelled: number
-    delivered: number
-    waiting: number
-    processing: number
-    readyForPickup: number
-    pendingConfirmation: number
-    awaitingDropoff: number
-  }
-  revenue: RevenueSummaryDto
-  alerts: { lateOrders: number; storedOrders: number; storedAfterDays: number }
-  previous: { from: string; to: string; received: number; revenueTotal: Money }
+  live: OverviewReport['live']
+  period: OverviewTotalsDto
+  previous: OverviewTotalsDto
 }
 
 export interface RevenueReportResponseDto {
@@ -44,7 +46,9 @@ export interface RevenueReportResponseDto {
     total: Money
     paymentCount: number
   }[]
+  previous: { from: string; to: string; total: Money; paidOrders: number }
   summary: RevenueSummaryDto & {
+    paidOrders: number
     byChannel: { channel: ReportChannel; total: Money; paymentCount: number }[]
   }
 }
@@ -67,13 +71,34 @@ export interface OrderReportResponseDto {
   granularity: 'DAY' | 'MONTH'
   summary: {
     totalOrders: number
+    deliveredOrders: number
     cancelledOrders: number
     activeOrders: number
+    dueOrders: number
     lateOrders: number
-    lateRatePercent: Money
+    lateRatePercent: Money | null
+    ordersTotalAmount: Money
+    itemsRevenue: Money
     byChannel: { channel: ReportChannel; orders: number; revenue: Money }[]
   }
-  byStatus: { status: string; description: string; count: number }[]
+  previous: { totalOrders: number }
+  cancelReasons: OrderReport['cancelReasons']
+  processing: {
+    completedOrders: number
+    avgHours: Money | null
+    medianHours: Money | null
+    onTimeOrders: number
+    onTimeRatePercent: Money | null
+  }
+  byWashMode: { washModeId: number; washModeName: string; orders: number; amount: Money }[]
+  online: {
+    requests: number
+    confirmed: number
+    cancelled: number
+    confirmRatePercent: Money | null
+    avgConfirmMinutes: Money | null
+  } | null
+  byStatus: OrderReport['byStatus']
   rows: { period: string; received: number }[]
   byService: {
     serviceId: number | null
@@ -84,4 +109,54 @@ export interface OrderReportResponseDto {
     unit: 'KG' | 'PIECE' | 'SET' | 'PRODUCT' | null
     revenue: Money
   }[]
+}
+
+export interface CustomerSpendingDto {
+  customerId: number
+  customerCode: string
+  customerName: string
+  orderCount: number
+  spent: Money
+  lastOrderAt: string | null
+}
+
+export interface CustomerReportResponseDto {
+  newCustomers: number
+  returningCustomers: number
+  returnRatePercent: Money | null
+  registrations: number
+  previous: { newCustomers: number }
+  topCustomers: CustomerSpendingDto[]
+}
+
+export interface PromotionReportResponseDto {
+  uses: number
+  discountTotal: Money
+  revenue: Money
+  byVoucher: {
+    voucherCode: string
+    voucherId: number | null
+    uses: number
+    discountTotal: Money
+    revenue: Money
+  }[]
+}
+
+export interface OperationsReportResponseDto {
+  byStaff: OperationsReport['byStaff']
+  shifts: {
+    closed: number
+    short: number
+    over: number
+    differenceTotal: Money
+    handInTotal: Money
+  }
+  shiftRows: (Omit<ShiftRow, 'difference' | 'handInCash'> & {
+    difference: Money
+    handInCash: Money
+  })[]
+  incidents: Omit<OperationsReport['incidents'], 'payouts'> & {
+    payouts: { cash: Money; bankTransfer: Money }
+  }
+  previous: { incidentsTotal: number }
 }

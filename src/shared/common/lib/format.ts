@@ -2,6 +2,12 @@ import dayjs from 'dayjs'
 
 const number = new Intl.NumberFormat('vi-VN')
 
+/** 1 chữ số thập phân cố định (tỉ lệ %, giờ, phút). */
+export const formatOneDecimal = new Intl.NumberFormat('vi-VN', {
+  maximumFractionDigits: 1,
+  minimumFractionDigits: 1,
+}).format
+
 export const formatMoney = (value: number) => `${number.format(value)}đ`
 
 export const formatNumber = (value: number) => number.format(value)

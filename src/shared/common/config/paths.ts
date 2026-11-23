@@ -6,6 +6,7 @@ export const MODULE_PATHS = {
   orderManagement: '/order-management',
   catalog: '/catalog',
   finance: '/finance',
+  reports: '/reports',
   admin: '/admin',
 } as const
 
@@ -48,7 +49,11 @@ export const PATHS = {
   shifts: `${M.finance}/shifts`,
   shiftDetail: (id: Id) => `${M.finance}/shifts/${id}`,
   shiftClose: (id: Id) => `${M.finance}/shifts/${id}/close`,
-  reports: `${M.finance}/reports`,
+  reportRevenue: `${M.reports}/revenue`,
+  reportOrders: `${M.reports}/orders`,
+  reportCustomers: `${M.reports}/customers`,
+  reportPromotions: `${M.reports}/promotions`,
+  reportOperations: `${M.reports}/operations`,
 
   users: `${M.admin}/users`,
   auditLog: `${M.admin}/audit-log`,

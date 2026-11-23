@@ -1,3 +1,4 @@
+import type { CancelReasonCode } from '../domain/cancelReasons'
 import type {
   DropoffStatus,
   OrderChannel,
@@ -176,6 +177,7 @@ export interface CompleteOrderRequestDto {
 }
 
 export interface CancelOrderRequestDto {
+  reasonCode: CancelReasonCode
   reason?: string
   customerReason?: string
 }
@@ -281,6 +283,7 @@ export interface WorkCountsResponseDto {
 }
 
 export interface RejectOrderRequestDto {
+  reasonCode: CancelReasonCode
   customerReason: string
   reason?: string
 }

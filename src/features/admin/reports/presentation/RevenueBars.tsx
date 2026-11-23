@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { LuChartColumn } from 'react-icons/lu'
 import { formatMoney } from '@/shared/common/lib/format'
 import { EmptyState } from '@/shared/admin/ui'
-import { barHeights, compactMoney, niceTicks } from '../domain/dashboard'
+import { barHeights, compactMoney, niceTicks } from '../domain/metrics'
 import { periodBounds, periodLabel } from '../domain/report'
 import type { DateRange, ReportMode, RevenueRow } from '../domain/types'
 import { BANK_COLOR, CASH_COLOR } from './paymentColors'
@@ -98,7 +98,6 @@ export function RevenueBars({
     <RevenueDayModal
       range={periodBounds(openRow.period, mode, range ?? NO_CLIP)}
       title={`Doanh thu ${mode === 'month' ? 'tháng' : 'ngày'} ${periodLabel(openRow.period, mode)}`}
-      expectedCount={openRow.paymentCount}
       channel={channel}
       onClose={closeModal}
     />

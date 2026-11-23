@@ -1,9 +1,9 @@
-import { Badge, Button, Card, Group, Select, Stack, Text, TextInput } from '@mantine/core'
+import { Anchor, Badge, Button, Card, Select, Stack, Text, TextInput } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import dayjs from 'dayjs'
 import type { ChangeEvent } from 'react'
 import { LuCalendar, LuSearch, LuSearchX, LuTriangleAlert } from 'react-icons/lu'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   INCIDENT_TYPE_LABEL,
   type IncidentSummary,
@@ -20,7 +20,6 @@ import {
   CopyableCode,
   type DataTableColumn,
   EmptyState,
-  InfoLabel,
   ListPage,
   Money,
   StatusBadge,
@@ -101,13 +100,6 @@ export default function IncidentsPage() {
     createdFrom ? dayjs(createdFrom).toDate() : null,
     createdTo ? dayjs(createdTo).toDate() : null,
   ]
-  const paidTotal = (stats?.paidCash ?? 0) + (stats?.paidTransfer ?? 0)
-  const paidLabel = (
-    <InfoLabel info="Khoản chi bồi thường không trừ vào doanh thu.">
-      Tổng đã chi bồi thường (kết quả lọc)
-    </InfoLabel>
-  )
-
   const filters = (
     <>
       <Select
@@ -152,16 +144,9 @@ export default function IncidentsPage() {
 
   const summary = (
     <Card mb="md" py="sm">
-      <Group gap="md">
-        <Text size="sm" c="dimmed">
-          {paidLabel}
-        </Text>
-        <Text fw={700}>{formatMoney(paidTotal)}</Text>
-        <Text size="xs" c="dimmed">
-          Tiền mặt {formatMoney(stats?.paidCash ?? 0)} · Chuyển khoản{' '}
-          {formatMoney(stats?.paidTransfer ?? 0)}
-        </Text>
-      </Group>
+      <Anchor component={Link} to={PATHS.reportOperations} size="sm">
+        Xem báo cáo vận hành
+      </Anchor>
     </Card>
   )
 

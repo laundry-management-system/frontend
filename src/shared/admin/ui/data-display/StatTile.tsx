@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { LuMinus, LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 
 interface StatTileProps {
-  label: string
+  label: ReactNode
   value: ReactNode
   delta?: string
   trend?: 'up' | 'down' | 'flat'

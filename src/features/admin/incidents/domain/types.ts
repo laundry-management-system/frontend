@@ -114,8 +114,6 @@ export interface IncidentStats {
   approved: number
   rejected: number
   all: number
-  paidCash: number
-  paidTransfer: number
 }
 
 export interface IncidentFormValues {
