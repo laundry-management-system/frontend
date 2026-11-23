@@ -1,3 +1,4 @@
+import { isExtraService } from './extraService.ts'
 import type { Invoice, OrderDetail, PaymentTxn } from './types'
 
 interface InvoiceExtra {
@@ -17,7 +18,7 @@ export function buildInvoice(order: OrderDetail, txn: PaymentTxn, extra: Invoice
     orderCode: order.orderCode,
     customerName: order.customerName,
     customerPhone: order.customerPhone,
-    receivedAt: order.receivedAt,
+    receivedAt: order.receivedAt ?? '',
     paidAt: txn.paidAt,
     method: txn.method,
     referenceCode: txn.referenceCode,
@@ -31,6 +32,7 @@ export function buildInvoice(order: OrderDetail, txn: PaymentTxn, extra: Invoice
         unit: line.unit,
         unitPrice: line.unitPrice,
         lineTotal: Math.round(line.unitPrice * quantity),
+        extra: isExtraService(line.serviceId, order.requestedServices),
       }
     }),
     subtotal: order.subtotal,
@@ -39,7 +41,9 @@ export function buildInvoice(order: OrderDetail, txn: PaymentTxn, extra: Invoice
     incidentCodes: order.incidentCodes,
     expressFee: order.expressFee,
     whitesFee: order.whitesFee,
-    totalAmount: order.totalAmount,
+    pickupFee: order.fulfillment?.pickupFee ?? 0,
+    deliveryFee: order.fulfillment?.deliveryFee ?? 0,
+    totalAmount: order.payableAmount,
     cash: extra.cash ?? null,
     receiver: extra.receiver ?? null,
   }

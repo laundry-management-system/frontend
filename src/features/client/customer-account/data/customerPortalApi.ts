@@ -3,8 +3,10 @@ import { customerHttpClient } from '@/shared/common/api/httpClient'
 import type {
   AuthenticationResponseDto,
   ChangeMyPasswordRequestDto,
+  CustomerOrderDetailDto,
   CustomerOrderDto,
   CustomerProfileDto,
+  PaymentQrDto,
   UpdateMyProfileRequestDto,
 } from './dto'
 
@@ -19,6 +21,43 @@ export const customerPortalApi = {
         withCredentials: true,
       })
     ).data.accessToken,
+  getPaymentQr: async (orderCode: string) =>
+    (
+      await customerHttpClient.get<PaymentQrDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}/payment-qr`,
+      )
+    ).data,
+  getMyOrder: async (orderCode: string) =>
+    (
+      await customerHttpClient.get<CustomerOrderDetailDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}`,
+      )
+    ).data,
+  applyMyOrderVoucher: async (orderCode: string, voucherCode: string) =>
+    (
+      await customerHttpClient.put<CustomerOrderDetailDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}/voucher`,
+        { voucherCode },
+      )
+    ).data,
+  removeMyOrderVoucher: async (orderCode: string) =>
+    (
+      await customerHttpClient.delete<CustomerOrderDetailDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}/voucher`,
+      )
+    ).data,
+  claimMyOrderPayment: async (orderCode: string) =>
+    (
+      await customerHttpClient.post<CustomerOrderDetailDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}/payment-claim`,
+      )
+    ).data,
+  confirmReceived: async (orderCode: string) =>
+    (
+      await customerHttpClient.post<CustomerOrderDetailDto>(
+        `/customer-portal/orders/${encodeURIComponent(orderCode)}/confirm-received`,
+      )
+    ).data,
   listOrders: async ({ page, size }: { page: number; size: number }) =>
     fromSpringPage(
       (

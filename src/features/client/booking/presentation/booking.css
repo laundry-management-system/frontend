@@ -1,0 +1,386 @@
+/*
+ * Trang đặt đơn (/booking): dùng nguyên token landing (--pub-*, public.css), không có bảng màu riêng.
+ * Phần dưới chỉ là hình khối của wizard và nối Mantine vào token landing trong [data-booking].
+ */
+[data-surface='public'] [data-booking] {
+  /* Biến Mantine gốc đã tính ở :root theo màu quản trị nên khai báo lại theo token landing */
+  --ds-primary: var(--pub-primary);
+  --ds-primary-hover: var(--pub-primary-hover);
+  --ds-primary-foreground: var(--pub-on-primary);
+  --ds-ring: var(--pub-focus);
+  --mantine-font-family: var(--pub-font-body);
+  --mantine-color-text: var(--pub-ink);
+  --mantine-color-dimmed: var(--pub-ink-muted);
+  --mantine-color-body: var(--pub-surface);
+  --mantine-color-default: var(--pub-surface);
+  --mantine-color-default-hover: var(--pub-bg);
+  --mantine-color-default-color: var(--pub-ink);
+  --mantine-color-default-border: var(--pub-border);
+  --mantine-primary-color-filled: var(--pub-primary);
+  --mantine-primary-color-filled-hover: var(--pub-primary-hover);
+  --mantine-radius-default: var(--pub-radius-xl);
+  /* Chữ thân và nhãn ô nhập tối thiểu 16 px (theme gốc 13-14 px cho màn quản trị) */
+  --mantine-font-size-xs: 14px;
+  --mantine-font-size-sm: 16px;
+  --mantine-font-size-md: 16px;
+  --mantine-font-size-lg: 18px;
+  --mantine-line-height: 1.5;
+}
+
+@layer components {
+  /* Ô nhập cao, bo tròn */
+  [data-booking] .mantine-Input-input {
+    min-height: 3.25rem;
+    border-color: var(--pub-border);
+  }
+  [data-booking] .mantine-InputWrapper-label {
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+  }
+
+  /* Mỗi bước là một thẻ trắng bo lớn trên nền kem của landing */
+  .bk-card {
+    padding: clamp(1.25rem, 0.8rem + 2vw, 2.5rem);
+    border-radius: 1.5rem;
+    background: var(--pub-surface);
+    box-shadow: var(--pub-shadow-md);
+  }
+  .bk-card-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .bk-card-head h2 {
+    font-size: var(--pub-text-xl);
+  }
+  .bk-card-head h2:focus {
+    outline: none;
+  }
+
+  /* Vòng số: bước hiện tại nền bạc hà, đã xong nền navy có dấu tích, chưa tới chỉ có viền */
+  .bk-num {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 2px solid var(--pub-border);
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-surface);
+    color: var(--pub-ink-muted);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .bk-num[data-state='current'] {
+    border-color: var(--pub-accent);
+    background: var(--pub-accent);
+    color: var(--pub-on-accent);
+    box-shadow: 0 0 0 4px var(--pub-accent-soft);
+  }
+  .bk-num[data-state='done'] {
+    border-color: var(--pub-primary);
+    background: var(--pub-primary);
+    color: var(--pub-on-primary);
+  }
+
+  /* Thanh 5 bước: các vòng số nối bằng vạch; vạch tới bước đã qua / hiện tại đậm */
+  .bk-steps {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .bk-step {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+  .bk-step + .bk-step::before {
+    content: '';
+    position: absolute;
+    top: 1.375rem;
+    right: calc(50% + 1.75rem);
+    left: calc(-50% + 1.75rem);
+    border-top: 2px solid var(--pub-border);
+  }
+  .bk-step:is([data-state='done'], [data-state='current'])::before {
+    border-top-color: var(--pub-primary);
+  }
+  .bk-step-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--pub-touch);
+    padding: 0 0.25rem;
+    border-radius: var(--pub-radius-md);
+    color: var(--pub-ink-muted);
+    font: inherit;
+    font-size: var(--pub-text-sm);
+    line-height: 1.35;
+  }
+  .bk-step:is([data-state='done'], [data-state='current']) .bk-step-body {
+    color: var(--pub-ink);
+  }
+  .bk-step[data-state='current'] .bk-step-body {
+    font-weight: 700;
+  }
+  button.bk-step-body {
+    cursor: pointer;
+  }
+  button.bk-step-body:hover:not(:disabled) > span:last-child {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  /* Thẻ chọn dịch vụ: viền bo tròn, đã chọn thì nền navy chữ trắng */
+  .bk-option {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    min-height: 6.5rem;
+    padding: 1.125rem 1.25rem;
+    border: 1.5px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+    color: var(--pub-ink);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--pub-duration) var(--pub-ease-out),
+      background-color var(--pub-duration) var(--pub-ease-out),
+      transform var(--pub-duration) var(--pub-ease-out);
+  }
+  .bk-option:hover {
+    border-color: var(--pub-primary);
+    transform: translateY(-2px);
+  }
+  .bk-option:active {
+    transform: translateY(0) scale(0.99);
+  }
+  .bk-option[aria-pressed='true'] {
+    border-color: var(--pub-primary);
+    background: var(--pub-primary);
+    color: var(--pub-on-primary);
+  }
+  /* Thứ bậc trong thẻ dịch vụ: tên 17px/600, giá 22px/700 navy là điểm nhìn, đơn vị 14px/400 nhạt, thời gian là nhãn nhỏ */
+  .bk-name {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .bk-price {
+    color: var(--pub-primary);
+    font-size: var(--pub-text-xl);
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .bk-unit {
+    color: var(--pub-ink-muted);
+    font-size: var(--pub-text-sm);
+    font-weight: 400;
+  }
+  .bk-badge {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--pub-radius-pill);
+    background: var(--pub-surface-alt);
+    color: var(--pub-ink-muted);
+    font-size: var(--pub-text-sm);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  /* Thẻ đã chọn nền navy: chữ trắng, đơn vị và nhãn trắng nhạt vẫn trên 10:1 */
+  .bk-option[aria-pressed='true'] :is(.bk-price, .bk-unit) {
+    color: var(--pub-on-primary);
+  }
+  .bk-option[aria-pressed='true'] .bk-unit {
+    opacity: 0.85;
+  }
+  .bk-option[aria-pressed='true'] .bk-badge {
+    background: #ffffff26;
+    color: var(--pub-on-primary);
+  }
+
+  /* Tiêu đề in hoa đậm của thẻ chọn và thẻ tích */
+  .bk-caps {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  /* Thẻ tích chọn (giặt nhanh, hình thức gửi / nhận): viền, vòng mềm khi chọn */
+  .bk-check {
+    padding: 1.125rem 1.25rem;
+    border: 1.5px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+    transition:
+      border-color var(--pub-duration) var(--pub-ease-out),
+      box-shadow var(--pub-duration) var(--pub-ease-out);
+  }
+  .bk-check:hover {
+    border-color: var(--pub-primary);
+  }
+  .bk-check:is([data-checked], :has(input:checked)) {
+    border-color: var(--pub-primary);
+    box-shadow: 0 0 0 4px var(--pub-primary-soft);
+  }
+
+  /* Thẻ hình thức gửi / nhận: cao bằng nhau trong lưới, dấu tích khi chọn; xếp dọc dưới sm */
+  .bk-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    height: 100%;
+  }
+  .bk-choice:is([data-checked], :has(input:checked)) {
+    background: var(--pub-primary-soft);
+  }
+
+  /* Hàng số lượng, nhóm thông tin ở Bước 5 và màn thành công */
+  .bk-panel {
+    padding: 1.125rem 1.25rem;
+    border: 1.5px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+  }
+
+  /* Nút −/+ trong ô số lượng: vùng chạm 44 px */
+  .bk-step-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--pub-radius-pill);
+    color: var(--pub-ink);
+    cursor: pointer;
+    transition: background-color var(--pub-duration) var(--pub-ease-out);
+  }
+  .bk-step-btn:hover {
+    background: var(--pub-surface-alt);
+  }
+  .bk-step-btn:active {
+    transform: scale(0.94);
+  }
+
+  /* Ô chọn ngày / giờ dạng chip */
+  .bk-chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.5rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+    color: var(--pub-ink);
+    font: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+      border-color var(--pub-duration) var(--pub-ease-out),
+      background-color var(--pub-duration) var(--pub-ease-out);
+  }
+  .bk-chip:hover {
+    border-color: var(--pub-primary);
+  }
+  .bk-chip[aria-pressed='true'] {
+    border-color: var(--pub-primary);
+    background: var(--pub-primary);
+    color: var(--pub-on-primary);
+  }
+  /* Ngày dạng tờ lịch */
+  .bk-date {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 6rem;
+    overflow: hidden;
+    border: 1.5px solid var(--pub-border);
+    border-radius: var(--pub-radius-xl);
+    background: var(--pub-surface);
+    color: var(--pub-ink);
+    font: inherit;
+    cursor: pointer;
+    transition:
+      border-color var(--pub-duration) var(--pub-ease-out),
+      box-shadow var(--pub-duration) var(--pub-ease-out);
+  }
+  .bk-date:hover {
+    border-color: var(--pub-primary);
+  }
+  .bk-date[aria-pressed='true'] {
+    border-color: var(--pub-primary);
+    box-shadow: 0 0 0 2px var(--pub-primary);
+  }
+  .bk-date-band {
+    position: relative;
+    align-self: stretch;
+    padding: 0.25rem 0;
+    background: var(--pub-primary);
+    color: var(--pub-on-primary);
+    font-size: var(--pub-text-sm);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .bk-date[aria-pressed='true'] .bk-date-band {
+    background: var(--pub-accent);
+    color: var(--pub-on-accent);
+  }
+  .bk-date-check {
+    position: absolute;
+    top: 50%;
+    right: 0.375rem;
+    translate: 0 -50%;
+  }
+  .bk-date-day {
+    margin-top: 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .bk-date-wd {
+    font-size: var(--pub-text-sm);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .bk-date-cap {
+    min-height: 1.4em;
+    padding-bottom: 0.25rem;
+    color: var(--pub-ink-muted);
+    font-size: var(--pub-text-sm);
+    line-height: 1.4;
+  }
+  .bk-chip-sub {
+    font-size: var(--pub-text-sm);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  /* Mọi số tiền dùng chung class này: cùng font thân, chữ số đều cột */
+  .bk-money {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bk-total {
+    font-size: var(--pub-text-xl);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+}
+
+/* Desktop: hàng Quay lại / Tiếp tục dính đáy thẻ bước; ô đang focus không nằm dưới nó */
+@media (min-width: 64em) {
+  html:has(body [data-booking]) {
+    scroll-padding-bottom: 7rem;
+  }
+}

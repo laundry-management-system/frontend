@@ -5,8 +5,19 @@ import { orderKeys } from '../queryKeys'
 export function useCancelOrder() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ orderId, reason }: { orderId: number; reason: string }) =>
-      ordersApi.cancel(orderId, reason.trim()),
+    mutationFn: ({
+      orderId,
+      reason,
+      customerReason,
+    }: {
+      orderId: number
+      reason: string
+      customerReason?: string
+    }) =>
+      ordersApi.cancel(orderId, {
+        reason: reason.trim() || undefined,
+        customerReason: customerReason?.trim() || undefined,
+      }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: orderKeys.all }),
   })
 }

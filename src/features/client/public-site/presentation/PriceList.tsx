@@ -10,7 +10,7 @@ import type { PublicService } from '../domain/types'
 import { SectionError } from './SectionError'
 import { SectionHeading } from './SectionHeading'
 
-const TITLE_ID = 'bang-gia-title'
+const TITLE_ID = 'pricing-title'
 const TITLE = (
   <>
     Dịch vụ và <span className="pub-accent-word">bảng giá</span>
@@ -51,7 +51,7 @@ function ServiceCard({ service, whitesFee }: { service: PublicService; whitesFee
       </span>
       <h3 className="text-(length:--pub-text-lg) font-semibold">{service.name}</h3>
       <p>
-        <span className="font-(family-name:--pub-font-display) text-[1.75rem] font-semibold text-(--pub-ink) tabular-nums">
+        <span className="font-(family-name:--pub-font-display) text-[1.5rem] font-semibold text-(--pub-ink) tabular-nums">
           {formatMoney(service.price)}
         </span>
         <span className="text-(--pub-ink-muted)">/{unit}</span>
@@ -124,7 +124,7 @@ export function PriceList() {
 
   return (
     <section
-      id="bang-gia"
+      id="pricing"
       aria-labelledby={TITLE_ID}
       aria-busy={services.isPending}
       className="pub-section"

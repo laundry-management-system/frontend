@@ -131,7 +131,6 @@ function ClassifyEditorBody({
   })
   const inactiveRequested = order.requestedServices.filter((r) => !serviceMap.has(r.id))
   const settingsFee = useShopSettings().data?.whitesFee ?? 0
-  const whitesFee = v3 && order.washWhitesSeparately ? settingsFee : 0
   const [orderType, setOrderType] = useState(initial.start.orderType)
   const [lines, setLines] = useState<OrderLine[]>(initial.start.lines)
   const [bagImages, setBagImages] = useState<File[]>([])
@@ -143,6 +142,13 @@ function ClassifyEditorBody({
 
   const save = useSaveClassification()
 
+  // FR-021: như BE, chỉ thu khi có dòng thuộc dịch vụ cho phép đồ trắng
+  const whitesFee =
+    v3 &&
+    order.washWhitesSeparately &&
+    lines.some((l) => serviceMap.get(l.serviceId)?.whitesApplicable)
+      ? settingsFee
+      : 0
   const totals = computeTotals(lines, orderType, serviceMap, 0, whitesFee)
   const lineErrors = lines.map(validateLine)
   const hasErrors = lineErrors.some((e) => Object.keys(e).length > 0)
@@ -320,7 +326,7 @@ function ClassifyEditorBody({
             {order.customerName} · {formatPhone(order.customerPhone)}
           </Text>
           <Text size="sm" c="dimmed">
-            Nhận {dateTime(order.receivedAt)}
+            Nhận {order.receivedAt ? dateTime(order.receivedAt) : '—'}
           </Text>
         </Stack>
         <Divider />

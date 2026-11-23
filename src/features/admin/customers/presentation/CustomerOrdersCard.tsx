@@ -29,7 +29,7 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
               name: 'receivedAt',
               label: 'Ngày nhận',
               width: 110,
-              render: (o) => formatDate(o.receivedAt),
+              render: (o) => (o.receivedAt ? formatDate(o.receivedAt) : '—'),
             },
             { name: 'serviceName', label: 'Dịch vụ', render: (o) => o.serviceName ?? '—' },
             {

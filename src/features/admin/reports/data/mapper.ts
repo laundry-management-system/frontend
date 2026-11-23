@@ -25,6 +25,8 @@ export const toRevenueReport = (dto: RevenueReportResponseDto): RevenueReport =>
     period: r.period,
     cash: Number(r.cash),
     bankTransfer: Number(r.bankTransfer),
+    online: Number(r.online),
+    offline: Number(r.offline),
     total: Number(r.total),
     paymentCount: r.paymentCount,
   })),
@@ -36,6 +38,11 @@ export const toRevenueReport = (dto: RevenueReportResponseDto): RevenueReport =>
     cashCount: dto.summary.cashCount ?? 0,
     bankTransferCount: dto.summary.bankTransferCount ?? 0,
   },
+  byChannel: dto.summary.byChannel.map((c) => ({
+    channel: c.channel,
+    count: c.paymentCount,
+    amount: Number(c.total),
+  })),
 })
 
 export const toRevenuePayment = (dto: RevenuePaymentDto): RevenuePayment => ({
@@ -57,6 +64,11 @@ export const toOrderReport = (dto: OrderReportResponseDto): OrderReport => ({
   delivered: statusCount(dto, 'DELIVERED'),
   processing: statusCount(dto, 'PROCESSING'),
   rows: dto.rows,
+  byChannel: dto.summary.byChannel.map((c) => ({
+    channel: c.channel,
+    count: c.orders,
+    amount: Number(c.revenue),
+  })),
   byService: dto.byService.map((s) => ({
     serviceId: s.serviceId,
     serviceName: s.serviceName,

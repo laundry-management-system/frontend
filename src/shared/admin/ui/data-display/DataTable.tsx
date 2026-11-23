@@ -80,7 +80,7 @@ export function DataTable<T>({
         <Table.Thead>
           <Table.Tr>
             {columns.map((col, c) => (
-              <Table.Th key={col.name} w={col.width} ta={col.align} {...fixed[c]}>
+              <Table.Th key={col.name} w={col.width} miw={col.width} ta={col.align} {...fixed[c]}>
                 {col.label}
               </Table.Th>
             ))}

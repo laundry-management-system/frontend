@@ -1,8 +1,4 @@
-import {
-  ChangePasswordSection,
-  MyOrdersSection,
-  ProfileSection,
-} from '@/features/client/customer-account'
+import { MyOrdersSection, ProfileSection } from '@/features/client/customer-account'
 
 export default function AccountPage() {
   return (
@@ -11,7 +7,6 @@ export default function AccountPage() {
       <div className="grid items-start gap-6 lg:grid-cols-[26rem_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-6">
           <ProfileSection />
-          <ChangePasswordSection />
         </div>
         <MyOrdersSection />
       </div>

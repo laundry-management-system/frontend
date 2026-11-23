@@ -9,10 +9,23 @@ export { ReceiptPrintArea, ReceiptSheet } from './presentation/intake/ReceiptShe
 export { useOrders } from './application/queries/useOrders'
 export { useOrderCounts } from './application/queries/useOrderCounts'
 export { useStartProcessing } from './application/mutations/useStartProcessing'
-export { canCancel, primaryActionOf } from './domain/rules'
+export {
+  canCancel,
+  canCompleteDropoff,
+  canConfirm,
+  canDeliver,
+  awaitsCustomerReceipt,
+  canStartDelivery,
+  isAwaitingPayment,
+  canReject,
+  canRejectPaymentClaim,
+  preReceiptLockReason,
+  primaryActionOf,
+} from './domain/rules'
 export { ORDER_STATUS_LABEL, ORDER_STATUSES, ORDER_TYPE_LABEL } from './domain/types'
 export type { NotificationResult, OrderListItem } from './domain/types'
-export { type AdminAction, AdminActionsCard } from './presentation/detail/AdminActionsCard'
+export { type AdminAction, adminMenuItems } from './presentation/detail/adminMenuItems'
+export { defaultDetailTab, type DetailTab, visibleDetailTabs } from './domain/rules'
 export { AdminReasonModal } from './presentation/modals/AdminReasonModal'
 export { CancelOrderModal } from './presentation/modals/CancelOrderModal'
 export { CompleteOrderModal } from './presentation/modals/CompleteOrderModal'
@@ -20,8 +33,12 @@ export { NotifyModal } from './presentation/modals/NotifyModal'
 export { OrderCustomerCard } from './presentation/detail/OrderCustomerCard'
 export { OrderHistoryCard } from './presentation/detail/OrderHistoryCard'
 export { OrderItemsCard } from './presentation/detail/OrderItemsCard'
+export { RequestedServicesCard } from './presentation/detail/RequestedServicesCard'
 export { OrderNotifyCard } from './presentation/detail/OrderNotifyCard'
 export { OrderPaymentCard } from './presentation/detail/OrderPaymentCard'
+export { OrderChannelBadge } from './presentation/OrderChannelBadge'
+export { OrderPaymentBadge } from './presentation/OrderPaymentBadge'
+export { OrderServiceTags } from './presentation/OrderServiceTags'
 export { OrderStatusCell } from './presentation/OrderStatusCell'
 export { useIntakeOrders } from './application/queries/useIntakeOrders'
 export { checkoutMode, confirmedTxn } from './domain/payment'
@@ -59,3 +76,20 @@ export { WorkListPrintSheet } from './presentation/WorkListPrintSheet'
 export { useFindOpenOrderByCode } from './application/queries/useFindOpenOrderByCode'
 export { orderKeys } from './application/queryKeys'
 export { formatConditionNote } from './domain/conditionNote'
+export { useConfirmOrder } from './application/mutations/useConfirmOrder'
+export { useRejectOrder } from './application/mutations/useRejectOrder'
+export {
+  appointmentSchema,
+  rejectOrderSchema,
+  type AppointmentValues,
+  type RejectOrderValues,
+} from './application/schemas'
+export { ORDER_CHANNEL_LABEL } from './domain/types'
+export type { OrderChannel } from './domain/types'
+export { OnlineFulfillmentCard } from './presentation/detail/OnlineFulfillmentCard'
+export { ConfirmOnlineOrderModal } from './presentation/modals/ConfirmOnlineOrderModal'
+export { CompleteDropoffModal } from './presentation/modals/CompleteDropoffModal'
+export { StartDeliveryModal } from './presentation/modals/StartDeliveryModal'
+export { RejectOrderModal } from './presentation/modals/RejectOrderModal'
+export { PaymentClaimChooserModal } from './presentation/modals/PaymentClaimChooserModal'
+export { RejectPaymentClaimModal } from './presentation/modals/RejectPaymentClaimModal'

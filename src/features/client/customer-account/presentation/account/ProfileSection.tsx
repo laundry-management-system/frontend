@@ -8,6 +8,7 @@ import { useUpdateMyProfile } from '../../application/mutations/useUpdateMyProfi
 import { useMyProfile } from '../../application/queries/useMyProfile'
 import { type ProfileValues, profileSchema } from '../../application/schemas'
 import type { CustomerProfile } from '../../domain/types'
+import { ChangePasswordSection } from './ChangePasswordSection'
 import { FIELD_CLASSES, FORM_ERROR_CLASS } from '../auth/fieldClasses'
 
 const TERM = 'text-(--pub-ink-muted)'
@@ -72,6 +73,7 @@ function ProfileEditForm({ profile, onClose }: { profile: CustomerProfile; onClo
       <TextInput
         label="Họ tên"
         withAsterisk
+        autoFocus
         autoComplete="name"
         classNames={FIELD_CLASSES}
         {...form.getInputProps('fullName')}
@@ -140,11 +142,14 @@ export function ProfileSection() {
   }
 
   return (
-    <section aria-labelledby="thong-tin-title" className="pub-card p-6">
-      <h2 id="thong-tin-title" className="mb-5 text-(length:--pub-text-xl)">
-        Thông tin
-      </h2>
-      {body}
-    </section>
+    <>
+      <section aria-labelledby="thong-tin-title" className="pub-card p-6">
+        <h2 id="thong-tin-title" className="mb-5 text-(length:--pub-text-xl)">
+          Thông tin
+        </h2>
+        {body}
+      </section>
+      {data && editing && <ChangePasswordSection />}
+    </>
   )
 }

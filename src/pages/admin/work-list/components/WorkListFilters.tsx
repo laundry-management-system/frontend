@@ -1,8 +1,8 @@
-import { Group, SegmentedControl, Select, Stack, TextInput } from '@mantine/core'
+import { Anchor, Group, SegmentedControl, Select, Stack, Text, TextInput } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react'
 import { LuCalendar, LuSearch } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   useFindOpenOrderByCode,
   useWorkCounts,
@@ -61,6 +61,19 @@ export function WorkListFilters() {
   return (
     <Stack gap="sm" w="100%">
       <SegmentedControl value={tab} onChange={handleTabChange} data={tabOptions} />
+      {counts && (
+        <Group gap="md">
+          <Anchor component={Link} to={`${PATHS.orders}?status=PENDING_CONFIRMATION`} size="sm">
+            Chờ xác nhận ({counts.pendingConfirmation})
+          </Anchor>
+          <Anchor component={Link} to={`${PATHS.orders}?status=AWAITING_DROPOFF`} size="sm">
+            Chờ nhận đồ ({counts.awaitingDropoff})
+          </Anchor>
+          <Text size="xs" c="dimmed">
+            Đơn online chưa nhận đồ, chưa vào danh sách công việc
+          </Text>
+        </Group>
+      )}
       <Group gap="sm">
         <TextInput
           w={320}

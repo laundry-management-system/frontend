@@ -37,18 +37,62 @@ const reasonField = z
   .min(1, 'Vui lòng nhập lý do')
   .max(500, 'Lý do tối đa 500 ký tự')
 
-export const cancelOrderSchema = (paid: boolean) =>
-  z.object({ reason: reasonField, refunded: z.boolean() }).refine((v) => !paid || v.refunded, {
-    path: ['refunded'],
-    message: 'Xác nhận đã hoàn tiền cho khách',
-  })
+/** ONLINE: lý do gửi khách bắt buộc, lý do nội bộ tùy chọn; OFFLINE: lý do bắt buộc. */
+export const cancelOrderSchema = (paid: boolean, online = false) =>
+  z
+    .object({
+      reason: online ? z.string().trim().max(500, 'Lý do tối đa 500 ký tự') : reasonField,
+      customerReason: online ? reasonField : z.string(),
+      refunded: z.boolean(),
+    })
+    .refine((v) => !paid || v.refunded, {
+      path: ['refunded'],
+      message: 'Xác nhận đã hoàn tiền cho khách',
+    })
 
 export interface CancelOrderValues {
   reason: string
+  customerReason: string
   refunded: boolean
 }
 
-export type AdminMode = 'revert' | 'reschedule' | 'price'
+/** Từ chối đơn online: lý do gửi khách bắt buộc, lý do nội bộ tùy chọn. */
+export const rejectOrderSchema = z.object({
+  customerReason: reasonField,
+  reason: z.string().trim().max(500, 'Lý do tối đa 500 ký tự'),
+})
+
+export const rejectClaimSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Nhập lý do (tối đa 200 ký tự)')
+    .max(200, 'Nhập lý do (tối đa 200 ký tự)'),
+})
+
+export type RejectOrderValues = z.input<typeof rejectOrderSchema>
+
+/** Mã vận đơn tùy chọn, rỗng = xóa (FR-037). */
+export const trackingCodeField = z.string().trim().max(50, 'Mã vận đơn tối đa 50 ký tự')
+
+export const trackingCodesSchema = z.object({
+  pickupTrackingCode: trackingCodeField,
+  deliveryTrackingCode: trackingCodeField,
+})
+
+export type TrackingCodesValues = z.input<typeof trackingCodesSchema>
+
+/** Đổi giờ hẹn: ít nhất một trong giờ gửi / giờ trả; giờ phải ở tương lai. */
+export const appointmentSchema = z
+  .object({ appointmentAt: z.date().nullable(), returnAt: z.date().nullable() })
+  .refine((v) => v.appointmentAt || v.returnAt, {
+    path: ['appointmentAt'],
+    message: 'Chọn ít nhất một giờ hẹn để đổi',
+  })
+
+export type AppointmentValues = z.input<typeof appointmentSchema>
+
+export type AdminMode = 'revert' | 'reschedule' | 'price' | 'undoDelivery'
 
 export interface AdminReasonValues {
   mode: AdminMode
@@ -60,7 +104,7 @@ export interface AdminReasonValues {
 
 export const adminReasonSchema = z
   .object({
-    mode: z.enum(['revert', 'reschedule', 'price']),
+    mode: z.enum(['revert', 'reschedule', 'price', 'undoDelivery']),
     targetStatus: z.string().nullable(),
     dueAt: z.date().nullable(),
     newTotalAmount: z.union([z.number(), z.literal('')]),

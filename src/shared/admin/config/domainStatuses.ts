@@ -39,6 +39,8 @@ export const GROUP_LABEL: Record<StatusGroup, string> = {
 }
 
 export const DOMAIN_STATUSES: DomainStatus[] = [
+  { group: 'order', key: 'pending-confirmation', label: 'Chờ xác nhận', tone: 'warning' },
+  { group: 'order', key: 'awaiting-dropoff', label: 'Chờ nhận đồ', tone: 'info' },
   { group: 'order', key: 'new', label: 'Mới nhận', tone: 'info' },
   { group: 'order', key: 'processing', label: 'Đang xử lý', tone: 'primary' },
   { group: 'order', key: 'completed', label: 'Hoàn thành', tone: 'success' },

@@ -12,7 +12,7 @@ const NOTE_MAX = 500
 
 /** Khách chuyển thiếu/thừa: ghi vào ghi chú đơn, đơn vẫn chưa thanh toán. Mount khi mở. */
 export function DiscrepancyModal({ order, onClose }: { order: OrderDetail; onClose: () => void }) {
-  const expected = order.totalAmount
+  const expected = order.payableAmount
   const record = useRecordDiscrepancy()
   const form = useForm<DiscrepancyValues>({
     initialValues: { receivedAmount: '', note: '' },

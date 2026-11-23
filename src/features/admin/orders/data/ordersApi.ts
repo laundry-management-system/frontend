@@ -1,6 +1,7 @@
 import { httpClient } from '@/shared/common/api/httpClient'
 import { fromSpringPage, type SpringPage } from '@/shared/common/api/page'
 import type {
+  OrderChannel,
   OrderLine,
   OrderStatus,
   PaymentResolution,
@@ -11,6 +12,9 @@ import type {
 import { tabParams } from '../domain/workList'
 import type {
   AdjustPriceRequestDto,
+  AppointmentRequestDto,
+  RejectOrderRequestDto,
+  TrackingRequestDto,
   CancelOrderRequestDto,
   ChangeStatusRequestDto,
   CompleteOrderRequestDto,
@@ -46,6 +50,7 @@ import {
 
 export interface OrderListParams {
   status?: OrderStatus
+  channel?: OrderChannel
   /** Lọc các đơn cùng lượt nhận (khớp chính xác) */
   intakeCode?: string
   q: string
@@ -113,20 +118,29 @@ export const ordersApi = {
     )
   },
 
-  list: async ({ status, intakeCode, q, page, size }: OrderListParams) => {
+  list: async ({ status, channel, intakeCode, q, page, size }: OrderListParams) => {
     const { data } = await httpClient.get<SpringPage<OrderResponseDto>>('/orders', {
-      params: { status, intakeCode, ...termParams(q), page, size, sort: 'receivedAt,desc' },
+      params: {
+        status,
+        channel,
+        intakeCode,
+        ...termParams(q),
+        page,
+        size,
+        sort: 'receivedAt,desc',
+      },
     })
     return fromSpringPage(data, toOrderListItem)
   },
 
   /** Danh sách công việc: lọc và phân trang ở BE, cùng ngày hẹn thì xếp theo giờ nhận. */
-  listWork: async ({ tab, q, dueFrom, dueTo, page, size }: WorkListParams) => {
+  listWork: async ({ tab, channel, q, dueFrom, dueTo, page, size }: WorkListParams) => {
     const { statuses, ...filter } = tabParams(tab)
     const { data } = await httpClient.get<SpringPage<OrderResponseDto>>('/orders', {
       params: {
         statuses: statuses.join(','),
         ...filter,
+        channel,
         ...termParams(q),
         dueFrom,
         dueTo,
@@ -140,9 +154,14 @@ export const ordersApi = {
     return fromSpringPage(data, toOrderListItem)
   },
 
-  workCounts: async ({ q, dueFrom, dueTo }: Pick<WorkListParams, 'q' | 'dueFrom' | 'dueTo'>) => {
+  workCounts: async ({
+    channel,
+    q,
+    dueFrom,
+    dueTo,
+  }: Pick<WorkListParams, 'channel' | 'q' | 'dueFrom' | 'dueTo'>) => {
     const { data } = await httpClient.get<WorkCountsResponseDto>('/orders/work-counts', {
-      params: { ...termParams(q), dueFrom, dueTo },
+      params: { channel, ...termParams(q), dueFrom, dueTo },
     })
     const counts: WorkCounts = {
       ALL: data.all,
@@ -151,6 +170,8 @@ export const ordersApi = {
       PROCESSING: data.processing,
       LATE: data.late,
       EXPRESS: data.express,
+      pendingConfirmation: data.pendingConfirmation,
+      awaitingDropoff: data.awaitingDropoff,
     }
     return counts
   },
@@ -188,10 +209,50 @@ export const ordersApi = {
     return toNotificationResult(data)
   },
 
-  cancel: (id: number, reason: string) => {
-    const dto: CancelOrderRequestDto = { reason }
+  /** ONLINE: `customerReason` bắt buộc, `reason` nội bộ tùy chọn; OFFLINE: `reason` bắt buộc */
+  cancel: (id: number, dto: CancelOrderRequestDto) => {
     return detail(httpClient.post<OrderDetailResponseDto>(`/orders/${id}/cancel`, dto))
   },
+
+  confirm: (id: number) => detail(httpClient.post<OrderDetailResponseDto>(`/orders/${id}/confirm`)),
+
+  reject: (id: number, dto: RejectOrderRequestDto) =>
+    detail(httpClient.post<OrderDetailResponseDto>(`/orders/${id}/reject`, dto)),
+
+  rejectPaymentClaim: (id: number, reason: string) =>
+    detail(
+      httpClient.post<OrderDetailResponseDto>(`/orders/${id}/payment-claim/reject`, { reason }),
+    ),
+
+  /** Đổi giờ hẹn gửi và / hoặc giờ hẹn trả (ít nhất một) */
+  appointment: (id: number, dto: AppointmentRequestDto) =>
+    detail(httpClient.patch<OrderDetailResponseDto>(`/orders/${id}/appointment`, dto)),
+
+  /** Mã vận đơn tùy chọn; chỉ gửi khi đơn có chặng lấy (PICKUP) */
+  completeDropoff: (id: number, pickupTrackingCode?: string) =>
+    detail(
+      httpClient.post<OrderDetailResponseDto>(`/orders/${id}/fulfillment/dropoff`, {
+        pickupTrackingCode,
+      }),
+    ),
+
+  startDelivery: (id: number, deliveryTrackingCode?: string) =>
+    detail(
+      httpClient.post<OrderDetailResponseDto>(`/orders/${id}/fulfillment/start-delivery`, {
+        deliveryTrackingCode,
+      }),
+    ),
+
+  undoDelivery: (id: number, reason: string) =>
+    detail(
+      httpClient.post<OrderDetailResponseDto>(`/orders/${id}/fulfillment/undo-delivery`, {
+        reason,
+      }),
+    ),
+
+  /** Chuỗi rỗng = xóa mã; bỏ trường = giữ nguyên */
+  updateTracking: (id: number, dto: TrackingRequestDto) =>
+    detail(httpClient.patch<OrderDetailResponseDto>(`/orders/${id}/fulfillment/tracking`, dto)),
 
   revertStatus: (id: number, targetStatus: OrderStatus, reason: string) => {
     const dto: RevertStatusRequestDto = { targetStatus, reason }

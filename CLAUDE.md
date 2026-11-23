@@ -132,6 +132,7 @@ Thứ tự ưu tiên:
 - Chỉ dựng layout riêng khi màn không phải danh sách (trang chi tiết, form nhiều bước, dashboard); khi đó vẫn dùng `PageHeader` cho tiêu đề.
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
 - Đăng ký page: thêm đường dẫn vào `PATHS` (`shared/common/config/paths.ts`), rồi khai route + mục menu trong `NAV_MODULES` (`app/admin/router/modules.tsx`, kèm `roles`; trang chi tiết đặt `hideInMenu`). Không viết đường dẫn trần trong code.
+- Đường dẫn và mục neo MUST bằng tiếng Anh không dấu (vd `/booking`, `#pricing`); đường dẫn cũ đi qua `PATHS.legacy*` và redirect.
 
 ## Khai báo props trước khi truyền
 
@@ -180,6 +181,7 @@ Mọi form phải báo lỗi **cùng một kiểu**: chữ đỏ ngay dưới ô
 - Thẻ `<form>` luôn có `noValidate`: `<form onSubmit={form.onSubmit(...)} noValidate>`. Prop `required` trên input chỉ để hiện dấu `*`; còn luật bắt buộc nằm ở schema zod / hàm `validate`.
 - Không dùng `pattern`, `minLength`, `type="email"`… để chặn submit; đưa luật vào schema để lỗi hiện đúng chỗ, đúng câu tiếng Việt.
 - Form không bọc `<form>` (gọi `form.onSubmit(handler)()` từ nút) thì không cần `noValidate`, nhưng vẫn phải validate qua `useForm`.
+- Trường bắt buộc (theo luật trong schema) hiện dấu `*` sau label qua prop `required`; trường tùy chọn không có dấu nào, không bao giờ ghi "(không bắt buộc)" hay "(tùy chọn)".
 - Lỗi từ BE: field error → `form.setErrors` (map tên field BE sang tên field form nếu khác), lỗi chung → `notify.error`.
 
 ## Quản lý state

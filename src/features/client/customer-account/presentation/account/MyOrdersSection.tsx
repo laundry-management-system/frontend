@@ -1,9 +1,54 @@
 import { Pagination, Skeleton } from '@mantine/core'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { LuInbox } from 'react-icons/lu'
-import { formatDate, formatMoney } from '@/shared/common/lib/format'
+import { CopyCodeButton } from '@/shared/client/ui'
+import { PATHS } from '@/shared/common/config/paths'
+import { formatDateTime, formatMoney } from '@/shared/common/lib/format'
+import { customerKeys } from '../../application/queryKeys'
 import { useMyOrders } from '../../application/queries/useMyOrders'
-import { ORDER_STATUS_LABEL } from '../../domain/orderStatus'
+import type { CustomerOrder, OrderStatus } from '../../domain/types'
+import { orderStatusLabel } from '../../domain/orderStatus'
+import { PaymentQrModal } from './PaymentQrModal'
+
+const STATUS_TONE: Partial<Record<OrderStatus, string>> = {
+  CANCELLED: 'bg-(--pub-danger-soft) text-(--pub-danger)',
+  COMPLETED: 'bg-(--pub-accent-soft) text-(--pub-accent-ink)',
+  DELIVERED: 'bg-(--pub-accent-soft) text-(--pub-accent-ink)',
+}
+const DEFAULT_TONE = 'bg-(--pub-primary-soft)'
+
+function OrderPayment({ order: o }: { order: CustomerOrder }) {
+  const queryClient = useQueryClient()
+  const [opened, setOpened] = useState(false)
+  if (o.channel !== 'ONLINE' || o.fulfillment?.returnMethod !== 'DELIVERY') return null
+  if (o.paymentStatus === 'PAID')
+    return <span className="font-semibold text-(--pub-accent-ink)">Đã thanh toán</span>
+  if (o.status !== 'COMPLETED') return null
+  if (o.paymentClaimedAt)
+    return <span className="font-semibold text-(--pub-ink-muted)">Chờ tiệm xác nhận</span>
+  const close = () => {
+    setOpened(false)
+    void queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'orders'] })
+  }
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setOpened(true)
+        }}
+        className="pub-btn pub-btn--primary relative z-10"
+      >
+        Thanh toán
+      </button>
+      <PaymentQrModal orderCode={o.orderCode} opened={opened} onClose={close} />
+    </>
+  )
+}
 
 export function MyOrdersSection() {
   const [page, setPage] = useState(1)
@@ -21,22 +66,54 @@ export function MyOrdersSection() {
   } else if (data) {
     body = (
       <>
-        <ul className="divide-y divide-(--pub-border)">
+        <ul className="grid gap-3">
           {data.content.map((o) => (
             <li
               key={o.orderCode}
-              className="grid gap-x-4 gap-y-1 py-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center"
+              className="relative grid gap-2 rounded-(--pub-radius-xl) border border-(--pub-border) bg-(--pub-surface) p-4 text-(length:--pub-text-md) transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-(--pub-shadow-md)"
             >
-              <span className="font-(family-name:--pub-font-mono) font-semibold">
-                {o.orderCode}
-              </span>
-              <span className="text-(--pub-ink-muted)">{formatDate(o.receivedAt)}</span>
-              <span className="w-fit rounded-(--pub-radius-pill) bg-(--pub-primary-soft) px-3 py-0.5 text-(length:--pub-text-sm) font-semibold">
-                {ORDER_STATUS_LABEL[o.status]}
-              </span>
-              <span className="font-semibold sm:min-w-24 sm:text-right">
-                {o.totalAmount === null ? 'Chưa tính' : formatMoney(o.totalAmount)}
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <div className="flex items-center gap-1">
+                  <Link
+                    to={PATHS.customerOrderDetail(o.orderCode)}
+                    className="font-(family-name:--pub-font-mono) font-semibold after:absolute after:inset-0 after:content-['']"
+                  >
+                    {o.orderCode}
+                  </Link>
+                  <CopyCodeButton code={o.orderCode} />
+                </div>
+                <span
+                  className={`w-fit rounded-(--pub-radius-pill) px-3 py-0.5 text-(length:--pub-text-sm) font-semibold ${STATUS_TONE[o.status] ?? DEFAULT_TONE}`}
+                >
+                  {orderStatusLabel(o)}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 text-(--pub-ink-muted)">
+                <span>
+                  {o.channel === 'ONLINE' ? 'Đặt online' : 'Tại tiệm'} ·{' '}
+                  {formatDateTime(o.receivedAt ?? o.createdAt)}
+                </span>
+                {o.status !== 'CANCELLED' && (
+                  <span className="text-(length:--pub-text-lg) font-bold text-(--pub-ink)">
+                    {!o.classified || o.payableAmount === null
+                      ? 'Chưa có'
+                      : formatMoney(o.payableAmount)}
+                  </span>
+                )}
+              </div>
+              <p className="text-(--pub-ink-muted)">
+                {o.services.length} dịch vụ
+                {o.services.some((s) => s.extra) ? ' · có dịch vụ phát sinh' : ''}
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <OrderPayment order={o} />
+                <span
+                  aria-hidden="true"
+                  className="ml-auto text-(length:--pub-text-sm) font-semibold text-(--pub-ink-muted)"
+                >
+                  Xem chi tiết ›
+                </span>
+              </div>
             </li>
           ))}
         </ul>
@@ -66,7 +143,7 @@ export function MyOrdersSection() {
 
   return (
     <section aria-labelledby="don-cua-toi-title" className="pub-card p-6">
-      <h2 id="don-cua-toi-title" className="mb-5 text-(length:--pub-text-xl)">
+      <h2 id="don-cua-toi-title" className="mb-5 text-(length:--pub-text-lg)">
         Đơn của tôi
       </h2>
       {body}
