@@ -5,7 +5,13 @@ export type IncidentStatus = 'pending' | 'approved' | 'rejected'
 export type PayoutMethod = 'CASH' | 'BANK_TRANSFER'
 export type IncidentUnit = 'KG' | 'PIECE' | 'SET' | 'PRODUCT'
 export type IncidentOrderStatus =
-  'RECEIVED' | 'PROCESSING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED'
+  | 'PENDING_CONFIRMATION'
+  | 'AWAITING_DROPOFF'
+  | 'RECEIVED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'DELIVERED'
+  | 'CANCELLED'
 
 export const INCIDENT_TYPE_LABEL: Record<IncidentType, string> = {
   LOST: 'Mất',

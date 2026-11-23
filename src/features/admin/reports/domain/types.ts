@@ -1,3 +1,6 @@
+/** Cùng giá trị với ReportChannel của feature orders */
+export type ReportChannel = 'ONLINE' | 'OFFLINE'
+
 export type DashboardPreset = 'today' | '7d' | 'month'
 
 export interface DateRange {
@@ -13,6 +16,13 @@ export interface RevenueSummary {
   paymentCount: number
 }
 
+/** count: số thanh toán (doanh thu) hoặc số đơn (báo cáo đơn) */
+export interface ChannelRow {
+  channel: ReportChannel
+  count: number
+  amount: number
+}
+
 export interface Dashboard extends DateRange {
   orders: {
     received: number
@@ -21,6 +31,8 @@ export interface Dashboard extends DateRange {
     waiting: number
     processing: number
     readyForPickup: number
+    pendingConfirmation: number
+    awaitingDropoff: number
   }
   revenue: RevenueSummary
   alerts: { lateOrders: number; storedOrders: number; storedAfterDays: number }
@@ -36,6 +48,7 @@ export interface RevenuePayment {
   orderId: number
   orderCode: string
   customerName: string
+  channel: ReportChannel
 }
 
 export type ReportMode = 'day' | 'month'
@@ -49,6 +62,8 @@ export interface RevenueRow {
   period: string
   cash: number
   bankTransfer: number
+  online: number
+  offline: number
   total: number
   paymentCount: number
 }
@@ -56,6 +71,7 @@ export interface RevenueRow {
 export interface RevenueReport {
   rows: RevenueRow[]
   summary: RevenueSummary & { cashCount: number; bankTransferCount: number }
+  byChannel: ChannelRow[]
 }
 
 export interface ServiceRow {
@@ -80,4 +96,5 @@ export interface OrderReport {
   processing: number
   rows: { period: string; received: number }[]
   byService: ServiceRow[]
+  byChannel: ChannelRow[]
 }

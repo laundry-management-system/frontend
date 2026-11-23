@@ -40,12 +40,18 @@ export function PaymentFields({
   onChange,
   qr,
   onDiscrepancy,
+  transferOnly,
+  compactTransfer,
 }: {
   total: number
   value: PaymentValue
   onChange: (v: PaymentValue) => void
   qr: UseQueryResult<VietQr>
   onDiscrepancy: () => void
+  /** Đơn online: không có tiền mặt, chỉ chuyển khoản */
+  transferOnly?: boolean
+  /** Xác nhận chuyển khoản khách đã báo: không hiện QR/tài khoản, chỉ còn mã tham chiếu */
+  compactTransfer?: boolean
 }) {
   const [qrBroken, setQrBroken] = useState(false)
   const change = changeDue(total, value.given)
@@ -124,10 +130,9 @@ export function PaymentFields({
 
   const transfer = (
     <Stack gap="sm">
-      {qrInfo}
+      {!compactTransfer && qrInfo}
       <TextInput
         label="Mã tham chiếu giao dịch"
-        placeholder="Không bắt buộc"
         maxLength={50}
         value={value.referenceCode}
         onChange={handleReferenceChange}
@@ -140,12 +145,14 @@ export function PaymentFields({
 
   return (
     <Stack gap="sm">
-      <SegmentedControl
-        fullWidth
-        data={METHODS}
-        value={value.method}
-        onChange={handleMethodChange}
-      />
+      {!transferOnly && (
+        <SegmentedControl
+          fullWidth
+          data={METHODS}
+          value={value.method}
+          onChange={handleMethodChange}
+        />
+      )}
       {value.method === 'CASH' ? cash : transfer}
     </Stack>
   )

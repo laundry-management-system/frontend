@@ -42,7 +42,7 @@ export interface CustomerOrderDto {
   totalAmount: number | string
   status: OrderStatus
   paymentStatus: PaymentStatus
-  receivedAt: string
+  receivedAt: string | null
 }
 
 export interface ActivateRegistrationResponseDto {

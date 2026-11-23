@@ -20,6 +20,7 @@ export const UNIT_LABEL: Record<PublicServiceUnit, string> = {
 }
 
 export interface PublicService {
+  id: number
   name: string
   unit: PublicServiceUnit
   price: number
@@ -32,6 +33,7 @@ export interface PublicService {
 }
 
 export interface PublicServiceArea {
+  id: number
   name: string
   pickupFee: number
   deliveryFee: number

@@ -1,3 +1,5 @@
+import type { ReportChannel } from '../domain/types'
+
 /** Tiền là BigDecimal của BE: có thể về dạng số hoặc chuỗi */
 type Money = number | string
 
@@ -21,6 +23,8 @@ export interface DashboardResponseDto {
     waiting: number
     processing: number
     readyForPickup: number
+    pendingConfirmation: number
+    awaitingDropoff: number
   }
   revenue: RevenueSummaryDto
   alerts: { lateOrders: number; storedOrders: number; storedAfterDays: number }
@@ -31,8 +35,18 @@ export interface RevenueReportResponseDto {
   from: string
   to: string
   granularity: 'DAY' | 'WEEK' | 'MONTH'
-  rows: { period: string; cash: Money; bankTransfer: Money; total: Money; paymentCount: number }[]
-  summary: RevenueSummaryDto
+  rows: {
+    period: string
+    cash: Money
+    bankTransfer: Money
+    online: Money
+    offline: Money
+    total: Money
+    paymentCount: number
+  }[]
+  summary: RevenueSummaryDto & {
+    byChannel: { channel: ReportChannel; total: Money; paymentCount: number }[]
+  }
 }
 
 export interface RevenuePaymentDto {
@@ -44,6 +58,7 @@ export interface RevenuePaymentDto {
   orderId: number
   orderCode: string
   customerName: string
+  channel: ReportChannel
 }
 
 export interface OrderReportResponseDto {
@@ -56,6 +71,7 @@ export interface OrderReportResponseDto {
     activeOrders: number
     lateOrders: number
     lateRatePercent: Money
+    byChannel: { channel: ReportChannel; orders: number; revenue: Money }[]
   }
   byStatus: { status: string; description: string; count: number }[]
   rows: { period: string; received: number }[]

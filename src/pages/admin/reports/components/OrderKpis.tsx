@@ -15,7 +15,7 @@ export function OrderKpis({ report }: OrderKpisProps) {
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 3, lg: 5 }} spacing="md" mb="lg">
-      <StatTile label="Tổng số đơn" value={n(s?.totalOrders)} />
+      <StatTile label="Tổng số đơn" value={n(s?.activeOrders)} />
       <StatTile label="Đã giao" value={n(report?.delivered)} />
       <StatTile label="Đang xử lý" value={n(report?.processing)} />
       <StatTile

@@ -4,6 +4,7 @@ import { NavLink as RouterNavLink, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/admin/auth'
 import { usePendingRegistrationCount } from '@/features/admin/customers'
 import { useIncidentStats } from '@/features/admin/incidents'
+import { useWorkCounts } from '@/features/admin/orders'
 import { canSeeModule, type NavModule, NAV_MODULES, visibleMenuItems } from '../router/modules'
 
 // Trang chi tiết (VD /order-management/orders/12) vẫn sáng mục cha; riêng '/' phải khớp đúng
@@ -18,6 +19,16 @@ function IncidentBadge() {
   return (
     <Badge size="sm" circle color="warning">
       {pending}
+    </Badge>
+  )
+}
+
+function PendingOrderBadge() {
+  const count = useWorkCounts({ q: '' }, 60_000).data?.pendingConfirmation ?? 0
+  if (count === 0) return null
+  return (
+    <Badge size="sm" circle color="warning" aria-label={`${count} đơn chờ xác nhận`}>
+      {count}
     </Badge>
   )
 }
@@ -48,11 +59,13 @@ function ModuleNavLink({ module }: { module: NavModule }) {
   const Icon = module.icon
   const items = visibleMenuItems(module, roles)
   const hasIncidents = items.some((c) => c.badge === 'incidents')
+  const hasOrders = items.some((c) => c.badge === 'orders')
   const toggle = () => setOpened((o) => !o)
   // Huy hiệu đặt cạnh nhãn vì rightSection của NavLink cha là mũi tên mở/đóng
   const label = (
     <Group gap={6} wrap="nowrap">
       {module.label}
+      {!opened && hasOrders && <PendingOrderBadge />}
       {!opened && hasIncidents && <IncidentBadge />}
     </Group>
   )
@@ -74,7 +87,13 @@ function ModuleNavLink({ module }: { module: NavModule }) {
           to={c.path}
           label={c.label}
           active={isUnder(pathname, c.path)}
-          rightSection={c.badge === 'incidents' ? <IncidentBadge /> : null}
+          rightSection={
+            c.badge === 'incidents' ? (
+              <IncidentBadge />
+            ) : c.badge === 'orders' ? (
+              <PendingOrderBadge />
+            ) : null
+          }
         />
       ))}
     </NavLink>

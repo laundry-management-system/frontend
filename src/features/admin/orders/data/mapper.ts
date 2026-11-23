@@ -32,7 +32,7 @@ const overdueOf = (dto: { isOverdue?: boolean; overdue?: boolean }) =>
   dto.isOverdue ?? dto.overdue ?? false
 
 export const toOrderSummary = (
-  dto: Omit<OrderResponseDto, 'orderType' | 'totalAmount' | 'isOverdue'>,
+  dto: Omit<OrderResponseDto, 'orderType' | 'totalAmount' | 'payableAmount' | 'isOverdue'>,
 ): OrderSummary => ({
   id: dto.id,
   orderCode: dto.orderCode,
@@ -43,12 +43,22 @@ export const toOrderSummary = (
   totalItemsCount: dto.totalItemsCount,
   receivedAt: dto.receivedAt,
   dueAt: dto.dueAt,
+  channel: dto.channel ?? 'OFFLINE',
+  createdAt: dto.createdAt ?? null,
+  appointmentAt: dto.appointmentAt ?? null,
+  appointmentOverdue: dto.appointmentOverdue ?? false,
+  dropoffStatus: dto.dropoffStatus ?? null,
+  returnStatus: dto.returnStatus ?? null,
+  pickupTrackingCode: dto.pickupTrackingCode ?? null,
+  deliveryTrackingCode: dto.deliveryTrackingCode ?? null,
+  paymentClaimedAt: dto.paymentClaimedAt ?? null,
 })
 
 export const toOrderListItem = (dto: OrderResponseDto): OrderListItem => ({
   ...toOrderSummary(dto),
   orderType: dto.orderType,
   totalAmount: money(dto.totalAmount),
+  payableAmount: money(dto.payableAmount),
   isOverdue: overdueOf(dto),
   intakeCode: dto.intakeCode ?? null,
   washWhitesSeparately: dto.washWhitesSeparately ?? false,
@@ -81,6 +91,12 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
   return {
     ...toOrderSummary({ ...dto, totalItemsCount: dto.items.length }),
     orderType: dto.orderType,
+    confirmedAt: dto.confirmedAt ?? null,
+    confirmedBy: dto.confirmedBy ?? null,
+    fulfillment: dto.fulfillment ?? null,
+    // BE chi tiết chỉ trả trạng thái chặng nằm trong fulfillment, không có ở cấp đơn
+    dropoffStatus: dto.dropoffStatus ?? dto.fulfillment?.dropoffStatus ?? null,
+    returnStatus: dto.returnStatus ?? dto.fulfillment?.returnStatus ?? null,
     receiptPrintedAt: dto.receiptPrintedAt,
     note: dto.note,
     items: dto.items.map(toOrderLine),
@@ -92,6 +108,7 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     voucherCode: dto.voucherCode ?? null,
     expressFee: money(dto.expressFee),
     totalAmount: money(dto.totalAmount),
+    payableAmount: money(dto.payableAmount),
     receiverName: dto.receiverName,
     receiverRelation: dto.receiverRelation,
     completedAt: dto.completedAt,
@@ -109,6 +126,7 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     compensationMultiplier: dto.compensationMultiplier ?? DEFAULT_COMPENSATION_MULTIPLIER,
     compensationCap:
       dto.compensationCap == null ? DEFAULT_COMPENSATION_CAP : Number(dto.compensationCap),
+    paymentClaimRejectedReason: dto.paymentClaimRejectedReason ?? null,
   }
 }
 

@@ -2,6 +2,7 @@ import { Burger, Drawer, Skeleton } from '@mantine/core'
 import { useDisclosure, useIntersection } from '@mantine/hooks'
 import { type MouseEvent, type ReactNode, useRef } from 'react'
 import { LuWashingMachine } from 'react-icons/lu'
+import { Link } from 'react-router-dom'
 import { AccountMenu } from '@/features/client/customer-account'
 import { CallButton, HeroRefContext, usePublicStore } from '@/features/client/public-site'
 import { PATHS } from '@/shared/common/config/paths'
@@ -69,8 +70,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     <header className="sticky top-0 z-100 border-b border-(--pub-border) bg-(--pub-bg)/90 backdrop-blur-md">
       <div className="pub-container flex min-h-18 items-center gap-3 py-2">
         <a
-          href={`${PATHS.landing}#mo-dau`}
-          data-target="mo-dau"
+          href={`${PATHS.landing}#intro`}
+          data-target="intro"
           onClick={handleAnchorNav}
           className="mr-auto flex min-h-(--pub-touch) min-w-0 items-center gap-2.5 rounded-(--pub-radius-btn) text-(--pub-ink) no-underline"
         >
@@ -88,6 +89,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <NavLinks onNavigate={handleAnchorNav} />
           </ul>
         </nav>
+        <Link to={PATHS.customerBooking} className="pub-btn pub-btn--primary hidden lg:inline-flex">
+          Đặt đơn ngay
+        </Link>
         <div className="hidden lg:block">
           <CallButton phone={phone} />
         </div>
@@ -99,7 +103,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           onClick={drawer.toggle}
           aria-label={drawerOpened ? 'Đóng menu' : 'Mở menu'}
           aria-expanded={drawerOpened}
-          aria-controls="menu-di-dong"
+          aria-controls="mobile-menu"
           className="size-11! lg:hidden!"
         />
       </div>
@@ -108,7 +112,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   const mobileMenu = (
     <Drawer
-      id="menu-di-dong"
+      id="mobile-menu"
       opened={drawerOpened}
       onClose={drawer.close}
       onExitTransitionEnd={handleDrawerClosed}
@@ -124,6 +128,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </ul>
       </nav>
       <div className="mt-6 flex flex-col gap-3">
+        <Link to={PATHS.customerBooking} className="pub-btn pub-btn--primary pub-btn--lg w-full">
+          Đặt đơn ngay
+        </Link>
         <CallButton phone={phone} size="lg" fullWidth />
         <AccountMenu />
       </div>
@@ -143,11 +150,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       data-call-bar={phone ? '' : undefined}
       className={`min-h-dvh overflow-x-clip ${phone ? 'pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0' : ''}`}
     >
-      <a href="#noi-dung" className="pub-skip-link">
+      <a href="#content"className="pub-skip-link">
         Bỏ qua tới nội dung chính
       </a>
       {header}
-      <main id="noi-dung" tabIndex={-1} className="outline-none">
+      <main id="content" tabIndex={-1} className="outline-none">
         <HeroRefContext value={heroRef}>{children}</HeroRefContext>
       </main>
       <SiteFooter />

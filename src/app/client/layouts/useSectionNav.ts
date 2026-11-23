@@ -3,10 +3,18 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { PATHS } from '@/shared/common/config/paths'
 
 export const NAV = [
-  { id: 'bang-gia', label: 'Dịch vụ và bảng giá' },
-  { id: 'khu-vuc', label: 'Khu vực phục vụ' },
-  { id: 'lien-he', label: 'Liên hệ' },
+  { id: 'pricing', label: 'Dịch vụ và bảng giá' },
+  { id: 'service-areas', label: 'Khu vực phục vụ' },
+  { id: 'contact', label: 'Liên hệ' },
 ] as const
+
+const LEGACY_HASHES: Record<string, string> = {
+  'mo-dau': 'intro',
+  'noi-dung': 'content',
+  'bang-gia': 'pricing',
+  'khu-vuc': 'service-areas',
+  'lien-he': 'contact',
+}
 
 /** Cuộn tới section rồi chuyển focus vào tiêu đề của nó, để bàn phím và trình đọc màn hình đi theo. */
 function goToSection(id: string) {
@@ -30,7 +38,8 @@ export function useSectionNav() {
 export function useScrollToHash() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
-    const id = hash.slice(1)
+    const raw = hash.slice(1)
+    const id = LEGACY_HASHES[raw] ?? raw
     if (!id || goToSection(id)) return
     const observer = new MutationObserver(() => {
       if (goToSection(id)) observer.disconnect()

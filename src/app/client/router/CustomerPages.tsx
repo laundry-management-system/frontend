@@ -8,6 +8,8 @@ const RegisterPage = lazy(() => import('@/pages/client/register/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('@/pages/client/forgot-password/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/client/reset-password/ResetPasswordPage'))
 const AccountPage = lazy(() => import('@/pages/client/account/AccountPage'))
+const OrderDetailPage = lazy(() => import('@/pages/client/account/OrderDetailPage'))
+const BookingPage = lazy(() => import('@/pages/client/booking/BookingPage'))
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -40,6 +42,26 @@ export function CustomerAccountRoute() {
     <Shell>
       <CustomerRoute>
         <AccountPage />
+      </CustomerRoute>
+    </Shell>
+  )
+}
+
+export function CustomerOrderDetailRoute() {
+  return (
+    <Shell>
+      <CustomerRoute>
+        <OrderDetailPage />
+      </CustomerRoute>
+    </Shell>
+  )
+}
+
+export function CustomerBookingRoute() {
+  return (
+    <Shell>
+      <CustomerRoute>
+        <BookingPage />
       </CustomerRoute>
     </Shell>
   )

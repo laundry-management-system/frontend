@@ -15,12 +15,16 @@ const M = MODULE_PATHS
 export const PATHS = {
   dashboard: '/',
   login: '/private/login',
-  landing: '/gioi-thieu',
+  landing: '/about',
   customerLogin: '/login',
   customerRegister: '/register',
   customerForgotPassword: '/forgot-password',
   customerResetPassword: '/reset-password',
   customerAccount: '/account',
+  customerBooking: '/booking',
+  customerOrderDetail: (code: string) => `/account/orders/${code}`,
+  legacyBooking: '/dat-don',
+  legacyLanding: '/gioi-thieu',
 
   workList: `${M.operations}/work-list`,
   intake: `${M.operations}/intake`,

@@ -39,6 +39,8 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
     { label: 'Giảm giá sự cố', value: -inv.incidentDiscount },
     { label: 'Phụ phí giặt nhanh', value: inv.expressFee },
     { label: 'Giặt riêng đồ trắng', value: inv.whitesFee },
+    { label: 'Phí lấy đồ', value: inv.pickupFee },
+    { label: 'Phí giao đồ', value: inv.deliveryFee },
   ].filter((a) => a.value !== 0)
 
   return (
@@ -68,7 +70,7 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
       {inv.lines.map((l) => (
         <Stack key={l.index} gap={0}>
           <Text {...BODY} style={{ overflowWrap: 'anywhere' }}>
-            {l.name}
+            {l.extra ? `${l.name} (Phát sinh thêm)` : l.name}
           </Text>
           <Group justify="space-between" wrap="nowrap" gap="xs">
             <Text {...SMALL} style={TABULAR}>

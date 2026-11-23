@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { LuCloudOff, LuDownload, LuRefreshCw } from 'react-icons/lu'
 import {
+  ChannelBreakdown,
   csvFileName,
   type OrderReport,
   OrdersLine,
@@ -14,6 +15,7 @@ import {
 } from '@/features/admin/reports'
 import { downloadCsv } from '@/shared/admin/lib/csv'
 import { EmptyState, IconButton, InfoLabel, PageHeader } from '@/shared/admin/ui'
+import { ChannelFilter } from './components/ChannelFilter'
 import { OrderKpis } from './components/OrderKpis'
 import { ServiceTable } from './components/ServiceTable'
 import { useReportPeriod } from './useReportPeriod'
@@ -25,9 +27,9 @@ const SERVICE_INFO =
 const fmt = (d: string) => dayjs(d).format('DD/MM/YYYY')
 
 export default function OrderReportPage() {
-  const { period, error, setPeriod } = useReportPeriod()
+  const { period, error, setPeriod, channel, setChannel } = useReportPeriod()
   const enabled = !error
-  const orders = useOrderReport(period, enabled)
+  const orders = useOrderReport(period, enabled, channel)
   const queryClient = useQueryClient()
   const report = enabled ? orders.data : undefined
 
@@ -40,6 +42,7 @@ export default function OrderReportPage() {
   const headerActions = (
     <Group gap="xs" align="flex-start">
       <ReportPeriodPicker value={period} error={error} onChange={setPeriod} />
+      <ChannelFilter value={channel} onChange={setChannel} />
       <IconButton label="Làm mới" icon={<LuRefreshCw size={16} />} onClick={refreshAll} />
       <Button
         variant="default"
@@ -65,6 +68,7 @@ export default function OrderReportPage() {
     orders.isError ? loadError : report ? content(report) : <Skeleton h={h} />
   const lineBody = body((r) => <OrdersLine rows={r.rows} mode={period.mode} />, 220)
   const ringBody = body((r) => <ServiceShareRing rows={r.byService} />, 180)
+  const channelBody = body((r) => <ChannelBreakdown rows={r.byChannel} countLabel="Số đơn" />, 100)
   const tableBody = body((r) => <ServiceTable rows={r.byService} />, 200)
 
   return (
@@ -90,6 +94,12 @@ export default function OrderReportPage() {
           {ringBody}
         </Card>
       </Group>
+      <Card mb="lg">
+        <Title order={5} mb="md">
+          Theo kênh
+        </Title>
+        {channelBody}
+      </Card>
       <Card>
         <Title order={5} mb="md">
           <InfoLabel info={SERVICE_INFO}>Theo dịch vụ</InfoLabel>

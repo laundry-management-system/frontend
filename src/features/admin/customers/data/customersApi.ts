@@ -24,7 +24,13 @@ export interface CustomerOrdersParams {
   size: number
 }
 
-const OPEN_STATUSES: OrderStatus[] = ['RECEIVED', 'PROCESSING', 'COMPLETED']
+const OPEN_STATUSES: OrderStatus[] = [
+  'PENDING_CONFIRMATION',
+  'AWAITING_DROPOFF',
+  'RECEIVED',
+  'PROCESSING',
+  'COMPLETED',
+]
 
 export const customersApi = {
   list: async ({ search, status, pendingAccount, page, size }: CustomerListParams) => {

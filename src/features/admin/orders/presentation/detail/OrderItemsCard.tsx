@@ -1,20 +1,11 @@
-import {
-  Badge,
-  Button,
-  Card,
-  Group,
-  Image,
-  Stack,
-  Table,
-  Text,
-  Title,
-  UnstyledButton,
-} from '@mantine/core'
+import { Badge, Card, Group, Image, Stack, Table, Text, Title, UnstyledButton } from '@mantine/core'
 import { useState } from 'react'
 import { LuPackageOpen } from 'react-icons/lu'
 import { UNIT_LABEL, useActiveServices } from '@/features/admin/services'
 import { EmptyState, ImageLightbox, Money } from '@/shared/admin/ui'
+import { isExtraService } from '../../domain/extraService'
 import type { OrderImage, OrderLine, RequestedService } from '../../domain/types'
+import { ExtraServiceTag } from '../ExtraServiceTag'
 
 const THUMB = {
   borderRadius: 'var(--radius-control)',
@@ -35,13 +26,14 @@ const hasCondition = (l: OrderLine) =>
 
 export function OrderItemsCard({
   items,
-  requestedServices = [],
-  onClassify,
+  requestedServices,
+  expressFee = 0,
+  whitesFee = 0,
 }: {
   items: OrderLine[]
-  /** Dịch vụ chọn ở quầy (tham khảo), hiện khi chưa phân loại */
-  requestedServices?: RequestedService[]
-  onClassify?: () => void
+  requestedServices: RequestedService[]
+  expressFee?: number
+  whitesFee?: number
 }) {
   // shortcut: tên dịch vụ lấy từ danh sách đang hoạt động; dịch vụ đã ngừng hiện "—" (BE không trả tên trong dòng đồ)
   const { data: services = [] } = useActiveServices()
@@ -55,36 +47,41 @@ export function OrderItemsCard({
         <Title order={5} mb="sm">
           Chi tiết đồ giặt
         </Title>
-        {requestedServices.length > 0 && (
-          <Group gap={6} mb="sm">
-            <Text size="sm" c="dimmed">
-              Dịch vụ tham khảo:
-            </Text>
-            {requestedServices.map((r) => (
-              <Badge key={r.id} color="gray" variant="light" radius="sm" tt="none">
-                {r.name ?? `#${r.id}`}
-              </Badge>
-            ))}
-          </Group>
-        )}
         <EmptyState
           icon={<LuPackageOpen size={32} />}
           title="Chưa phân loại"
           description="Khối lượng, dịch vụ và giá sẽ hiện ở đây sau khi phân loại."
-          action={onClassify && <Button onClick={onClassify}>Phân loại ngay</Button>}
         />
       </Card>
     )
 
+  const serviceName = (id: number | null) => services.find((s) => s.id === id)?.name ?? '—'
+
+  const feeRows = [
+    { label: 'Phụ phí giặt nhanh', amount: expressFee },
+    { label: 'Giặt riêng đồ trắng', amount: whitesFee },
+  ]
+    .filter((f) => f.amount > 0)
+    .map((f) => (
+      <Table.Tr key={f.label} style={{ background: 'var(--ds-secondary)' }}>
+        <Table.Td />
+        <Table.Td fw={500}>{f.label}</Table.Td>
+        <Table.Td />
+        <Table.Td />
+        <Table.Td>
+          <Money value={f.amount} />
+        </Table.Td>
+      </Table.Tr>
+    ))
+
   const itemTable = (
-    <Table>
+    <Table fz="md" styles={{ td: { fontSize: 'var(--mantine-font-size-md)' } }}>
       <Table.Thead>
         <Table.Tr>
           <Table.Th w={30} ta="center">
             #
           </Table.Th>
-          <Table.Th>Loại đồ</Table.Th>
-          <Table.Th w={170}>Dịch vụ</Table.Th>
+          <Table.Th>Dịch vụ</Table.Th>
           <Table.Th w={90} ta="center">
             SL/KL
           </Table.Th>
@@ -96,8 +93,17 @@ export function OrderItemsCard({
         {items.map((l, i) => (
           <Table.Tr key={l.id ?? i}>
             <Table.Td ta="center">{i + 1}</Table.Td>
-            <Table.Td>{l.itemType}</Table.Td>
-            <Table.Td>{services.find((s) => s.id === l.serviceId)?.name ?? '—'}</Table.Td>
+            <Table.Td>
+              <Group gap={6}>
+                {serviceName(l.serviceId)}
+                {isExtraService(l.serviceId, requestedServices) && <ExtraServiceTag />}
+              </Group>
+              {l.itemType !== serviceName(l.serviceId) && (
+                <Text size="sm" c="dimmed">
+                  {l.itemType}
+                </Text>
+              )}
+            </Table.Td>
             <Table.Td ta="center" style={{ whiteSpace: 'nowrap' }}>
               {qty(l)}
             </Table.Td>
@@ -109,6 +115,7 @@ export function OrderItemsCard({
             </Table.Td>
           </Table.Tr>
         ))}
+        {feeRows}
       </Table.Tbody>
     </Table>
   )

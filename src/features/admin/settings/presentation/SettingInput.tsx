@@ -22,6 +22,11 @@ const VALUE_STYLE = {
   overflowWrap: 'anywhere',
 } as const
 
+const BOOLEAN_OPTIONS = [
+  { value: 'true', label: 'Bật' },
+  { value: 'false', label: 'Tắt' },
+]
+
 function displayValue(field: SettingField, value: string) {
   switch (field.type) {
     case 'NON_NEGATIVE_INT':
@@ -32,6 +37,8 @@ function displayValue(field: SettingField, value: string) {
       return bankOptions(value).find((o) => o.value === value)?.label ?? value
     case 'PHONE':
       return formatPhone(value)
+    case 'BOOLEAN':
+      return value === 'true' ? 'Bật' : 'Tắt'
     default:
       return value
   }
@@ -91,6 +98,16 @@ export function SettingInput({ field, value, error, editing, onChange }: Setting
             {...common}
             searchable
             data={bankOptions(value)}
+            value={value || null}
+            onChange={handleSelect}
+          />
+        )
+      case 'BOOLEAN':
+        return (
+          <Select
+            {...common}
+            allowDeselect={false}
+            data={BOOLEAN_OPTIONS}
             value={value || null}
             onChange={handleSelect}
           />

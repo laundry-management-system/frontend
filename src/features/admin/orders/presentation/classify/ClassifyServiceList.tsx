@@ -1,8 +1,10 @@
 import { Badge, Checkbox, Group, Stack, Text } from '@mantine/core'
 import { type Service, UNIT_LABEL } from '@/features/admin/services'
 import { formatMoney } from '@/shared/common/lib/format'
+import { isExtraService } from '../../domain/extraService'
 import type { validateLine } from '../../domain/rules'
 import type { OrderLine, OrderType } from '../../domain/types'
+import { ExtraServiceTag } from '../ExtraServiceTag'
 import { ItemLineEditor } from './ItemLineEditor'
 
 interface ClassifyServiceListProps {
@@ -44,6 +46,8 @@ export function ClassifyServiceList({
     // Dịch vụ khách chọn lúc nhận lên đầu, còn lại giữ thứ tự bảng giá
     .sort((a, b) => Number(requestedIds.includes(b.id)) - Number(requestedIds.includes(a.id)))
 
+  const requested = requestedIds.map((id) => ({ id }))
+
   return (
     <Stack gap={0} style={LIST_BOX}>
       {visible.map((s, i) => {
@@ -82,6 +86,7 @@ export function ClassifyServiceList({
                     Khách chọn lúc nhận
                   </Badge>
                 )}
+                {line && isExtraService(s.id, requested) && <ExtraServiceTag />}
               </Group>
             </Checkbox.Card>
             {line && (

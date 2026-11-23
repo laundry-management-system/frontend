@@ -1,6 +1,13 @@
 export type CustomerStatus = 'ACTIVE' | 'INACTIVE'
 
-export type OrderStatus = 'RECEIVED' | 'PROCESSING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED'
+export type OrderStatus =
+  | 'PENDING_CONFIRMATION'
+  | 'AWAITING_DROPOFF'
+  | 'RECEIVED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'DELIVERED'
+  | 'CANCELLED'
 
 export type PaymentStatus = 'UNPAID' | 'PAID'
 
@@ -26,7 +33,7 @@ export interface Customer {
 export interface CustomerOrder {
   id: number
   code: string
-  receivedAt: string
+  receivedAt: string | null
   serviceName: string | null
   totalAmount: number
   status: OrderStatus
@@ -54,6 +61,8 @@ export const CUSTOMER_STATUS_LABEL: Record<CustomerStatus, string> = {
 
 // Khớp key nhóm `order` trong shared/config/domainStatuses
 export const ORDER_STATUS_KEY: Record<OrderStatus, string> = {
+  PENDING_CONFIRMATION: 'pending-confirmation',
+  AWAITING_DROPOFF: 'awaiting-dropoff',
   RECEIVED: 'new',
   PROCESSING: 'processing',
   COMPLETED: 'completed',

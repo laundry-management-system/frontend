@@ -21,6 +21,16 @@ export function OrderFlow({
   preset: DashboardPreset
 }) {
   const steps = [
+    {
+      label: 'Chờ xác nhận',
+      value: orders.pendingConfirmation,
+      to: `${PATHS.orders}?status=PENDING_CONFIRMATION`,
+    },
+    {
+      label: 'Chờ nhận đồ',
+      value: orders.awaitingDropoff,
+      to: `${PATHS.orders}?status=AWAITING_DROPOFF`,
+    },
     { label: 'Mới nhận', value: orders.waiting, to: `${PATHS.workList}?status=RECEIVED` },
     { label: 'Đang xử lý', value: orders.processing, to: `${PATHS.workList}?status=PROCESSING` },
     {

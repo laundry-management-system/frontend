@@ -18,6 +18,7 @@ export const publicStoreSchema = z.object({
 
 export const publicServicesSchema = z.array(
   z.object({
+    id: z.number(),
     name: z.string(),
     unit: z.enum(['KG', 'PIECE', 'SET', 'PRODUCT']),
     price: money,
@@ -32,6 +33,7 @@ export const publicServicesSchema = z.array(
 
 export const publicServiceAreasSchema = z.array(
   z.object({
+    id: z.number(),
     name: z.string(),
     pickupFee: money,
     deliveryFee: money,

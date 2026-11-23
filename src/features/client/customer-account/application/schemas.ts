@@ -66,3 +66,109 @@ export type ProfileValues = z.infer<typeof profileSchema>
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>
 export type ForgotValues = z.infer<typeof forgotSchema>
 export type ResetValues = z.infer<typeof resetSchema>
+
+export const paymentQrSchema = z.object({
+  orderCode: z.string(),
+  amount: z.number(),
+  bankId: z.string(),
+  accountNo: z.string(),
+  accountName: z.string(),
+  transferContent: z.string(),
+  qrImageUrl: z.string(),
+})
+
+const nullableString = z.string().nullable()
+
+export const customerOrderDetailSchema = z.object({
+  orderCode: z.string(),
+  channel: z.enum(['ONLINE', 'OFFLINE']),
+  orderType: z.string(),
+  status: z.enum([
+    'PENDING_CONFIRMATION',
+    'AWAITING_DROPOFF',
+    'RECEIVED',
+    'PROCESSING',
+    'COMPLETED',
+    'DELIVERED',
+    'CANCELLED',
+  ]),
+  paymentStatus: z.enum(['UNPAID', 'PAID']),
+  paymentClaimedAt: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
+  paymentClaimRejectedReason: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
+  voucherEditable: z.boolean().default(false),
+  receiptConfirmable: z.boolean().default(false),
+  classified: z.boolean(),
+  customerRejectReason: nullableString,
+  milestones: z.object({
+    placedAt: nullableString,
+    receivedAt: nullableString,
+    processingAt: nullableString,
+    completedAt: nullableString,
+    deliveringAt: nullableString,
+    deliveredAt: nullableString,
+  }),
+  dueAt: nullableString,
+  fulfillment: z
+    .object({
+      dropoffMethod: z.enum(['AT_STORE', 'PICKUP']),
+      returnMethod: z.enum(['AT_STORE', 'DELIVERY']),
+      pickupAreaName: nullableString,
+      pickupAddress: nullableString,
+      deliveryAreaName: nullableString,
+      deliveryAddress: nullableString,
+      appointmentAt: nullableString,
+      dropoffStatus: z
+        .enum(['AWAITING_CUSTOMER_DROPOFF', 'CUSTOMER_DROPPED_OFF', 'AWAITING_PICKUP', 'PICKED_UP'])
+        .nullable(),
+      returnStatus: z
+        .enum([
+          'AWAITING_CUSTOMER_COLLECT',
+          'CUSTOMER_COLLECTED',
+          'AWAITING_DELIVERY',
+          'DELIVERING',
+          'DELIVERED',
+        ])
+        .nullable(),
+      pickupTrackingCode: nullableString,
+      deliveryTrackingCode: nullableString,
+      pickupFee: z.number().nullable(),
+      deliveryFee: z.number().nullable(),
+    })
+    .nullable(),
+  requestedServices: z.array(z.object({ serviceName: z.string() })),
+  washWhitesSeparately: z.boolean(),
+  items: z.array(
+    z.object({
+      serviceName: z.string(),
+      unit: z.string(),
+      quantity: z.number(),
+      unitPrice: z.number(),
+      lineTotal: z.number(),
+      extra: z.boolean(),
+      conditionTags: z.array(z.string()),
+      images: z.array(z.object({ url: z.string() })),
+    }),
+  ),
+  money: z.object({
+    subtotal: z.number(),
+    expressFee: z.number(),
+    whitesFee: z.number(),
+    discountAmount: z
+      .number()
+      .nullable()
+      .transform((v) => v ?? 0),
+    voucherCode: z.string().nullable(),
+    incidentDiscount: z
+      .number()
+      .nullable()
+      .transform((v) => v ?? 0),
+    totalAmount: z.number(),
+    payableAmount: z.number(),
+  }),
+})
