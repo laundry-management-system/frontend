@@ -1,9 +1,11 @@
 import { Alert, Button, Card, Group } from '@mantine/core'
 import type { ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { LuCloudOff, LuPlus } from 'react-icons/lu'
 import { DataTable, type DataTableProps } from '../data-display/DataTable'
 import { EmptyState } from '../feedback/EmptyState'
 import { PageHeader } from './PageHeader'
+import { useTabSlots } from './tabSlots'
 
 export interface ListPageProps<T> extends DataTableProps<T> {
   title: string
@@ -51,15 +53,28 @@ export function ListPage<T>({
       </Group>
     ) : undefined
 
+  const slots = useTabSlots()
+  const pageHeader = (
+    <PageHeader title={title} description={description} info={info} actions={headerActions} />
+  )
+  const filterRow = filters && (
+    <Group px="md" py="sm">
+      {filters}
+    </Group>
+  )
+
   return (
     <>
-      <PageHeader title={title} description={description} info={info} actions={headerActions} />
+      {slots?.header ? createPortal(pageHeader, slots.header) : pageHeader}
       {notice}
-      {filters && (
-        <Card mb="md">
-          <Group>{filters}</Group>
-        </Card>
-      )}
+      {filters &&
+        (slots?.filters ? (
+          createPortal(filterRow, slots.filters)
+        ) : (
+          <Card mb="md">
+            <Group>{filters}</Group>
+          </Card>
+        ))}
       {summary}
       {/* Tải lại lỗi nhưng vẫn còn dữ liệu cũ: DataTable không hiện `empty`, nên báo lỗi riêng */}
       {error && table.data.length > 0 && (

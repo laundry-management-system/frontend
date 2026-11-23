@@ -2,27 +2,31 @@ import {
   Button,
   Checkbox,
   Divider,
+  Badge,
   Group,
   Input,
   Modal,
   NumberInput,
-  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
+  Switch,
   Text,
   TextInput,
 } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { useState } from 'react'
 import { toApiError } from '@/shared/common/api/apiError'
+import { formatMoney } from '@/shared/common/lib/format'
 import { notify } from '@/shared/common/lib/notify'
 import { ConfirmModal, EntityCode, InfoLabel, ModalFooter, MoneyInput } from '@/shared/admin/ui'
 import { serviceFormSchema } from '../application/schemas'
+import { useWashModes } from '../application/queries/useWashModes'
 import { useCreateService } from '../application/mutations/useCreateService'
 import { useUpdateService } from '../application/mutations/useUpdateService'
-import { formatPriceValue } from '../domain/priceHistory'
+import { formatPriceValue, priceFieldLabel } from '../domain/priceHistory'
 import {
+  priceFor,
   SERVICE_NAME_MAX,
   toFormValues,
   toServicePayload,
@@ -30,13 +34,11 @@ import {
   type TrackedChange,
 } from '../domain/rules'
 import {
-  PRICE_FIELD_LABEL,
-  SERVICE_STATUS_LABEL,
   type Service,
   type ServiceFormValues,
-  type ServiceStatus,
   type ServiceUnit,
   UNIT_LABEL,
+  type WashMode,
 } from '../domain/types'
 import { PriceChange } from './PriceChange'
 
@@ -56,7 +58,8 @@ interface ServiceFormModalProps {
 
 const changeLine = (c: TrackedChange) => (
   <Text key={c.field} size="sm">
-    {PRICE_FIELD_LABEL[c.field]}: {formatPriceValue(c.field, c.oldValue)} →{' '}
+    {c.modeName ? `Giá ${c.modeName}` : priceFieldLabel(c.field)}:{' '}
+    {formatPriceValue(c.field, c.oldValue)} →{' '}
     <Text span fw={500}>
       {formatPriceValue(c.field, c.newValue)}
     </Text>
@@ -70,6 +73,7 @@ const UNIT_OPTIONS = (Object.keys(UNIT_LABEL) as ServiceUnit[]).map((u) => ({
 
 export function ServiceFormModal(props: ServiceFormModalProps) {
   const { opened, onClose, mode, initial } = props
+  const { data: modes } = useWashModes()
   return (
     <Modal
       opened={opened}
@@ -90,20 +94,29 @@ export function ServiceFormModal(props: ServiceFormModalProps) {
       closeOnEscape={false}
       withCloseButton={false}
     >
-      {opened && <ServiceForm {...props} />}
+      {opened && modes && <ServiceForm {...props} modes={modes} />}
     </Modal>
   )
 }
 
-function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
+function ServiceForm({
+  onClose,
+  mode,
+  initial,
+  modes,
+}: ServiceFormModalProps & { modes: WashMode[] }) {
   const create = useCreateService()
   const update = useUpdateService()
   const pending = create.isPending || update.isPending
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [reasonPending, setReasonPending] = useState<ServiceFormValues | null>(null)
 
+  const activeModes = modes.filter((m) => m.active)
+  // Liên kết tới hình thức đã ngừng: chỉ đọc, BE giữ nguyên
+  const stoppedLinks = modes.filter((m) => !m.active && initial && priceFor(initial, m.id) != null)
+
   const form = useForm<ServiceFormValues>({
-    initialValues: toFormValues(initial),
+    initialValues: toFormValues(initial, activeModes),
     validate: schemaResolver(serviceFormSchema, { sync: true }),
   })
   const v = form.values
@@ -111,9 +124,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
 
   const handleError = (err: unknown) => {
     const error = toApiError(err)
-    // BE đặt tên field đơn giá là `currentPrice`, form là `price`
-    const { currentPrice, ...rest } = error.fieldErrors
-    const errors = currentPrice ? { price: currentPrice, ...rest } : rest
+    const errors = error.fieldErrors
     // Lỗi không thuộc ô nào trên form thì báo toast, tránh lưu thất bại mà không có phản hồi
     if (Object.keys(errors).some((key) => key in form.values)) form.setErrors(errors)
     else notify.error(error.message)
@@ -143,15 +154,17 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
   )
 
   const close = () => (form.isDirty() ? setConfirmDiscard(true) : onClose())
+  const closeDiscard = () => setConfirmDiscard(false)
   const changes = reasonPending ? trackedChanges(initial, reasonPending) : []
-  const priceChange = changes.find((c) => c.field === 'PRICE')
-  const otherChanges = changes.filter((c) => c.field !== 'PRICE')
+  const isDelta = (c: TrackedChange) =>
+    c.field === 'MODE_PRICE' && c.oldValue != null && c.newValue != null
+  const deltaChanges = changes.filter(isDelta)
+  const otherChanges = changes.filter((c) => !isDelta(c))
   const closeReason = () => setReasonPending(null)
   const confirmReason = (reason?: string) => {
     save(reasonPending!, reason)
     setReasonPending(null)
   }
-  const toggleExpress = () => form.setFieldValue('expressSupported', !v.expressSupported)
   const toggleWhites = () => form.setFieldValue('whitesApplicable', !v.whitesApplicable)
 
   const basicFields = (
@@ -173,17 +186,6 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
         />
       </SimpleGrid>
       <SimpleGrid cols={2}>
-        <MoneyInput
-          label={
-            <InfoLabel
-              info={mode === 'edit' && 'Đổi giá phải nhập lý do và được ghi vào lịch sử giá.'}
-            >
-              {`Đơn giá (mỗi ${unitLabel})`}
-            </InfoLabel>
-          }
-          required
-          {...form.getInputProps('price')}
-        />
         <NumberInput
           label={
             <InfoLabel info="Cân/đếm dưới mức này vẫn tính tiền bằng mức tối thiểu khi phân loại.">
@@ -196,73 +198,71 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
           {...(v.unit === 'KG' ? { decimalScale: 2 } : { allowDecimal: false })}
           {...form.getInputProps('minQuantity')}
         />
-        <NumberInput
-          label="Thời gian xử lý chuẩn"
-          required
-          min={1}
-          allowDecimal={false}
-          allowNegative={false}
-          rightSection="giờ"
-          rightSectionWidth={44}
-          {...form.getInputProps('standardHours')}
-        />
-        {mode === 'edit' && (
-          <Input.Wrapper
-            label={
-              <InfoLabel info="Dịch vụ ngừng hoạt động không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.">
-                Trạng thái
-              </InfoLabel>
-            }
-          >
-            <SegmentedControl
-              fullWidth
-              value={v.status}
-              onChange={(s) => form.setFieldValue('status', s as ServiceStatus)}
-              data={(['ACTIVE', 'INACTIVE'] as ServiceStatus[]).map((s) => ({
-                value: s,
-                label: SERVICE_STATUS_LABEL[s],
-              }))}
-            />
-          </Input.Wrapper>
-        )}
       </SimpleGrid>
     </>
   )
 
+  const priceRows = (
+    <Input.Wrapper
+      label={
+        <InfoLabel info="Giá theo từng hình thức giặt. Đổi giá phải nhập lý do và được ghi vào lịch sử giá.">
+          {`Giá theo hình thức (mỗi ${unitLabel})`}
+        </InfoLabel>
+      }
+      required
+      error={form.errors.prices}
+    >
+      <Stack gap={0} style={OPTION_BOX}>
+        {v.prices.map((p, i) => (
+          <Group
+            key={p.mode.id}
+            justify="space-between"
+            wrap="nowrap"
+            p="md"
+            style={i > 0 ? { borderTop: '1px solid var(--ds-border)' } : undefined}
+          >
+            <Switch
+              checked={p.enabled}
+              onChange={(e) => form.setFieldValue(`prices.${i}.enabled`, e.currentTarget.checked)}
+              label={
+                <Group gap={6}>
+                  <Text fw={500}>{p.mode.name}</Text>
+                  {p.mode.isDefault && <Badge variant="light">Mặc định</Badge>}
+                </Group>
+              }
+              description={`Xong trong ${p.mode.completionHours} giờ`}
+            />
+            <MoneyInput
+              w={160}
+              aria-label={`Giá ${p.mode.name}`}
+              disabled={!p.enabled}
+              {...form.getInputProps(`prices.${i}.price`)}
+            />
+          </Group>
+        ))}
+        {stoppedLinks.map((m) => (
+          <Group
+            key={m.id}
+            justify="space-between"
+            p="md"
+            c="dimmed"
+            style={{ borderTop: '1px solid var(--ds-border)' }}
+          >
+            <Text>
+              {m.name}{' '}
+              <Badge color="neutral" variant="light">
+                đã ngừng
+              </Badge>
+            </Text>
+            <Text className="text-money">{formatMoney(priceFor(initial!, m.id)!)}</Text>
+          </Group>
+        ))}
+      </Stack>
+    </Input.Wrapper>
+  )
+
   const optionList = (
     <Stack gap={0} style={OPTION_BOX}>
-      <Checkbox.Card
-        checked={v.expressSupported}
-        onClick={toggleExpress}
-        withBorder={false}
-        radius={0}
-        p="md"
-      >
-        <Group gap="sm" wrap="nowrap">
-          <Checkbox.Indicator />
-          <Text fw={500}>Hỗ trợ giặt nhanh</Text>
-        </Group>
-      </Checkbox.Card>
-      {v.expressSupported && (
-        <SimpleGrid cols={2} px="md" pb="md">
-          <MoneyInput
-            label={`Phụ phí giặt nhanh (mỗi ${unitLabel})`}
-            required
-            {...form.getInputProps('expressSurcharge')}
-          />
-          <NumberInput
-            label="Thời gian giặt nhanh"
-            required
-            min={1}
-            allowDecimal={false}
-            allowNegative={false}
-            rightSection="giờ"
-            rightSectionWidth={44}
-            {...form.getInputProps('expressHours')}
-          />
-        </SimpleGrid>
-      )}
-      <Divider />
       <Checkbox.Card
         checked={v.whitesApplicable}
         onClick={toggleWhites}
@@ -286,7 +286,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
     <>
       <ConfirmModal
         opened={confirmDiscard}
-        onClose={() => setConfirmDiscard(false)}
+        onClose={closeDiscard}
         onConfirm={onClose}
         kind="confirm"
         title="Bỏ thay đổi?"
@@ -299,16 +299,18 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
         onClose={closeReason}
         onConfirm={confirmReason}
         kind="reason"
-        title={`${priceChange ? 'Đổi giá' : 'Cập nhật'} ${initial?.name ?? ''}`}
-        confirmLabel={priceChange ? 'Lưu giá mới' : 'Lưu thay đổi'}
+        title={`${deltaChanges.length ? 'Đổi giá' : 'Cập nhật'} ${initial?.name ?? ''}`}
+        confirmLabel={deltaChanges.length ? 'Lưu giá mới' : 'Lưu thay đổi'}
       >
         <Stack gap="sm">
-          {priceChange && (
+          {deltaChanges.map((c) => (
             <PriceChange
-              oldPrice={Number(priceChange.oldValue)}
-              newPrice={Number(priceChange.newValue)}
+              key={c.modeName}
+              modeName={c.modeName}
+              oldPrice={Number(c.oldValue)}
+              newPrice={Number(c.newValue)}
             />
-          )}
+          ))}
           {otherChanges.map(changeLine)}
         </Stack>
       </ConfirmModal>
@@ -319,6 +321,7 @@ function ServiceForm({ onClose, mode, initial }: ServiceFormModalProps) {
     <form onSubmit={submit} noValidate>
       <Stack>
         {basicFields}
+        {priceRows}
 
         <Divider label="Tùy chọn" labelPosition="left" />
         {optionList}

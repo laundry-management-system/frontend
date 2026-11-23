@@ -82,7 +82,8 @@ const nullableString = z.string().nullable()
 export const customerOrderDetailSchema = z.object({
   orderCode: z.string(),
   channel: z.enum(['ONLINE', 'OFFLINE']),
-  orderType: z.string(),
+  washModeId: z.number(),
+  washModeName: z.string(),
   status: z.enum([
     'PENDING_CONFIRMATION',
     'AWAITING_DROPOFF',

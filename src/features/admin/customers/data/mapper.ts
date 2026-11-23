@@ -24,7 +24,7 @@ export const toCustomerOrder = (dto: CustomerOrderDto): CustomerOrder => ({
   id: dto.id,
   code: dto.orderCode,
   receivedAt: dto.receivedAt,
-  serviceName: dto.serviceName,
+  washModeName: dto.washModeName,
   totalAmount: Number(dto.totalAmount),
   status: dto.status,
   paymentStatus: dto.paymentStatus,

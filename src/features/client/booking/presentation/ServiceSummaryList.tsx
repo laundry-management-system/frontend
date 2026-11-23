@@ -7,7 +7,7 @@ export interface ServiceSummaryItem {
   key: number
   name: string
   /** Thiếu khi không tìm thấy dịch vụ trong danh sách hiện tại: bỏ dòng giá. */
-  priced?: { price: number; unit: BookingUnit; expressSurcharge?: number | null }
+  priced?: { price: number; unit: BookingUnit }
 }
 
 const ROW = 'flex min-h-14 items-center justify-between gap-3 px-4 py-2'
@@ -16,28 +16,38 @@ const ROW = 'flex min-h-14 items-center justify-between gap-3 px-4 py-2'
 export function ServiceSummaryList({
   items,
   whites,
-  express,
+  modeName,
 }: {
   items: ServiceSummaryItem[]
   whites: boolean
-  express: boolean
+  modeName?: string
 }) {
   const list = (
-    <ul className="divide-y divide-(--pub-border) rounded-(--pub-radius-xl) border border-(--pub-border)">
-      {items.map((i) => (
-        <li key={i.key} className={ROW}>
-          <div className="min-w-0">
-            <p className="bk-name">{i.name}</p>
-            {i.priced && (
-              <p className="bk-unit">
-                {formatMoney(i.priced.price + (express ? (i.priced.expressSurcharge ?? 0) : 0))}/
-                {UNIT_LABEL[i.priced.unit]}
-              </p>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="overflow-hidden rounded-(--pub-radius-xl) border border-(--pub-border)">
+      {modeName && (
+        <p className="flex flex-wrap items-center gap-x-2 bg-(--pub-primary-soft) px-4 py-2.5 text-(length:--pub-text-sm)">
+          <span className="text-(--pub-ink-muted)">Hình thức giặt</span>
+          <span className="font-semibold">{modeName}</span>
+        </p>
+      )}
+      <ul className="divide-y divide-(--pub-border)">
+        {items.map((i) => (
+          <li
+            key={i.key}
+            className={`${ROW} ${modeName ? 'border-t border-(--pub-border)' : ''}`.trim()}
+          >
+            <div className="min-w-0">
+              <p className="bk-name">{i.name}</p>
+              {i.priced && (
+                <p className="bk-unit">
+                  {formatMoney(i.priced.price)}/{UNIT_LABEL[i.priced.unit]}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
   if (!whites) return list
   return (

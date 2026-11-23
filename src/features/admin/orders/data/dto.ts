@@ -6,7 +6,6 @@ import type {
   HistoryActionType,
   ItemUnit,
   OrderStatus,
-  OrderType,
   PaymentMethod,
   PaymentResolution,
   PaymentStatus,
@@ -23,7 +22,8 @@ export interface OrderResponseDto {
   totalItemsCount: number
   receivedAt: string | null
   dueAt: string
-  orderType: OrderType
+  washModeId?: number
+  washModeName?: string
   totalAmount: number | string
   payableAmount: number | string
   channel: OrderChannel
@@ -75,6 +75,7 @@ export interface OrderDetailResponseDto extends Omit<
   confirmedAt?: string | null
   confirmedBy?: string | null
   fulfillment?: OrderFulfillment | null
+  washModeHours?: number | null
   receiptPrintedAt: string | null
   note: string | null
   items: OrderItemDto[]
@@ -93,7 +94,14 @@ export interface OrderDetailResponseDto extends Omit<
   deliveredBy?: string | null
   historyList: OrderHistoryDto[] | null
   customerId?: number | null
-  requestedServices?: { id: number; name: string | null; unit: ItemUnit | null }[] | null
+  requestedServices?:
+    | {
+        id: number
+        name: string | null
+        unit: ItemUnit | null
+        unitPrice?: number | string | null
+      }[]
+    | null
   whitesFee?: number | string | null
   incidentDiscount?: number | string | null
   incidentCodes?: string[] | null
@@ -112,7 +120,8 @@ export interface OrderReceiptResponseDto {
   trackingQrUrl: string
   shopName: string
   hotline: string
-  orderType?: OrderType
+  washModeId?: number
+  washModeName?: string
   intakeCode?: string | null
   intakeOrderIndex?: number
   intakeOrderCount?: number
@@ -130,18 +139,14 @@ export interface OrderReceiptResponseDto {
   }[]
 }
 
-export interface IntakeOrderRequestDto {
-  orderType: OrderType
-  serviceIds: number[]
-  dueAt: string
-  washWhitesSeparately: boolean
-}
-
 export interface IntakeRequestDto {
   requestId: string
   customerPhone: string
   customerName: string
-  orders: IntakeOrderRequestDto[]
+  washModeId: number
+  items: { serviceId: number }[]
+  washWhitesSeparately: boolean
+  dueAt?: string
 }
 
 export interface IntakeResponseDto {
@@ -269,7 +274,8 @@ export interface WorkCountsResponseDto {
   received: number
   processing: number
   late: number
-  express: number
+  express?: number
+  byMode?: { washModeId: number; count: number }[]
   pendingConfirmation: number
   awaitingDropoff: number
 }

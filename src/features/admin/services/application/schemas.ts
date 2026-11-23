@@ -16,17 +16,15 @@ export const serviceFormSchema = z
       .enum(['KG', 'PIECE', 'SET', 'PRODUCT'])
       .nullable()
       .refine((v) => v !== null, 'Vui lòng chọn đơn vị tính'),
-    price: numberOrBlank
-      .refine((v) => v !== '', { message: 'Vui lòng nhập đơn giá', abort: true })
-      .refine((v) => isInt(v) && Number(v) >= 0, 'Đơn giá không được âm'),
-    standardHours: numberOrBlank
-      .refine((v) => v !== '', { message: 'Vui lòng nhập thời gian xử lý chuẩn', abort: true })
-      .refine((v) => isInt(v) && Number(v) >= 1, 'Thời gian phải lớn hơn 0 giờ'),
+    prices: z.array(
+      z.object({
+        mode: z.any(),
+        enabled: z.boolean(),
+        price: numberOrBlank,
+      }),
+    ),
     minQuantity: numberOrBlank.refine((v) => v === '' || v >= 0, 'Tối thiểu không được âm'),
     whitesApplicable: z.boolean(),
-    expressSupported: z.boolean(),
-    expressSurcharge: numberOrBlank,
-    expressHours: numberOrBlank,
     status: z.enum(['ACTIVE', 'INACTIVE']),
   })
   .superRefine((v, ctx) => {
@@ -37,17 +35,44 @@ export const serviceFormSchema = z
         path: ['minQuantity'],
         message: 'Tối thiểu phải là số nguyên',
       })
-    if (!v.expressSupported) return
-    const issue = (path: 'expressSurcharge' | 'expressHours', message: string) =>
-      ctx.addIssue({ code: 'custom', path: [path], message })
-
-    if (v.expressSurcharge === '') issue('expressSurcharge', 'Vui lòng nhập phụ phí giặt nhanh')
-    else if (v.expressSurcharge < 0) issue('expressSurcharge', 'Phụ phí không được âm')
-
-    if (v.expressHours === '') issue('expressHours', 'Vui lòng nhập thời gian giặt nhanh')
-    else if (!isInt(v.expressHours) || v.expressHours < 1)
-      issue('expressHours', 'Thời gian phải lớn hơn 0 giờ')
-    // BR-C06 (refine của object chỉ chạy khi các field đã hợp lệ, nên standardHours là số)
-    else if (v.expressHours >= v.standardHours)
-      issue('expressHours', 'Thời gian giặt nhanh phải ngắn hơn thời gian chuẩn')
+    if (!v.prices.some((p) => p.enabled))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['prices'],
+        message: 'Chọn ít nhất một hình thức giặt và nhập giá',
+      })
+    v.prices.forEach((p, i) => {
+      if (!p.enabled) return
+      if (p.price === '')
+        ctx.addIssue({ code: 'custom', path: ['prices', i, 'price'], message: 'Vui lòng nhập giá' })
+      else if (!isInt(p.price) || p.price < 0)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['prices', i, 'price'],
+          message: 'Giá phải là số nguyên không âm',
+        })
+    })
   })
+
+export const washModeFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập tên hình thức')
+    .max(50, 'Tên hình thức tối đa 50 ký tự'),
+  completionHours: numberOrBlank
+    .refine((v) => v !== '', { message: 'Vui lòng nhập thời gian hoàn thành', abort: true })
+    .refine((v) => isInt(v) && Number(v) >= 1 && Number(v) <= 720, 'Thời gian từ 1 đến 720 giờ'),
+  active: z.boolean(),
+  isDefault: z.boolean(),
+  services: z.array(
+    z.object({
+      serviceId: z.number(),
+      price: numberOrBlank
+        .refine((v) => v !== '', { message: 'Vui lòng nhập giá', abort: true })
+        .refine((v) => isInt(v) && Number(v) >= 0, 'Giá không được âm'),
+    }),
+  ),
+})
+
+export type WashModeFormValues = z.input<typeof washModeFormSchema>

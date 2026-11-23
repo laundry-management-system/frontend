@@ -125,6 +125,7 @@ export default function OrderDetailPage() {
   const openReject = () => setModal({ kind: 'reject' })
 
   const openCancel = () => setModal({ kind: 'cancel' })
+  const openOnBehalf = () => setModal({ kind: 'onBehalf' })
   const openDropoff = () => setModal({ kind: 'dropoff' })
   const openStartDelivery = () => setModal({ kind: 'startDelivery' })
   const menuItems: RowAction[] = [
@@ -133,7 +134,7 @@ export default function OrderDetailPage() {
     {
       label: 'Hoàn tất thay khách',
       hidden: !mode || !awaitsCustomerReceipt(order),
-      onClick: openCheckout,
+      onClick: mode === 'handover' ? openOnBehalf : openCheckout,
     },
     ...(isAdmin ? adminMenuItems({ order, onAction: onAdminAction }) : []),
   ]
@@ -217,6 +218,7 @@ export default function OrderDetailPage() {
         setModal={setModal}
         onNotified={setLastNotification}
         onStarted={printInvoice}
+        onDropoffDone={reprint}
         onCheckoutDone={handleCheckoutDone}
       />
       <ReceiptPrintArea receipts={receipts} />

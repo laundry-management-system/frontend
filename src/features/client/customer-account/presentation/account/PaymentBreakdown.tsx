@@ -24,6 +24,8 @@ export function Breakdown({
   const money = (v: number) => (v < 0 ? `−${formatMoney(-v)}` : formatMoney(v))
   return (
     <dl className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-2 text-(length:--pub-text-sm)">
+      <dt className="text-(--pub-ink-muted)">Hình thức giặt</dt>
+      <dd className="text-right">{order.washModeName}</dd>
       {rows
         .filter(([label, v]) => v !== 0 || label === 'Tiền dịch vụ')
         .map(([label, v]) => (

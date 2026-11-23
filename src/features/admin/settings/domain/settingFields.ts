@@ -66,20 +66,6 @@ export const SETTING_FIELDS: (SettingField & { key: SettingKey })[] = [
     type: 'POSITIVE_INT',
   },
   {
-    key: 'BOOKING_RETURN_GAP_HOURS_NORMAL',
-    group: 'OPERATION',
-    label: 'Thời gian giặt tiêu chuẩn',
-    unit: 'giờ',
-    type: 'POSITIVE_INT',
-  },
-  {
-    key: 'BOOKING_RETURN_GAP_HOURS_EXPRESS',
-    group: 'OPERATION',
-    label: 'Thời gian giặt nhanh',
-    unit: 'giờ',
-    type: 'POSITIVE_INT',
-  },
-  {
     key: 'MAX_LOGIN_FAIL',
     group: 'SECURITY',
     label: 'Khóa tài khoản sau … lần sai',

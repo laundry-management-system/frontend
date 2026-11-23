@@ -20,7 +20,7 @@ import { workColumns } from './components/workColumns'
 import { useWorkListParams } from './useWorkListParams'
 import { PATHS } from '@/shared/common/config/paths'
 
-const FLAG_CLASS = { late: 'ds-row-flag-late', express: 'ds-row-flag-express' } as const
+const FLAG_CLASS = { late: 'ds-row-flag-late' } as const
 
 const weekday = (d: dayjs.Dayjs) => (d.day() === 0 ? 'Chủ nhật' : `Thứ ${d.day() + 1}`)
 
@@ -28,9 +28,10 @@ export default function WorkListPage() {
   const navigate = useNavigate()
   const { data: me } = useMe()
   const now = useNow()
-  const { search, tab, page, setPage, range, filtered, clearAll } = useWorkListParams()
+  const { search, tab, modeId, page, setPage, range, filtered, clearAll } = useWorkListParams()
   const { data, isLoading, isError, refetch } = useWorkOrders({
     tab,
+    washModeId: modeId,
     q: search,
     ...range,
     page: page - 1,

@@ -23,13 +23,21 @@ export interface PublicService {
   id: number
   name: string
   unit: PublicServiceUnit
-  price: number
   minQuantity: number
-  standardHours: number
-  expressSupported: boolean
-  expressSurcharge: number | null
-  expressHours: number | null
   whitesApplicable: boolean
+  prices: PublicServicePrice[]
+}
+
+export interface PublicServicePrice {
+  washModeId: number
+  price: number
+}
+
+export interface PublicWashMode {
+  id: number
+  name: string
+  completionHours: number
+  isDefault: boolean
 }
 
 export interface PublicServiceArea {
@@ -49,7 +57,7 @@ export interface EstimateInput {
   service: Pick | null
   /** Chuỗi khách gõ, chấp nhận dấu phẩy hoặc chấm thập phân. */
   quantity: string
-  express: boolean
+  washModeId: number | null
   mode: 'IN_STORE' | 'DOOR'
   area: Pick | null
   pickup: boolean
@@ -60,7 +68,6 @@ export interface EstimateResult {
   billableQty: number
   belowMinimum: boolean
   subtotal: number
-  expressFee: number
   deliveryFee: number
   total: number
 }

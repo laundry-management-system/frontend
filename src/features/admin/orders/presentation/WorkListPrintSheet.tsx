@@ -11,7 +11,7 @@ interface WorkListPrintSheetProps {
 }
 
 const typeLabel = (o: OrderListItem) =>
-  isUnclassified(o) ? 'Chưa phân loại' : o.orderType === 'EXPRESS' ? 'Giặt nhanh' : 'Thường'
+  isUnclassified(o) ? 'Chưa phân loại' : (o.washModeName ?? '—')
 
 /** Bản in khổ A4 của danh sách đang xem; chỉ hiện khi in (dùng chung cơ chế .print-area). */
 export function WorkListPrintSheet({ title, rows, now }: WorkListPrintSheetProps) {
@@ -28,7 +28,7 @@ export function WorkListPrintSheet({ title, rows, now }: WorkListPrintSheetProps
             <th>Khách hàng</th>
             <th>SĐT</th>
             <th>Hẹn trả</th>
-            <th>Loại</th>
+            <th>Hình thức</th>
             <th>Trạng thái</th>
             <th>Trễ</th>
           </tr>

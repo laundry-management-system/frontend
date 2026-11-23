@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { normalizePhone } from '@/features/client/customer-account'
 import { appointmentSlots, returnSlots, toAppointmentIso } from '../domain/appointment'
-import { gapHoursOf, type BookingStep } from '../domain/draft'
+import { gapHoursOf, priceOf, type BookingStep } from '../domain/draft'
 import type {
   BookingArea,
   BookingDraft,
@@ -10,6 +10,7 @@ import type {
   BookingService,
   BookingSettings,
   BookingStore,
+  BookingWashMode,
 } from '../domain/types'
 
 const money = z.number().int().nonnegative()
@@ -18,13 +19,12 @@ export const bookingSettingsSchema = z.object({
   bookingEnabled: z.boolean(),
   deliveryEnabled: z.boolean(),
   minLeadHours: z.number().nonnegative(),
-  returnGapHoursNormal: z.number().nonnegative(),
-  returnGapHoursExpress: z.number().nonnegative(),
 }) satisfies z.ZodType<BookingSettings>
 
 const bookingOrderSchema = z.object({
   orderCode: z.string(),
-  orderType: z.enum(['NORMAL', 'EXPRESS']),
+  washModeId: z.number(),
+  washModeName: z.string(),
   status: z.string(),
   createdAt: z.string(),
   appointmentAt: z.string(),
@@ -52,6 +52,7 @@ export const bookingIntakeSchema = z.object({
 
 export interface StepContext {
   services: readonly BookingService[]
+  modes: readonly BookingWashMode[]
   areas: readonly BookingArea[]
   settings: BookingSettings
   store: BookingStore
@@ -66,12 +67,13 @@ const hhmm = (t: string) => t.slice(0, 5)
 
 const rules: Record<BookingStep, StepRule> = {
   1: (d, { services }, issue) => {
+    if (d.washModeId === null) issue(['items'], 'Vui lòng chọn hình thức giặt')
     if (d.items.length === 0) issue(['items'], 'Vui lòng chọn ít nhất một dịch vụ')
     if (d.items.length > 20) issue(['items'], 'Tối đa 20 dịch vụ mỗi yêu cầu')
-    if (d.orderType === 'EXPRESS') {
-      const svc = services.find((s) => !s.expressSupported && d.items.some((i) => i.serviceId === s.id))
-      if (svc) issue(['items'], `Dịch vụ "${svc.name}" không hỗ trợ giặt nhanh`)
-    }
+    const svc = services.find(
+      (s) => priceOf(s, d.washModeId) === null && d.items.some((i) => i.serviceId === s.id),
+    )
+    if (svc) issue(['items'], `Dịch vụ "${svc.name}" không áp dụng cho hình thức đã chọn`)
   },
   // AT_STORE / AT_STORE luôn hợp lệ.
   2: (d, { areas, settings }, issue) => {
@@ -79,13 +81,16 @@ const rules: Record<BookingStep, StepRule> = {
     const delivery = d.returnMethod === 'DELIVERY'
     if (!pickup && !delivery) return
     if (!settings.deliveryEnabled || areas.length === 0) {
-      const message = 'Tiệm đang tạm ngưng lấy và giao tận nơi. Vui lòng chọn Mang đến tiệm và Nhận tại tiệm'
+      const message =
+        'Tiệm đang tạm ngưng lấy và giao tận nơi. Vui lòng chọn Mang đến tiệm và Nhận tại tiệm'
       if (pickup) issue(['dropoffMethod'], message)
       if (delivery) issue(['returnMethod'], message)
       return
     }
-    if (pickup && !areas.some((a) => a.id === d.pickupAreaId)) issue(['pickupAreaId'], 'Chọn khu vực lấy đồ')
-    if (delivery && !areas.some((a) => a.id === d.deliveryAreaId)) issue(['deliveryAreaId'], 'Chọn khu vực giao đồ')
+    if (pickup && !areas.some((a) => a.id === d.pickupAreaId))
+      issue(['pickupAreaId'], 'Chọn khu vực lấy đồ')
+    if (delivery && !areas.some((a) => a.id === d.deliveryAreaId))
+      issue(['deliveryAreaId'], 'Chọn khu vực giao đồ')
     const address = (key: 'pickupAddress' | 'deliveryAddress', required: string) => {
       if (!d[key].trim()) issue([key], required)
       else if (d[key].length > 255) issue([key], 'Địa chỉ tối đa 255 ký tự')
@@ -95,10 +100,13 @@ const rules: Record<BookingStep, StepRule> = {
     }
     if (delivery) address('deliveryAddress', 'Nhập địa chỉ giao đồ')
   },
-  3: (d, { store, settings, now }, issue) => {
-    const slot = appointmentSlots(now, store.openingTime, store.closingTime, settings.minLeadHours).find(
-      (s) => s.date === d.appointmentDate,
-    )
+  3: (d, { store, settings, modes, now }, issue) => {
+    const slot = appointmentSlots(
+      now,
+      store.openingTime,
+      store.closingTime,
+      settings.minLeadHours,
+    ).find((s) => s.date === d.appointmentDate)
     if (d.appointmentHour === null || !slot?.hours.includes(d.appointmentHour)) {
       issue(
         ['appointmentHour'],
@@ -108,7 +116,12 @@ const rules: Record<BookingStep, StepRule> = {
     }
     // Giống BE: giờ gửi sai thì chưa xét giờ nhận lại.
     const dropoffIso = toAppointmentIso(slot.date, d.appointmentHour)
-    const checkReturn = (key: 'returnHour', date: string | null, hour: number | null, gap: number) => {
+    const checkReturn = (
+      key: 'returnHour',
+      date: string | null,
+      hour: number | null,
+      gap: number,
+    ) => {
       if (date === null || hour === null) return issue([key], 'Chọn giờ nhận lại')
       const ok = returnSlots(dropoffIso, store.openingTime, store.closingTime, gap).some(
         (s) => s.date === date && s.hours.includes(hour),
@@ -120,13 +133,14 @@ const rules: Record<BookingStep, StepRule> = {
         )
       }
     }
-    checkReturn('returnHour', d.returnDate, d.returnHour, gapHoursOf(settings, d.orderType))
+    checkReturn('returnHour', d.returnDate, d.returnHour, gapHoursOf(modes, d.washModeId))
   },
   4: (d, _ctx, issue) => {
     const name = d.contactName.trim()
     if (!name) issue(['contactName'], 'Nhập họ và tên')
     else if (name.length > 100) issue(['contactName'], 'Họ tên tối đa 100 ký tự')
-    if (normalizePhone(d.contactPhone) === null) issue(['contactPhone'], 'Số điện thoại không hợp lệ (10 chữ số)')
+    if (normalizePhone(d.contactPhone) === null)
+      issue(['contactPhone'], 'Số điện thoại không hợp lệ (10 chữ số)')
     if (d.note.length > 500) issue(['note'], 'Ghi chú tối đa 500 ký tự')
     if (!d.termsAccepted) issue(['termsAccepted'], 'Cần đồng ý điều khoản để đặt đơn')
   },
@@ -135,7 +149,9 @@ const rules: Record<BookingStep, StepRule> = {
 
 /** Luật của một bước, dùng với `schemaResolver(stepSchema(step, ctx), { sync: true })`; trả mọi lỗi cùng lúc. */
 export function stepSchema(step: BookingStep, ctx: StepContext) {
-  return z.custom<BookingDraft>().superRefine((d, zctx) =>
-    rules[step](d, ctx, (path, message) => zctx.addIssue({ code: 'custom', path, message })),
-  )
+  return z
+    .custom<BookingDraft>()
+    .superRefine((d, zctx) =>
+      rules[step](d, ctx, (path, message) => zctx.addIssue({ code: 'custom', path, message })),
+    )
 }

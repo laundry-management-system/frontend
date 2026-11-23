@@ -7,6 +7,7 @@ import {
   CheckoutModal,
   checkoutMode,
   CompleteDropoffModal,
+  CompleteOnBehalfModal,
   CompleteOrderModal,
   ConfirmOnlineOrderModal,
   DiscrepancyModal,
@@ -32,6 +33,7 @@ export type ModalState =
   | { kind: 'rejectClaim' }
   | { kind: 'claimChooser' }
   | { kind: 'dropoff' }
+  | { kind: 'onBehalf' }
   | { kind: 'startDelivery' }
   | { kind: 'admin'; mode: Exclude<AdminAction, 'cancel'> }
   | { kind: 'checkout' }
@@ -44,6 +46,7 @@ interface Props {
   setModal: Dispatch<SetStateAction<ModalState>>
   onNotified: (r: NotificationResult) => void
   onStarted: () => void
+  onDropoffDone: () => void
   onCheckoutDone: (r: CheckoutDone) => void
 }
 
@@ -53,6 +56,7 @@ export function OrderDetailModals({
   setModal,
   onNotified,
   onStarted,
+  onDropoffDone,
   onCheckoutDone,
 }: Props) {
   const mode = checkoutMode(order)
@@ -85,7 +89,10 @@ export function OrderDetailModals({
       {modal?.kind === 'rejectClaim' && (
         <RejectPaymentClaimModal order={order} onClose={closeModal} />
       )}
-      {modal?.kind === 'dropoff' && <CompleteDropoffModal order={order} onClose={closeModal} />}
+      {modal?.kind === 'dropoff' && (
+        <CompleteDropoffModal order={order} onClose={closeModal} onDone={onDropoffDone} />
+      )}
+      {modal?.kind === 'onBehalf' && <CompleteOnBehalfModal order={order} onClose={closeModal} />}
       {modal?.kind === 'startDelivery' && (
         <StartDeliveryModal order={order} onClose={closeModal} onStarted={onStarted} />
       )}

@@ -47,7 +47,8 @@ export interface CustomerOrder {
   orderCode: string
   createdAt: string
   channel: 'ONLINE' | 'OFFLINE'
-  orderType: string
+  washModeId: number
+  washModeName: string
   fulfillment: CustomerOrderFulfillment | null
   /** Lý do từ chối dành cho khách; không bao giờ là lý do nội bộ. */
   customerRejectReason: string | null
@@ -111,7 +112,8 @@ export interface CustomerOrderMoney {
 export interface CustomerOrderDetail {
   orderCode: string
   channel: 'ONLINE' | 'OFFLINE'
-  orderType: string
+  washModeId: number
+  washModeName: string
   status: OrderStatus
   paymentStatus: 'UNPAID' | 'PAID'
   paymentClaimedAt: string | null

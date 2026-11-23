@@ -5,12 +5,13 @@ import { LuCheck, LuPackageCheck, LuPackagePlus } from 'react-icons/lu'
 import { InfoTip } from '../InfoTip'
 import { useBookingFormContext } from '../../application/bookingForm'
 import { appointmentSlots, returnSlots, toAppointmentIso, vnToday } from '../../domain/appointment'
-import { gapHoursOf, TIER_LABEL } from '../../domain/draft'
-import type { BookingSettings, BookingStore } from '../../domain/types'
+import { gapHoursOf } from '../../domain/draft'
+import type { BookingSettings, BookingStore, BookingWashMode } from '../../domain/types'
 
 interface Props {
   store: BookingStore
   settings: BookingSettings
+  modes: readonly BookingWashMode[]
 }
 
 // Ngày dạng YYYY-MM-DD (giờ VN): đọc thứ theo UTC để không lệch múi giờ của máy.
@@ -20,7 +21,12 @@ const HOURS_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-3'
 const DAY_MS = 86_400_000
 
 /** Ngày dạng tờ lịch; vẫn là nút bật/tắt (aria-pressed) với nhãn đọc đầy đủ. */
-function DateCard({ date, today, selected, onPick }: {
+function DateCard({
+  date,
+  today,
+  selected,
+  onPick,
+}: {
   date: string
   today: string
   selected: boolean
@@ -31,26 +37,48 @@ function DateCard({ date, today, selected, onPick }: {
   const idx = new Date(`${date}T00:00:00Z`).getUTCDay()
   const full = `${WEEKDAY_FULL[idx]}, ${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}${caption ? `, ${caption.toLowerCase()}` : ''}`
   return (
-    <button type="button" aria-pressed={selected} aria-label={full} onClick={onPick} className="bk-date">
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={full}
+      onClick={onPick}
+      className="bk-date"
+    >
       <span className="bk-date-band" aria-hidden="true">
         Th {Number(date.slice(5, 7))}
         {selected && <LuCheck size={14} className="bk-date-check" />}
       </span>
-      <span className="bk-date-day bk-money" aria-hidden="true">{date.slice(8, 10)}</span>
-      <span className="bk-date-wd" aria-hidden="true">{idx === 0 ? 'CN' : `Thứ ${idx + 1}`}</span>
-      <span className="bk-date-cap" aria-hidden="true">{caption}</span>
+      <span className="bk-date-day bk-money" aria-hidden="true">
+        {date.slice(8, 10)}
+      </span>
+      <span className="bk-date-wd" aria-hidden="true">
+        {idx === 0 ? 'CN' : `Thứ ${idx + 1}`}
+      </span>
+      <span className="bk-date-cap" aria-hidden="true">
+        {caption}
+      </span>
     </button>
   )
 }
 
 /** Lưới nút giờ (bật/tắt, aria-pressed). */
-function HourChips({ hours, selected, onPick }: {
+function HourChips({
+  hours,
+  selected,
+  onPick,
+}: {
   hours: readonly number[]
   selected: number | null
   onPick: (h: number) => void
 }) {
   return hours.map((h) => (
-    <button key={h} type="button" aria-pressed={selected === h} onClick={() => onPick(h)} className="bk-chip">
+    <button
+      key={h}
+      type="button"
+      aria-pressed={selected === h}
+      onClick={() => onPick(h)}
+      className="bk-chip"
+    >
       {String(h).padStart(2, '0')}:00
     </button>
   ))
@@ -60,7 +88,12 @@ const returnTip = (store: BookingStore, gap: number) =>
   `Giờ nhận lại nằm trong giờ mở cửa ${store.openingTime} – ${store.closingTime}, sau giờ gửi đồ ít nhất ${gap} giờ và trong 3 ngày kể từ ngày gửi.`
 
 /** Thẻ nhóm một phần của bước: tiêu đề, nội dung cách nhau 24px. */
-function TimeCard({ icon, title, tip, children }: {
+function TimeCard({
+  icon,
+  title,
+  tip,
+  children,
+}: {
   icon: ReactNode
   title: string
   tip?: string
@@ -69,7 +102,9 @@ function TimeCard({ icon, title, tip, children }: {
   return (
     <section className="bk-panel p-6 flex flex-col gap-6">
       <header className="grid grid-cols-[1.5rem_1fr] items-center gap-x-3">
-        <span aria-hidden="true" className="grid size-6 place-items-center text-(--pub-primary)">{icon}</span>
+        <span aria-hidden="true" className="grid size-6 place-items-center text-(--pub-primary)">
+          {icon}
+        </span>
         <h3 className="inline-flex items-center gap-1 text-(length:--pub-text-lg) leading-6 font-bold">
           {title}
           {tip && <InfoTip label={tip} />}
@@ -81,7 +116,12 @@ function TimeCard({ icon, title, tip, children }: {
 }
 
 /** Giờ nhận lại: chọn ngày rồi giờ trong returnSlots của giờ gửi. */
-function ReturnBlock({ dropoffIso, store, gap, today }: {
+function ReturnBlock({
+  dropoffIso,
+  store,
+  gap,
+  today,
+}: {
   dropoffIso: string | null
   store: BookingStore
   gap: number
@@ -91,6 +131,8 @@ function ReturnBlock({ dropoffIso, store, gap, today }: {
   const { returnDate: date, returnHour: hour } = form.values
   const slots = dropoffIso ? returnSlots(dropoffIso, store.openingTime, store.closingTime, gap) : []
   const hours = slots.find((s) => s.date === date)?.hours ?? []
+
+  const pickHour = (h: number) => form.setFieldValue('returnHour', h)
 
   if (!dropoffIso) return null
   if (slots.length === 0) {
@@ -118,18 +160,22 @@ function ReturnBlock({ dropoffIso, store, gap, today }: {
       </div>
       {date && (
         <div role="group" aria-label="Giờ nhận lại: giờ" className={`mt-6 ${HOURS_GRID}`}>
-          <HourChips hours={hours} selected={hour} onPick={(h) => form.setFieldValue('returnHour', h)} />
+          <HourChips
+            hours={hours}
+            selected={hour}
+            onPick={pickHour}
+          />
         </div>
       )}
     </Input.Wrapper>
   )
 }
 
-export function StepTime({ store, settings }: Props) {
+export function StepTime({ store, settings, modes }: Props) {
   const form = useBookingFormContext()
-  const { appointmentDate, appointmentHour, dropoffMethod, orderType } = form.values
+  const { appointmentDate, appointmentHour, dropoffMethod, washModeId } = form.values
   const { minLeadHours } = settings
-  const gap = gapHoursOf(settings, orderType)
+  const gap = gapHoursOf(modes, washModeId)
   const dropoffIso =
     appointmentDate !== null && appointmentHour !== null
       ? toAppointmentIso(appointmentDate, appointmentHour)
@@ -179,14 +225,7 @@ export function StepTime({ store, settings }: Props) {
   )
 
   const returnCard = (
-    <TimeCard
-      icon={<LuPackageCheck size={20} />}
-      title="Giờ nhận lại"
-      tip={returnTip(store, gap)}
-    >
-      <p className="text-(length:--pub-text-sm) text-(--pub-ink-muted)">
-        Sớm nhất {gap} giờ sau giờ gửi ({TIER_LABEL[orderType]})
-      </p>
+    <TimeCard icon={<LuPackageCheck size={20} />} title="Giờ nhận lại" tip={returnTip(store, gap)}>
       <ReturnBlock dropoffIso={dropoffIso} store={store} gap={gap} today={today} />
     </TimeCard>
   )

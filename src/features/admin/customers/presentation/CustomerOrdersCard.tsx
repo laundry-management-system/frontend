@@ -31,7 +31,7 @@ export function CustomerOrdersCard({ phone }: { phone: string }) {
               width: 110,
               render: (o) => (o.receivedAt ? formatDate(o.receivedAt) : '—'),
             },
-            { name: 'serviceName', label: 'Dịch vụ', render: (o) => o.serviceName ?? '—' },
+            { name: 'washModeName', label: 'Hình thức giặt', render: (o) => o.washModeName ?? '—' },
             {
               name: 'totalAmount',
               label: 'Tổng tiền',

@@ -14,13 +14,15 @@ import { UNIT_LABEL } from '../domain/types'
 import { formatMoney, formatNumber } from '@/shared/common/lib/format'
 import { usePublicServiceAreas } from '../application/queries/usePublicServiceAreas'
 import { usePublicServices } from '../application/queries/usePublicServices'
+import { usePublicWashModes } from '../application/queries/usePublicWashModes'
 import { estimateFormSchema } from '../application/schemas'
-import { estimate, rematch } from '../domain/estimate'
+import { estimate, priceFor, rematch } from '../domain/estimate'
 import type {
   EstimateInput,
   EstimateResult,
   PublicService,
   PublicServiceArea,
+  PublicWashMode,
 } from '../domain/types'
 import { formatFee } from './formatFee'
 import { SectionError } from './SectionError'
@@ -36,7 +38,7 @@ const TITLE = (
 const INITIAL_VALUES: EstimateInput = {
   service: null,
   quantity: '',
-  express: false,
+  washModeId: null,
   mode: 'IN_STORE',
   area: null,
   pickup: true,
@@ -70,8 +72,8 @@ const SEGMENT_CLASSES = {
 }
 const NOTE = 'Tổng ước tính chỉ để tham khảo, số tiền chính thức tính khi tiệm cân, đếm đồ.'
 
-const serviceLabel = (s: PublicService, duplicated: boolean) =>
-  duplicated ? `${s.name} (${formatMoney(s.price)}/${UNIT_LABEL[s.unit]})` : s.name
+const serviceLabel = (s: PublicService, duplicated: boolean, modeId: number | null) =>
+  duplicated ? `${s.name} (${formatMoney(priceFor(s, modeId) ?? 0)}/${UNIT_LABEL[s.unit]})` : s.name
 
 function EstimatorSkeleton() {
   return (
@@ -90,12 +92,12 @@ function EstimatorSkeleton() {
 interface ResultPanelProps {
   result: EstimateResult | null
   service: PublicService | null
-  express: boolean
+  price: number | null
   hint: string
 }
 
 /** Một vùng aria-live duy nhất: đổi gì cũng đọc lại cả bảng kết quả, ghi chú để ngoài cho đỡ lặp. */
-function ResultPanel({ result, service, express, hint }: ResultPanelProps) {
+function ResultPanel({ result, service, price, hint }: ResultPanelProps) {
   const unit = service ? UNIT_LABEL[service.unit] : ''
   let content
   if (!result || !service)
@@ -112,7 +114,7 @@ function ResultPanel({ result, service, express, hint }: ResultPanelProps) {
           <dt>
             Tạm tính
             <span className="block text-(length:--pub-text-sm) text-white/80">
-              {formatNumber(result.billableQty)} {unit} × {formatMoney(service.price)}
+              {formatNumber(result.billableQty)} {unit} × {formatMoney(price ?? 0)}
             </span>
           </dt>
           <dd className="font-bold tabular-nums">{formatMoney(result.subtotal)}</dd>
@@ -121,12 +123,6 @@ function ResultPanel({ result, service, express, hint }: ResultPanelProps) {
           <p className="rounded-(--pub-radius-md) bg-white/15 px-3 py-2 text-(length:--pub-text-sm) font-semibold">
             Tính tối thiểu {formatNumber(service.minQuantity)} {unit}
           </p>
-        )}
-        {express && (
-          <div className="flex items-baseline justify-between gap-4">
-            <dt>Phụ phí giặt nhanh</dt>
-            <dd className="font-bold tabular-nums">{formatMoney(result.expressFee)}</dd>
-          </div>
         )}
         <div className="flex items-baseline justify-between gap-4">
           <dt>Phí giao nhận</dt>
@@ -160,10 +156,11 @@ function ResultPanel({ result, service, express, hint }: ResultPanelProps) {
 
 interface EstimatorFormProps {
   services: PublicService[]
+  modes: PublicWashMode[]
   areas: ReturnType<typeof usePublicServiceAreas>
 }
 
-function EstimatorForm({ services, areas }: EstimatorFormProps) {
+function EstimatorForm({ services, modes, areas }: EstimatorFormProps) {
   const form = useForm<EstimateInput>({
     initialValues: INITIAL_VALUES,
     validate: schemaResolver(estimateFormSchema(services), { sync: true }),
@@ -182,19 +179,29 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
 
   const service = servicePick ? services[servicePick.index] : null
   const unit = service ? UNIT_LABEL[service.unit] : null
-  const expressSupported = !!service?.expressSupported
-  const express = values.express && expressSupported
+  const defaultModeId = (modes.find((m) => m.isDefault) ?? modes[0]).id
+  // Hình thức đã chọn mà vừa ngừng thì quay về mặc định
+  const washModeId = modes.some((m) => m.id === values.washModeId)
+    ? values.washModeId
+    : defaultModeId
+  const price = service ? priceFor(service, washModeId) : null
   const mode = doorAvailable ? values.mode : 'IN_STORE'
   const area = mode === 'DOOR' && areaPick ? areaList[areaPick.index] : null
   const needsArea = mode === 'DOOR' && !area
   const result =
     service && !needsArea
-      ? estimate({ ...values, service: servicePick, area: areaPick, express, mode }, service, area)
+      ? estimate(
+          { ...values, service: servicePick, area: areaPick, washModeId, mode },
+          service,
+          area,
+        )
       : null
   const hint =
-    service && needsArea && estimate(values, service, null)
-      ? 'Chọn khu vực để xem phí giao nhận và tổng ước tính.'
-      : 'Chọn dịch vụ và nhập số lượng để xem ước tính.'
+    service && price === null
+      ? 'Dịch vụ này không áp dụng hình thức giặt đã chọn, vui lòng chọn hình thức khác.'
+      : service && needsArea && estimate({ ...values, washModeId }, service, null)
+        ? 'Chọn khu vực để xem phí giao nhận và tổng ước tính.'
+        : 'Chọn dịch vụ và nhập số lượng để xem ước tính.'
 
   // Gõ số lượng render lại cả form mỗi phím; giữ nguyên mảng data để Select không dựng lại danh sách
   const serviceOptions = useMemo(() => {
@@ -202,12 +209,16 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
     services.forEach((s) => nameCount.set(s.name, (nameCount.get(s.name) ?? 0) + 1))
     return services.map((s, i) => ({
       value: String(i),
-      label: serviceLabel(s, (nameCount.get(s.name) ?? 0) > 1),
+      label: serviceLabel(s, (nameCount.get(s.name) ?? 0) > 1, defaultModeId),
     }))
-  }, [services])
+  }, [services, defaultModeId])
   const areaOptions = useMemo(
     () => areaList.map((a, i) => ({ value: String(i), label: a.name })),
     [areaList],
+  )
+  const washModeOptions = useMemo(
+    () => modes.map((m) => ({ value: String(m.id), label: m.name })),
+    [modes],
   )
   const modeOptions = useMemo(
     () => [
@@ -220,14 +231,10 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
   const handleSubmit = form.onSubmit(NOOP)
   const handleServiceChange = (value: string | null) => {
     const next = value === null ? null : services[Number(value)]
-    form.setValues({
-      service: next ? { index: Number(value), name: next.name } : null,
-      express: next?.expressSupported ? values.express : false,
-    })
+    form.setFieldValue('service', next ? { index: Number(value), name: next.name } : null)
     if (form.isTouched('quantity')) form.validateField('quantity')
   }
-  const handleExpressChange = (e: ChangeEvent<HTMLInputElement>) =>
-    form.setFieldValue('express', e.currentTarget.checked)
+  const handleWashModeChange = (value: string) => form.setFieldValue('washModeId', Number(value))
   const handleModeChange = (value: string) =>
     form.setFieldValue('mode', value as EstimateInput['mode'])
   const handleAreaChange = (value: string | null) => {
@@ -248,10 +255,6 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
   const quantityError = form.errors.quantity ? (
     <span role="alert">{form.errors.quantity}</span>
   ) : null
-  const expressLabel =
-    expressSupported && service?.expressSurcharge
-      ? `Giặt nhanh (+${formatMoney(service.expressSurcharge)}/${unit})`
-      : 'Giặt nhanh'
 
   const lostNotice = (serviceLost || areaLost) && (
     <div
@@ -359,18 +362,21 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
           error={quantityError}
           classNames={FIELD_CLASSES}
         />
-        <Checkbox
-          label={expressLabel}
-          checked={express}
-          onChange={handleExpressChange}
-          disabled={!expressSupported}
-          color="var(--pub-primary)"
-          size="md"
-          classNames={CHECKBOX_CLASSES}
-        />
+        <fieldset className="flex flex-col gap-3 sm:col-span-2">
+          <legend className="mb-1.5 font-semibold">Hình thức giặt</legend>
+          <SegmentedControl
+            data={washModeOptions}
+            value={String(washModeId)}
+            onChange={handleWashModeChange}
+            fullWidth
+            color="var(--pub-primary)"
+            radius="sm"
+            classNames={SEGMENT_CLASSES}
+          />
+        </fieldset>
         {deliveryFields}
       </form>
-      <ResultPanel result={result} service={service} express={express} hint={hint} />
+      <ResultPanel result={result} service={service} price={price} hint={hint} />
     </div>
   )
 }
@@ -378,22 +384,27 @@ function EstimatorForm({ services, areas }: EstimatorFormProps) {
 /** Ước tính nhanh: khách tự tính tiền dự kiến theo bảng giá và phí giao nhận hiện hành. */
 export function Estimator() {
   const services = usePublicServices()
+  const modes = usePublicWashModes()
   const areas = usePublicServiceAreas()
-  const handleRetry = () => services.refetch()
+  const handleRetry = () => {
+    services.refetch()
+    modes.refetch()
+  }
 
-  if (services.data?.length === 0) return null
+  if (services.data?.length === 0 || modes.data?.length === 0) return null
 
   // Tải lại lỗi mà vẫn còn dữ liệu cũ thì giữ form, khách không mất phần đã nhập
   let body
-  if (services.data) body = <EstimatorForm services={services.data} areas={areas} />
-  else if (services.isPending) body = <EstimatorSkeleton />
+  if (services.data && modes.data)
+    body = <EstimatorForm services={services.data} modes={modes.data} areas={areas} />
+  else if (services.isPending || modes.isPending) body = <EstimatorSkeleton />
   else body = <SectionError what="bảng giá để ước tính" onRetry={handleRetry} />
 
   return (
     <section
       id="uoc-tinh"
       aria-labelledby={TITLE_ID}
-      aria-busy={services.isPending}
+      aria-busy={services.isPending || modes.isPending}
       className="pub-section bg-(--pub-surface)"
     >
       <div className="pub-container">

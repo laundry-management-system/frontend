@@ -1,5 +1,5 @@
 import { isUnclassified } from './rules.ts'
-import type { OrderListItem, OrderStatus, OrderType, WorkTab } from './types'
+import type { OrderListItem, OrderStatus, WorkTab } from './types'
 
 const MINUTE = 60_000
 const HOUR = 60 * MINUTE
@@ -10,7 +10,6 @@ export interface WorkFilter {
   statuses: OrderStatus[]
   classified?: boolean
   late?: boolean
-  orderType?: OrderType
 }
 
 const OPEN: OrderStatus[] = ['RECEIVED', 'PROCESSING']
@@ -26,8 +25,6 @@ export function tabParams(tab: WorkTab): WorkFilter {
       return { statuses: ['PROCESSING'] }
     case 'LATE':
       return { statuses: OPEN, late: true }
-    case 'EXPRESS':
-      return { statuses: OPEN, orderType: 'EXPRESS' }
     default:
       return { statuses: OPEN }
   }
@@ -54,11 +51,9 @@ export function dueRange(due: string, today: string): { dueFrom?: string; dueTo?
 
 export const isLate = (o: Pick<OrderListItem, 'dueAt'>, now: number) => now > Date.parse(o.dueAt)
 
-/** Vạch màu đầu dòng: TRỄ ưu tiên hơn Giặt nhanh. */
-export function rowFlag(o: Pick<OrderListItem, 'dueAt' | 'orderType'>, now: number) {
-  if (isLate(o, now)) return 'late' as const
-  return o.orderType === 'EXPRESS' ? ('express' as const) : null
-}
+/** Vạch màu đầu dòng: chỉ đơn TRỄ. */
+export const rowFlag = (o: Pick<OrderListItem, 'dueAt'>, now: number) =>
+  isLate(o, now) ? ('late' as const) : null
 
 export type WorkAction = 'classify' | 'start' | 'complete'
 

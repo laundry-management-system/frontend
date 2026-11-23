@@ -44,7 +44,8 @@ export function summarizeOrders(orders: CustomerOrder[]) {
   for (const order of orders) {
     if (order.paymentStatus === 'PAID' && order.status !== 'CANCELLED')
       totalSpent += order.totalAmount
-    if (order.serviceName) counts.set(order.serviceName, (counts.get(order.serviceName) ?? 0) + 1)
+    if (order.washModeName)
+      counts.set(order.washModeName, (counts.get(order.washModeName) ?? 0) + 1)
   }
   let topService: string | null = null
   let best = 0

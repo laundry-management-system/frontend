@@ -17,7 +17,11 @@ const dayMonth = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
 const fullDate = (d: Date) => `${dayMonth(d)}/${d.getFullYear()}`
 const time = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
 
-const MONEY_FIELDS: readonly PriceField[] = ['PRICE', 'EXPRESS_SURCHARGE']
+const MONEY_FIELDS: readonly PriceField[] = ['PRICE', 'MODE_PRICE', 'EXPRESS_SURCHARGE']
+
+/** Nhãn loại thay đổi; giá theo hình thức kèm tên hình thức */
+export const priceFieldLabel = (field: PriceField, modeName?: string | null) =>
+  field === 'MODE_PRICE' && modeName ? `Giá ${modeName}` : PRICE_FIELD_LABEL[field]
 
 export function formatPriceValue(field: PriceField, value: string | null) {
   if (value == null) return field === 'STATUS' ? '—' : 'Không hỗ trợ'
@@ -54,12 +58,21 @@ export function formatChangedAt(iso: string, now = new Date()) {
  * để vẽ bậc thang; `changes` là mọi thay đổi (cả trạng thái, giờ xử lý, phụ phí), mới nhất trước.
  * Lần đổi trước khi có tính năng không được ghi: giá cũ của lần đổi đầu tiên coi là giá trước đó.
  */
-export function buildPriceTimeline(rows: PriceHistoryRow[], currentPrice: number) {
+export function buildPriceTimeline(
+  rows: PriceHistoryRow[],
+  currentPrice: number,
+  defaultModeId: number | null,
+) {
   const byTime = rows.toSorted(
     (a, b) => a.changedAt.localeCompare(b.changedAt) || a.logId - b.logId,
   )
+  // Biểu đồ chỉ vẽ hình thức mặc định, nối với các dòng PRICE cũ; thêm/bỏ liên kết (giá null) không có bậc
   const priceChanges = byTime.filter(
-    (r) => r.field === 'PRICE' && Number(r.oldValue) !== Number(r.newValue),
+    (r) =>
+      (r.field === 'PRICE' || (r.field === 'MODE_PRICE' && r.washModeId === defaultModeId)) &&
+      r.oldValue != null &&
+      r.newValue != null &&
+      Number(r.oldValue) !== Number(r.newValue),
   )
   const changes = byTime.toReversed()
   if (priceChanges.length === 0) return { points: [], changes, reminder: null }
@@ -99,7 +112,7 @@ export const priceHistoryCsvRows = (rows: PriceHistoryRow[]) => [
     return [
       String(i + 1),
       r.serviceName,
-      PRICE_FIELD_LABEL[r.field],
+      priceFieldLabel(r.field, r.washModeName),
       formatPriceValue(r.field, r.oldValue),
       formatPriceValue(r.field, r.newValue),
       priceRowDelta(r)?.label ?? '—',

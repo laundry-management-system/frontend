@@ -1,3 +1,4 @@
+import { FILTER_SELECT_PROPS } from '@/shared/admin/ui'
 import { Button, Select } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import { useState } from 'react'
@@ -6,9 +7,15 @@ import { useUsers } from '@/features/admin/users'
 import type { AuditLogParams } from '../application/useAuditLogParams'
 import { ACTION_LABEL, AUDIT_ACTIONS, ENTITY_TYPE_LABEL, ENTITY_TYPES } from '../domain/labels'
 
-const ACTION_OPTIONS = AUDIT_ACTIONS.map((a) => ({ value: a, label: ACTION_LABEL[a] }))
-const ENTITY_OPTIONS = ENTITY_TYPES.map((t) => ({ value: t, label: ENTITY_TYPE_LABEL[t] }))
-const SYSTEM_OPTION = { value: '0', label: 'Hệ thống' }
+const ACTION_OPTIONS = AUDIT_ACTIONS.map((a) => ({
+  value: a,
+  label: `Hành động: ${ACTION_LABEL[a]}`,
+}))
+const ENTITY_OPTIONS = ENTITY_TYPES.map((t) => ({
+  value: t,
+  label: `Đối tượng: ${ENTITY_TYPE_LABEL[t]}`,
+}))
+const SYSTEM_OPTION = { value: '0', label: 'Người dùng: Hệ thống' }
 // shortcut: tối đa 100 nhân viên, quá thì đổi sang ô tìm gọi API
 const USER_QUERY = { page: 0, size: 100 }
 
@@ -43,7 +50,7 @@ export function AuditLogFilters({ params }: { params: AuditLogParams }) {
       .filter((u) => u.id !== 0)
       .map((u) => ({
         value: String(u.id),
-        label: `${u.fullName} (${u.username})`,
+        label: `Người dùng: ${u.fullName} (${u.username})`,
       })),
   ]
 
@@ -62,7 +69,8 @@ export function AuditLogFilters({ params }: { params: AuditLogParams }) {
         onChange={handleRangeChange}
       />
       <Select
-        w={220}
+        {...FILTER_SELECT_PROPS}
+        w={280}
         placeholder="Người dùng: Tất cả"
         searchable
         clearable
@@ -71,7 +79,8 @@ export function AuditLogFilters({ params }: { params: AuditLogParams }) {
         onChange={handleUserChange}
       />
       <Select
-        w={220}
+        {...FILTER_SELECT_PROPS}
+        w={260}
         placeholder="Hành động: Tất cả"
         searchable
         clearable
@@ -80,7 +89,8 @@ export function AuditLogFilters({ params }: { params: AuditLogParams }) {
         onChange={handleActionChange}
       />
       <Select
-        w={200}
+        {...FILTER_SELECT_PROPS}
+        w={260}
         placeholder="Đối tượng: Tất cả"
         clearable
         data={ENTITY_OPTIONS}
