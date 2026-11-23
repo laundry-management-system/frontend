@@ -54,7 +54,6 @@ export const DOMAIN_STATUSES: DomainStatus[] = [
   { group: 'payment-txn', key: 'voided', label: 'Đã hủy', tone: 'neutral' },
   { group: 'payment-txn', key: 'refunded', label: 'Đã hoàn tiền', tone: 'warning' },
   { group: 'flag', key: 'late', label: 'TRỄ', tone: 'danger', solid: true, icon: 'triangle-alert' },
-  { group: 'flag', key: 'express', label: 'Giặt nhanh', tone: 'express', solid: true, icon: 'zap' },
   { group: 'flag', key: 'vip', label: 'VIP', tone: 'vip', icon: 'star' },
   { group: 'flag', key: 'stale', label: 'Đồ tồn', tone: 'warning', icon: 'package' },
   { group: 'flag', key: 'unclassified', label: 'Chưa phân loại', tone: 'warning' },

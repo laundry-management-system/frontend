@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { toApiError } from '@/shared/common/api/apiError'
 import { formatPersonName, stripDigits } from '@/shared/common/lib/format'
 import { notify } from '@/shared/common/lib/notify'
-import { ConfirmModal, ModalFooter } from '@/shared/admin/ui'
+import { ConfirmModal, EntityCode, ModalFooter } from '@/shared/admin/ui'
 import { useCreateUser, useUpdateUser } from '../application/useUserMutations'
 import { ROLE_LABEL, type Role, type User } from '../domain/types'
 import { validateEmail, validateFullName, validatePhone } from '../domain/rules'
@@ -36,11 +36,22 @@ const today = () => dayjs().format('YYYY-MM-DD')
 
 /** Form remount mỗi lần mở để giá trị ban đầu lấy thẳng từ `user`. */
 export function UserFormModal(props: UserFormModalProps) {
+  const { user } = props
+  const title =
+    props.mode === 'edit' && user ? (
+      <>
+        Sửa nhân viên <EntityCode code={user.employeeCode} /> – {user.fullName}
+      </>
+    ) : props.mode === 'edit' ? (
+      'Sửa nhân viên'
+    ) : (
+      'Thêm nhân viên'
+    )
   return (
     <Modal
       opened={props.opened}
       onClose={props.onClose}
-      title={props.mode === 'edit' ? 'Sửa nhân viên' : 'Thêm nhân viên'}
+      title={title}
       centered
       size={560}
       // Form tự hỏi "Bỏ thay đổi?", không đóng khi bấm ra ngoài/Esc

@@ -1,4 +1,10 @@
-import type { PriceField, ServiceStatus, ServiceUnit } from '../domain/types'
+import type {
+  ModeServiceLine,
+  PriceField,
+  ServicePrice,
+  ServiceStatus,
+  ServiceUnit,
+} from '../domain/types'
 
 export interface ServiceResponseDto {
   id: number
@@ -6,26 +12,39 @@ export interface ServiceResponseDto {
   name: string
   unit: ServiceUnit
   unitDisplayName: string | null
-  currentPrice: number | string
-  standardHours: number
-  expressSupported: boolean | null
-  expressSurcharge: number | string | null
-  expressHours: number | null
   minQuantity?: number | string | null
   whitesApplicable?: boolean | null
   status: ServiceStatus
+  prices?: { washModeId: number; price: number | string }[]
   createdAt: string
   updatedAt: string
+}
+
+export interface WashModeDto {
+  id: number
+  code: string
+  name: string
+  completionHours: number
+  active: boolean
+  isDefault: boolean
+}
+
+export type WashModeDetailDto = WashModeDto & {
+  services: { serviceId: number; price: number | string }[]
+}
+
+export interface WashModeRequestDto {
+  name: string
+  completionHours: number
+  active: boolean
+  isDefault: boolean
+  services: ModeServiceLine[]
 }
 
 export interface CreateServiceRequestDto {
   name: string
   unit: ServiceUnit
-  currentPrice: number
-  standardHours: number
-  expressSupported: boolean
-  expressSurcharge: number | null
-  expressHours: number | null
+  prices: ServicePrice[]
   minQuantity: number
   whitesApplicable: boolean
 }
@@ -44,6 +63,8 @@ export interface PriceHistoryRowResponseDto {
   serviceName: string
   unit: ServiceUnit | null
   field: PriceField
+  washModeId?: number | null
+  washModeName?: string | null
   oldValue: string | null
   newValue: string | null
   changedById: number

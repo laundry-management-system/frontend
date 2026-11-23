@@ -4,8 +4,13 @@ import { LuArrowRight, LuCloudOff, LuInfo } from 'react-icons/lu'
 import { formatMoney } from '@/shared/common/lib/format'
 import { EmptyState } from '@/shared/admin/ui'
 import { usePriceTimeline } from '../application/queries/usePriceTimeline'
-import { formatChangedAt, formatPriceValue, priceRowDelta } from '../domain/priceHistory'
-import { PRICE_FIELD_LABEL, type PriceHistoryRow } from '../domain/types'
+import {
+  formatChangedAt,
+  formatPriceValue,
+  priceFieldLabel,
+  priceRowDelta,
+} from '../domain/priceHistory'
+import type { PriceHistoryRow } from '../domain/types'
 import { PriceLine } from './PriceLine'
 
 const DELTA_COLOR = { up: 'success', down: 'warning', same: 'neutral' } as const
@@ -16,7 +21,7 @@ function ChangeItem({ row }: { row: PriceHistoryRow }) {
     <Stack gap={4} py={8}>
       <Group justify="space-between" wrap="nowrap" gap="xs">
         <Text size="sm" fw={500}>
-          {PRICE_FIELD_LABEL[row.field]}
+          {priceFieldLabel(row.field, row.washModeName)}
         </Text>
         <Text size="xs" c="dimmed" ta="right">
           {formatChangedAt(row.changedAt)} · {row.changedByName}

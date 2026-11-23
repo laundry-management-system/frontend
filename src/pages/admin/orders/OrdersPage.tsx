@@ -1,4 +1,4 @@
-import { Button, SegmentedControl, Stack, Text, TextInput, VisuallyHidden } from '@mantine/core'
+import { Button, Select, Stack, Text, TextInput, VisuallyHidden } from '@mantine/core'
 import type { ChangeEvent, ReactNode } from 'react'
 import { LuReceiptText, LuSearch, LuSearchX } from 'react-icons/lu'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -10,14 +10,20 @@ import {
   type OrderListItem,
   OrderChannelBadge,
   OrderPaymentBadge,
-  OrderServiceTags,
   OrderStatusCell,
   useOrderCounts,
   useOrders,
 } from '@/features/admin/orders'
 import { useListParams } from '@/shared/admin/hooks/useListParams'
 import { formatDateTime, formatPhone } from '@/shared/common/lib/format'
-import { CopyableCode, type DataTableColumn, EmptyState, ListPage, Money } from '@/shared/admin/ui'
+import {
+  CopyableCode,
+  type DataTableColumn,
+  EmptyState,
+  ListPage,
+  Money,
+  FILTER_SELECT_PROPS,
+} from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 
 /** Trễ = quá hạn hẹn trả (isOverdue, đơn đang xử lý); quá giờ hẹn = chưa nhận đồ mà đã qua giờ hẹn gửi (loại trừ nhau). */
@@ -70,11 +76,11 @@ export default function OrdersPage() {
   const handleRetry = () => refetch()
   const rowKey = (o: OrderListItem) => o.id
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
-  const handleChannelChange = (v: string) =>
+  const handleChannelChange = (v: string | null) =>
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
-        if (v === 'ALL') next.delete('channel')
+        if (!v || v === 'ALL') next.delete('channel')
         else next.set('channel', v)
         next.delete('page')
         return next
@@ -85,30 +91,40 @@ export default function OrdersPage() {
     setQ('')
     setParams({}, { replace: true })
   }
-  const handleStatusChange = (v: string) => setStatus(v as typeof status)
+  const handleStatusChange = (v: string | null) => setStatus(v as typeof status)
 
   const primaryAction = { label: 'Tạo đơn', onClick: goIntake }
 
   const statusOptions = [
-    { label: withCount('Tất cả', counts?.ALL), value: 'ALL' },
+    { label: `Trạng thái: ${withCount('Tất cả', counts?.ALL)}`, value: 'ALL' },
     ...ORDER_STATUSES.map((s) => ({
-      label: withCount(ORDER_STATUS_LABEL[s], counts?.[s]),
+      label: `Trạng thái: ${withCount(ORDER_STATUS_LABEL[s], counts?.[s])}`,
       value: s,
     })),
   ]
 
   const channelOptions = [
-    { label: 'Tất cả', value: 'ALL' },
-    ...CHANNELS.map((c) => ({ label: ORDER_CHANNEL_LABEL[c], value: c })),
+    { label: 'Kênh: Tất cả', value: 'ALL' },
+    ...CHANNELS.map((c) => ({ label: `Kênh: ${ORDER_CHANNEL_LABEL[c]}`, value: c })),
   ]
 
   const filters = (
-    <Stack gap="sm" w="100%">
-      <SegmentedControl value={status} onChange={handleStatusChange} data={statusOptions} />
-      <SegmentedControl
+    <>
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={300}
+        value={status}
+        onChange={handleStatusChange}
+        data={statusOptions}
+        allowDeselect={false}
+      />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={220}
         value={channel ?? 'ALL'}
         onChange={handleChannelChange}
         data={channelOptions}
+        allowDeselect={false}
       />
       <TextInput
         w={320}
@@ -117,7 +133,7 @@ export default function OrdersPage() {
         value={q}
         onChange={handleSearchChange}
       />
-    </Stack>
+    </>
   )
 
   const columns: DataTableColumn<OrderListItem>[] = [
@@ -135,11 +151,18 @@ export default function OrdersPage() {
       render: (o) => <OrderChannelBadge channel={o.channel} />,
     },
     {
-      name: 'services',
-      label: 'Dịch vụ',
-      width: 110,
+      name: 'washMode',
+      label: 'Hình thức',
+      width: 150,
       render: (o) => (
-        <OrderServiceTags orderType={o.orderType} washWhitesSeparately={o.washWhitesSeparately} />
+        <>
+          <Text size="sm">{o.washModeName}</Text>
+          {o.washWhitesSeparately && (
+            <Text size="xs" c="dimmed">
+              + Đồ trắng
+            </Text>
+          )}
+        </>
       ),
     },
     {

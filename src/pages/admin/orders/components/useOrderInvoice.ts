@@ -1,3 +1,4 @@
+import { notify } from '@/shared/common/lib/notify'
 import { useMe, useUserName } from '@/features/admin/users'
 import {
   buildInvoice,
@@ -22,27 +23,37 @@ export function useOrderInvoice(order: OrderDetail | undefined) {
 
   const makeInvoice = (
     o: OrderDetail,
-    t: PaymentTxn,
+    t: PaymentTxn | null,
     name: string,
     extra: Pick<Invoice, 'cash' | 'receiver'>,
+    info = shop.data,
   ) =>
     buildInvoice(o, t, {
-      shopName: shop.data?.shopName ?? '',
-      hotline: shop.data?.hotline ?? '',
+      shopName: info?.shopName ?? '',
+      hotline: info?.hotline ?? '',
       confirmedByName: name,
       ...extra,
     })
-  const printInvoice = () =>
-    order &&
-    txn &&
+  // Chưa có giao dịch xác nhận (VD thu khi giao) thì in hóa đơn chưa thanh toán
+  const printInvoice = async () => {
+    if (!order) return
+    const info = shop.data ?? (await shop.refetch()).data
+    if (!info) return notify.error('Chưa lấy được thông tin tiệm để in hóa đơn')
     invoicePrint.print(
-      makeInvoice(order, txn, confirmerName, {
-        cash: null,
-        receiver: order.deliveredAt
-          ? { name: order.receiverName, relation: order.receiverRelation }
-          : null,
-      }),
+      makeInvoice(
+        order,
+        txn,
+        confirmerName,
+        {
+          cash: null,
+          receiver: order.deliveredAt
+            ? { name: order.receiverName, relation: order.receiverRelation }
+            : null,
+        },
+        info,
+      ),
     )
+  }
   const handleCheckoutDone = ({ payment, delivery, cash }: CheckoutDone) => {
     const t = payment ?? txn
     if (!order || !t) return

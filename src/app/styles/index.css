@@ -417,6 +417,21 @@
   }
 }
 
+/* DataTable: dòng cảnh báo (dịch vụ thiếu giá hình thức mặc định): nền vàng nhạt + viền trái vàng */
+@layer components {
+  .ds-row-warning > td,
+  .ds-row-warning > td.ds-fixed-col {
+    background: color-mix(in srgb, var(--ds-warning) 12%, var(--ds-card));
+  }
+  .ds-row-warning:hover > td,
+  .ds-row-warning:hover > td.ds-fixed-col {
+    background: color-mix(in srgb, var(--ds-warning) 20%, var(--ds-card));
+  }
+  .ds-row-warning > td:first-child {
+    box-shadow: inset 4px 0 0 var(--ds-warning);
+  }
+}
+
 /* Chấm "đang diễn ra" (ca đang mở): vòng sáng lan ra; tắt khi người dùng chọn giảm chuyển động */
 @layer components {
   .ds-live-dot {

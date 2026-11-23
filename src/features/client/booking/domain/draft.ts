@@ -3,16 +3,15 @@ import type {
   BookingDraft,
   BookingItemDraft,
   BookingService,
-  BookingSettings,
+  BookingWashMode,
   DropoffMethod,
-  OrderType,
   ReturnMethod,
 } from './types.ts'
 
 /** Body POST /api/customer-portal/bookings/intake (contract 028). */
 export interface CreateBookingIntakeRequest {
   requestId: string
-  orderType: OrderType
+  washModeId: number
   items: { serviceId: number }[]
   dropoffMethod: DropoffMethod
   returnMethod: ReturnMethod
@@ -33,7 +32,7 @@ export type BookingStep = 1 | 2 | 3 | 4 | 5
 
 export function emptyDraft(): BookingDraft {
   return {
-    orderType: 'NORMAL',
+    washModeId: null,
     items: [],
     dropoffMethod: 'AT_STORE',
     returnMethod: 'AT_STORE',
@@ -53,42 +52,43 @@ export function emptyDraft(): BookingDraft {
   }
 }
 
-const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v)
 
-/** Nháp cũ/hỏng trong sessionStorage → nháp đủ trường mới (D7: nháp chưa có orderType suy ra từ express cũ). Không bao giờ ném lỗi. */
+/** Nháp cũ/hỏng trong sessionStorage → nháp đủ trường mới Không bao giờ ném lỗi. */
 export function migrateDraft(raw: unknown): BookingDraft {
-  const {
-    express: oldExpress,
-    serviceAreaId: oldArea,
-    normalReturnDate,
-    normalReturnHour,
-    expressReturnDate,
-    expressReturnHour,
-    ...v
-  }: Record<string, unknown> = isObj(raw) ? raw : {}
+  const { serviceAreaId: oldArea, ...v }: Record<string, unknown> = isObj(raw) ? raw : {}
   delete v.voucherCode // FR-021: nháp cũ còn mã voucher
   delete v.sameReturn
+  delete v.express
+  delete v.orderType // nháp cũ chọn hình thức NORMAL/EXPRESS: bỏ, chọn lại theo hình thức động
+  delete v.normalReturnDate
+  delete v.normalReturnHour
+  delete v.expressReturnDate
+  delete v.expressReturnHour
   const oldItems = (Array.isArray(v.items) ? v.items : []).filter(isObj)
   const items = oldItems.map((i) => ({ serviceId: i.serviceId }) as BookingItemDraft)
-  const legacy = typeof oldArea === 'number' ? { pickupAreaId: oldArea, deliveryAreaId: oldArea } : {} // FR-032
-  const allExpress = oldItems.length > 0 && oldItems.every((i) => i.express === true || oldExpress === true)
-  const tier = v.orderType !== undefined
-    ? {}
-    : allExpress
-      ? { orderType: 'EXPRESS', returnDate: expressReturnDate ?? null, returnHour: expressReturnHour ?? null }
-      : { orderType: 'NORMAL', returnDate: normalReturnDate ?? null, returnHour: normalReturnHour ?? null }
-  return { ...emptyDraft(), ...legacy, ...tier, ...v, items } as BookingDraft
+  const legacy =
+    typeof oldArea === 'number' ? { pickupAreaId: oldArea, deliveryAreaId: oldArea } : {} // FR-032
+  return { ...emptyDraft(), ...legacy, ...v, items } as BookingDraft
 }
 
-export const TIER_LABEL: Record<OrderType, string> = { NORMAL: 'Giặt tiêu chuẩn', EXPRESS: 'Giặt nhanh' }
+/** Giá của dịch vụ theo hình thức; null = không áp dụng hình thức này. */
+export const priceOf = (s: Pick<BookingService, 'prices'>, washModeId: number | null) =>
+  s.prices.find((p) => p.washModeId === washModeId)?.price ?? null
 
-/** Thời gian giặt (giờ tối thiểu từ gửi đến nhận) của hình thức. */
-export const gapHoursOf = (s: Pick<BookingSettings, 'returnGapHoursNormal' | 'returnGapHoursExpress'>, orderType: OrderType) =>
-  orderType === 'EXPRESS' ? s.returnGapHoursExpress : s.returnGapHoursNormal
+/** Dòng giá cho ServiceSummaryList; undefined khi không tìm thấy dịch vụ hoặc không có giá hình thức. */
+export function pricedOf(
+  s: Pick<BookingService, 'prices' | 'unit'> | undefined,
+  washModeId: number | null,
+) {
+  const price = s ? priceOf(s, washModeId) : null
+  return s && price !== null ? { price, unit: s.unit } : undefined
+}
 
-/** EXPRESS chỉ giữ dịch vụ hỗ trợ giặt nhanh; NORMAL trả lại chính `items`. */
-export const itemsForTier = (items: BookingItemDraft[], orderType: OrderType, expressSupportedIds: readonly number[]) =>
-  orderType === 'EXPRESS' ? items.filter((i) => expressSupportedIds.includes(i.serviceId)) : items
+/** Thời gian giặt (giờ tối thiểu từ gửi đến nhận) = completionHours của hình thức; chưa có hình thức → 0. */
+export const gapHoursOf = (modes: readonly BookingWashMode[], washModeId: number | null) =>
+  modes.find((m) => m.id === washModeId)?.completionHours ?? 0
 
 const orNull = (s: string) => s.trim() || null
 
@@ -96,8 +96,10 @@ const isoOrNull = (date: string | null, hour: number | null) =>
   date !== null && hour !== null ? toAppointmentIso(date, hour) : null
 
 /** Có dịch vụ đã chọn áp dụng giặt riêng đồ trắng. */
-export const hasWhitesService = (items: readonly BookingItemDraft[], services: readonly Pick<BookingService, 'id' | 'whitesApplicable'>[]) =>
-  items.some((i) => services.find((s) => s.id === i.serviceId)?.whitesApplicable)
+export const hasWhitesService = (
+  items: readonly BookingItemDraft[],
+  services: readonly Pick<BookingService, 'id' | 'whitesApplicable'>[],
+) => items.some((i) => services.find((s) => s.id === i.serviceId)?.whitesApplicable)
 
 export function toIntakeRequest(
   d: BookingDraft,
@@ -108,7 +110,7 @@ export function toIntakeRequest(
   const delivery = d.returnMethod === 'DELIVERY'
   return {
     requestId,
-    orderType: d.orderType,
+    washModeId: d.washModeId as number, // bước 1 đã chặn null
     items: d.items.map((i) => ({ serviceId: i.serviceId })),
     dropoffMethod: d.dropoffMethod,
     returnMethod: d.returnMethod,
@@ -126,7 +128,14 @@ export function toIntakeRequest(
   }
 }
 
-const STEP_2 = ['dropoffMethod', 'returnMethod', 'pickupAreaId', 'deliveryAreaId', 'pickupAddress', 'deliveryAddress']
+const STEP_2 = [
+  'dropoffMethod',
+  'returnMethod',
+  'pickupAreaId',
+  'deliveryAreaId',
+  'pickupAddress',
+  'deliveryAddress',
+]
 const STEP_4 = ['contactName', 'contactPhone', 'note', 'termsAccepted']
 
 /** Bước chứa ô của khóa lỗi BE; khóa lạ → 5 (hiện Alert ở bước xác nhận). */
@@ -152,14 +161,21 @@ export interface ReturnRules {
 }
 
 /** Giờ nhận đã chọn còn nằm trong returnSlots của giờ gửi hiện tại; chưa có giờ gửi → không hợp lệ. */
-function returnValid(dropoffIso: string | null, date: string | null, hour: number | null, r: ReturnRules) {
+function returnValid(
+  dropoffIso: string | null,
+  date: string | null,
+  hour: number | null,
+  r: ReturnRules,
+) {
   if (dropoffIso === null) return false
-  return returnSlots(dropoffIso, r.open, r.close, r.gapHours).some((s) => s.date === date && hour !== null && s.hours.includes(hour))
+  return returnSlots(dropoffIso, r.open, r.close, r.gapHours).some(
+    (s) => s.date === date && hour !== null && s.hours.includes(hour),
+  )
 }
 
 /**
- * Bỏ dịch vụ / khu vực đã ngừng, ép tại tiệm khi không giao nhận được; bỏ dịch vụ không hỗ trợ giặt nhanh khi
- * orderType EXPRESS (khi có `expressSupportedIds`); có `rules` thì xoá giờ nhận lại không còn hợp lệ với giờ gửi.
+ * Bỏ dịch vụ / khu vực đã ngừng, ép tại tiệm khi không giao nhận được; `serviceIds` là các dịch vụ có giá theo
+ * hình thức đã chọn (dịch vụ thiếu giá hình thức bị bỏ); có `rules` thì xoá giờ nhận lại không còn hợp lệ với giờ gửi.
  * Không đổi gì thì trả lại chính `draft`.
  */
 export function pruneDraft(
@@ -168,22 +184,32 @@ export function pruneDraft(
   areaIds: readonly number[],
   deliveryEnabled: boolean,
   rules?: ReturnRules,
-  expressSupportedIds?: readonly number[],
   whitesApplicableIds?: readonly number[],
 ): BookingDraft {
-  const kept = draft.items.filter((i) => serviceIds.includes(i.serviceId))
-  const items = expressSupportedIds ? itemsForTier(kept, draft.orderType, expressSupportedIds) : kept
-  const whitesGone = draft.washWhitesSeparately && !!whitesApplicableIds &&
+  const items = draft.items.filter((i) => serviceIds.includes(i.serviceId))
+  const whitesGone =
+    draft.washWhitesSeparately &&
+    !!whitesApplicableIds &&
     !items.some((i) => whitesApplicableIds.includes(i.serviceId))
   const gone = (id: number | null) => id !== null && !areaIds.includes(id)
   const pickupGone = gone(draft.pickupAreaId)
   const deliveryGone = gone(draft.deliveryAreaId)
-  const forceStore = (!deliveryEnabled || areaIds.length === 0) &&
+  const forceStore =
+    (!deliveryEnabled || areaIds.length === 0) &&
     (draft.dropoffMethod !== 'AT_STORE' || draft.returnMethod !== 'AT_STORE')
   const dropoff = isoOrNull(draft.appointmentDate, draft.appointmentHour)
-  const clearReturn = !!rules && draft.returnHour !== null &&
+  const clearReturn =
+    !!rules &&
+    draft.returnHour !== null &&
     !returnValid(dropoff, draft.returnDate, draft.returnHour, rules)
-  if (items.length === draft.items.length && !whitesGone && !pickupGone && !deliveryGone && !forceStore && !clearReturn) {
+  if (
+    items.length === draft.items.length &&
+    !whitesGone &&
+    !pickupGone &&
+    !deliveryGone &&
+    !forceStore &&
+    !clearReturn
+  ) {
     return draft
   }
   return {

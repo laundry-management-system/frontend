@@ -32,7 +32,7 @@ const overdueOf = (dto: { isOverdue?: boolean; overdue?: boolean }) =>
   dto.isOverdue ?? dto.overdue ?? false
 
 export const toOrderSummary = (
-  dto: Omit<OrderResponseDto, 'orderType' | 'totalAmount' | 'payableAmount' | 'isOverdue'>,
+  dto: Omit<OrderResponseDto, 'totalAmount' | 'payableAmount' | 'isOverdue'>,
 ): OrderSummary => ({
   id: dto.id,
   orderCode: dto.orderCode,
@@ -56,7 +56,8 @@ export const toOrderSummary = (
 
 export const toOrderListItem = (dto: OrderResponseDto): OrderListItem => ({
   ...toOrderSummary(dto),
-  orderType: dto.orderType,
+  washModeId: dto.washModeId ?? null,
+  washModeName: dto.washModeName ?? null,
   totalAmount: money(dto.totalAmount),
   payableAmount: money(dto.payableAmount),
   isOverdue: overdueOf(dto),
@@ -90,7 +91,9 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
   const history = sortHistory(dto.historyList ?? [])
   return {
     ...toOrderSummary({ ...dto, totalItemsCount: dto.items.length }),
-    orderType: dto.orderType,
+    washModeId: dto.washModeId ?? null,
+    washModeName: dto.washModeName ?? null,
+    washModeHours: dto.washModeHours ?? null,
     confirmedAt: dto.confirmedAt ?? null,
     confirmedBy: dto.confirmedBy ?? null,
     fulfillment: dto.fulfillment ?? null,
@@ -118,7 +121,12 @@ export const toOrderDetail = (dto: OrderDetailResponseDto): OrderDetail => {
     history,
     intakeCode: dto.intakeCode ?? null,
     customerId: dto.customerId ?? null,
-    requestedServices: dto.requestedServices ?? [],
+    requestedServices: (dto.requestedServices ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      unit: r.unit,
+      unitPrice: r.unitPrice == null ? null : Number(r.unitPrice),
+    })),
     washWhitesSeparately: dto.washWhitesSeparately ?? false,
     whitesFee: money(dto.whitesFee),
     incidentDiscount: money(dto.incidentDiscount),
@@ -138,7 +146,7 @@ export const toReceiptData = (dto: OrderReceiptResponseDto): ReceiptData => ({
   dueAt: dto.dueAt,
   shopName: dto.shopName,
   hotline: dto.hotline,
-  orderType: dto.orderType,
+  washModeName: dto.washModeName,
   intakeCode: dto.intakeCode ?? null,
   intakeOrderIndex: dto.intakeOrderIndex,
   intakeOrderCount: dto.intakeOrderCount,

@@ -9,7 +9,6 @@ import {
   Group,
   Loader,
   Stack,
-  SegmentedControl,
   Text,
   TextInput,
   ThemeIcon,
@@ -18,10 +17,19 @@ import {
 import { schemaResolver, useForm } from '@mantine/form'
 import { useMediaQuery } from '@mantine/hooks'
 import dayjs from 'dayjs'
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type ChangeEvent,
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { LuCircleCheck, LuPrinter, LuTags, LuUserCheck } from 'react-icons/lu'
 import { useCustomerByPhone, useCustomerStats } from '@/features/admin/customers'
-import { type Service, useActiveServices } from '@/features/admin/services'
+import { priceFor, useActiveServices, useWashModes } from '@/features/admin/services'
 import { useShopSettings } from '@/features/admin/settings'
 import { toApiError } from '@/shared/common/api/apiError'
 import { OPENING_HOURS } from '@/shared/admin/config/constants'
@@ -31,22 +39,24 @@ import { notify } from '@/shared/common/lib/notify'
 import { EmptyState, InfoLabel } from '@/shared/admin/ui'
 import { intakeFormSchema, stripPhone, type IntakeFormValues } from '../../application/schemas'
 import { useCreateIntake } from '../../application/mutations/useCreateIntake'
-import { clampToOpeningHours, type QuickDueOption } from '../../domain/dueDate'
 import {
-  ctaLabel,
-  emptySelection,
+  clampToOpeningHours,
+  type QuickDueOption,
+  suggestDueAtForHours,
+  validateDueAt,
+} from '../../domain/dueDate'
+import {
+  type DueKey,
   intakeBlockReason,
-  planOrders,
-  type PlannedOrder,
-  toggleExpressService,
-  toggleService,
+  servicesNotApplicable,
+  toIntakeRequest,
 } from '../../domain/intake'
 import { formatPhoneTyping } from '../../domain/rules'
-import type { OrderDetail, OrderType, ReceiptData } from '../../domain/types'
-import { ExpressPicker } from './ExpressPicker'
+import type { OrderDetail, ReceiptData } from '../../domain/types'
 import { PlannedOrderCard } from './PlannedOrderCard'
 import { ReceiptSheet } from './ReceiptSheet'
 import { ServicePicker } from './ServicePicker'
+import { WashModePicker } from './WashModePicker'
 import { FIT_VIEWPORT, STICKY_ASIDE, TWO_COLUMNS_QUERY } from '../stickyAside'
 
 const isValidPhone = (phone: string) => /^0\d{9}$/.test(phone)
@@ -56,8 +66,6 @@ const FIELD_OF: Record<string, keyof IntakeFormValues> = {
   customerPhone: 'phone',
   customerName: 'customerName',
 }
-
-const TAB_LABEL: Record<OrderType, string> = { NORMAL: 'Tiêu chuẩn', EXPRESS: 'Giặt nhanh' }
 
 export interface IntakeResult {
   intakeCode: string
@@ -103,8 +111,8 @@ function Step({
 }
 
 /**
- * Tiếp nhận đồ v3 (WF-C01): khách → dịch vụ → giặt nhanh → đơn sẽ tạo → tạo & in.
- * Dịch vụ chỉ là ghi chú tham khảo để tách đơn; giá chốt lúc phân loại.
+ * Tiếp nhận đồ (WF-C01): khách → hình thức giặt → dịch vụ → đơn sẽ tạo → tạo & in.
+ * Một lượt = một đơn; chọn hình thức trước như đặt online, giá chốt lúc phân loại.
  */
 export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
   const now = useMemo(() => new Date(), [])
@@ -114,10 +122,17 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
   const { data: services = [], isLoading: servicesLoading } = useActiveServices()
   const shopSettings = useShopSettings().data
   const whitesFee = shopSettings?.whitesFee
-  const [sel, setSel] = useState(emptySelection)
+  const { data: allModes, isLoading: modesLoading } = useWashModes()
+  const modes = useMemo(() => (allModes ?? []).filter((m) => m.active), [allModes])
+  const defaultMode = modes.find((m) => m.isDefault)
+  const [pickedModeId, setPickedModeId] = useState<number | null>(null)
+  const mode = modes.find((m) => m.id === pickedModeId) ?? defaultMode
+  const [serviceIds, setServiceIds] = useState<number[]>([])
+  const [whitesChecked, setWhitesChecked] = useState(false)
+  const [due, setDueValue] = useState<Date | null>(null)
+  const [dueKey, setDueKey] = useState<DueKey>('suggest')
   const [requestId, setRequestId] = useState(() => crypto.randomUUID())
-  const [orderErrors, setOrderErrors] = useState<Partial<Record<OrderType, string>>>({})
-  const [tab, setTab] = useState<OrderType>('NORMAL')
+  const [errors, setErrors] = useState<{ washModeId?: string; items?: string; dueAt?: string }>({})
 
   const form = useForm<IntakeFormValues>({
     initialValues: { phone: formatPhoneTyping(initialPhone), customerName: '' },
@@ -157,60 +172,58 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lookupKey])
 
-  const plans = planOrders(sel, services, now, OPENING_HOURS)
-  // Giặt nhanh chỉ chọn trong các dịch vụ khách đã mang đến (bước 2)
-  const selectedServices = services.filter((s) => sel.serviceIds.includes(s.id))
+  const minDue = mode && suggestDueAtForHours(now, mode.completionHours, OPENING_HOURS)
+  const dueAt = dueKey === 'suggest' ? (minDue ?? null) : due
+  const selectedServices = services.filter((s) => serviceIds.includes(s.id))
+  const notApplicable = mode ? servicesNotApplicable(services, serviceIds, mode.id) : []
+  const applicable = selectedServices.filter((s) => !notApplicable.includes(s))
+  const whitesAvailable = applicable.some((s) => s.whitesApplicable)
+  const whites = whitesAvailable && whitesChecked
   const blockReason =
     (inactive && 'Hồ sơ khách đang ngừng hoạt động.') ||
     intakeBlockReason({
       phoneValid: isValidPhone(phone),
       customerName: form.values.customerName,
-      sel,
-      plans,
-      now,
+      serviceIds,
+      hasMode: !!mode,
+      notApplicable: notApplicable.map((s) => s.name),
+      dueError: validateDueAt(dueAt, now, minDue),
     })
-  const activeTab = plans.some((p) => p.orderType === tab) ? tab : (plans[0]?.orderType ?? 'NORMAL')
 
-  const update = (next: Partial<typeof sel>) => setSel((prev) => ({ ...prev, ...next }))
-  const handleToggleService = (id: number) => setSel((prev) => toggleService(prev, id))
-  const handleToggleExpressService = (id: number) =>
-    setSel((prev) => toggleExpressService(prev, id))
-  const toggleExpress = () => update({ express: !sel.express })
+  const pickMode = (id: number) => {
+    setPickedModeId(id)
+    setDueKey('suggest')
+    setErrors({})
+  }
+  const toggleService = (id: number) =>
+    setServiceIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
 
-  const setDue = (type: OrderType, value: Date | null) => {
+  const setDue = (value: Date | null) => {
     const clamped = value && clampToOpeningHours(value, OPENING_HOURS)
     if (value && clamped && clamped.getTime() !== value.getTime())
       notify.info(`Ngoài giờ mở cửa, đã chuyển sang ${dayjs(clamped).format('DD/MM HH:mm')}`)
-    setSel((prev) => ({
-      ...prev,
-      due: { ...prev.due, [type]: clamped },
-      dueKey: { ...prev.dueKey, [type]: 'custom' },
-    }))
+    setDueValue(clamped)
+    setDueKey('custom')
   }
-  const pickQuickDue = (type: OrderType, o: QuickDueOption) =>
-    setSel((prev) => ({
-      ...prev,
-      due: { ...prev.due, [type]: o.date },
-      dueKey: { ...prev.dueKey, [type]: o.key },
-    }))
-  const setWhites = (type: OrderType, checked: boolean) =>
-    setSel((prev) => ({ ...prev, whites: { ...prev.whites, [type]: checked } }))
+  const pickQuickDue = (o: QuickDueOption) => {
+    setDueValue(o.date)
+    setDueKey(o.key)
+  }
 
   const handleSubmit = form.onSubmit((values) => {
-    if (blockReason || lookupPending || createIntake.isPending) return
-    setOrderErrors({})
+    if (blockReason || !mode || lookupPending || createIntake.isPending) return
+    setErrors({})
     createIntake.mutate(
-      {
+      toIntakeRequest({
         requestId,
         customerPhone: phone,
         customerName: formatPersonName(values.customerName),
-        orders: plans.map((p) => ({
-          orderType: p.orderType,
-          serviceIds: p.services.map((s) => s.id),
-          dueAt: p.dueAt!.toISOString(),
-          washWhitesSeparately: p.whites,
-        })),
-      },
+        washModeId: mode.id,
+        serviceIds,
+        washWhitesSeparately: whites,
+        // "Gợi ý": để server tự đặt minDue theo giờ mở cửa thật và thời điểm tạo
+        dueAt: dueKey === 'suggest' ? null : dueAt,
+      }),
       {
         onSuccess: (result) => {
           setRequestId(crypto.randomUUID())
@@ -219,50 +232,44 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
         onError: (e) => {
           const err = toApiError(e)
           const fieldErrors: Record<string, string> = {}
-          const perOrder: Partial<Record<OrderType, string>> = {}
+          const next: typeof errors = {}
           for (const [k, v] of Object.entries(err.fieldErrors)) {
-            const m = /^orders\[(\d+)]/.exec(k)
-            const plan = m && plans[Number(m[1])]
-            if (plan) perOrder[plan.orderType] = v
+            if (k === 'washModeId') next.washModeId = v
+            else if (k === 'dueAt') next.dueAt = v
+            else if (k.startsWith('items')) next.items = next.items ? `${next.items}; ${v}` : v
             else if (FIELD_OF[k]) fieldErrors[FIELD_OF[k]] = v
           }
           form.setErrors(fieldErrors)
-          setOrderErrors(perOrder)
+          setErrors(next)
           notify.error(err.message)
         },
       },
     )
   })
 
-  const previewOf = (p: PlannedOrder<Service> | undefined): ReceiptData => ({
+  const previewData: ReceiptData = {
     orderCode: `LD-${dayjs(now).format('YYYYMMDD')}-…`,
     receivedAt: now.toISOString(),
     customerName: form.values.customerName.trim(),
     customerPhone: isValidPhone(phone) ? formatPhone(phone) : form.values.phone,
-    dueAt: p?.dueAt ? p.dueAt.toISOString() : '',
+    dueAt: dueAt ? dueAt.toISOString() : '',
     shopName: 'Tiệm Giặt Ủi',
     hotline: '',
-    orderType: p?.orderType,
-    intakeCode: plans.length > 1 ? `NH-${dayjs(now).format('YYYYMMDD')}-…` : null,
-    intakeOrderIndex: p ? plans.indexOf(p) + 1 : 1,
-    intakeOrderCount: plans.length,
-    washWhitesSeparately: p?.whites ?? false,
+    washModeName: mode?.name,
+    washWhitesSeparately: whites,
     whitesFee: whitesFee ?? 0,
     compensationMultiplier: shopSettings?.compensationMultiplier ?? 10,
     compensationCap: shopSettings?.compensationCap ?? 500000,
-    services: p?.services.map((s) => ({
-      name: s.name,
-      unit: s.unit ?? 'PIECE',
-      unitPrice: s.price,
-      expressSurcharge: p.orderType === 'EXPRESS' ? s.expressSurcharge : null,
-      minQuantity: s.minQuantity,
-    })),
-  })
-  const handleTabChange = (v: string) => setTab(v as OrderType)
-  const tabOptions = plans.map((p, i) => ({
-    value: p.orderType,
-    label: `Phiếu ${i + 1} · ${TAB_LABEL[p.orderType]}`,
-  }))
+    services: mode
+      ? applicable.map((s) => ({
+          name: s.name,
+          unit: s.unit ?? 'PIECE',
+          unitPrice: priceFor(s, mode.id) ?? 0,
+          expressSurcharge: null,
+          minQuantity: s.minQuantity,
+        }))
+      : [],
+  }
 
   const customerCard = customer && (
     <Group
@@ -304,17 +311,40 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
     </Group>
   )
 
+  const modeBody = modesLoading ? (
+    <Center py="md">
+      <Loader size="sm" />
+    </Center>
+  ) : mode ? (
+    <WashModePicker modes={modes} value={mode.id} error={errors.washModeId} onChange={pickMode} />
+  ) : (
+    <EmptyState
+      icon={<LuTags size={32} />}
+      title="Chưa có hình thức giặt đang hoạt động"
+      description="Admin cần thêm hoặc kích hoạt hình thức ở trang Bảng giá dịch vụ."
+    />
+  )
+
   const servicesBody = servicesLoading ? (
     <Center py="md">
       <Loader size="sm" />
     </Center>
-  ) : services.length ? (
-    <ServicePicker
-      services={services}
-      selectedIds={sel.serviceIds}
-      expressIds={sel.express ? sel.expressIds : []}
-      onToggle={handleToggleService}
-    />
+  ) : services.length && mode ? (
+    <>
+      <ServicePicker
+        services={services}
+        selectedIds={serviceIds}
+        washModeId={mode.id}
+        defaultModeId={defaultMode?.id ?? null}
+        completionHours={mode.completionHours}
+        onToggle={toggleService}
+      />
+      {errors.items && (
+        <Text size="sm" c="red">
+          {errors.items}
+        </Text>
+      )}
+    </>
   ) : (
     <EmptyState
       icon={<LuTags size={32} />}
@@ -323,13 +353,21 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
     />
   )
 
-  const splitMessage = !plans.length
-    ? 'Chọn dịch vụ ở bước 2 để xem đơn.'
-    : plans.length === 1
-      ? `Lượt nhận này tạo 1 đơn (${TAB_LABEL[plans[0].orderType].toLowerCase()}).`
-      : 'Lượt nhận này tách thành 2 đơn: phần giặt nhanh làm và hẹn trả riêng. Đồ để 2 túi riêng, mỗi túi kẹp một liên phiếu.'
-
-  const previewPlan = plans.find((p) => p.orderType === activeTab)
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setFieldValue('phone', formatPhoneTyping(e.currentTarget.value))
+  const handlePhoneKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || customer) return
+    e.preventDefault()
+    if (!nameLocked) nameRef.current?.focus()
+  }
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setFieldValue('customerName', stripDigits(e.currentTarget.value))
+  const handleNameBlur = (e: FocusEvent<HTMLInputElement>) => {
+    setFieldValue('customerName', formatPersonName(e.currentTarget.value))
+    form.getInputProps('customerName').onBlur?.()
+  }
+  const dropNotApplicable = () =>
+    setServiceIds((prev) => prev.filter((id) => !notApplicable.some((s) => s.id === id)))
 
   const customerFields = (
     <>
@@ -344,13 +382,9 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
         inputMode="tel"
         placeholder="0938 111 222"
         {...form.getInputProps('phone')}
-        onChange={(e) => setFieldValue('phone', formatPhoneTyping(e.currentTarget.value))}
+        onChange={handlePhoneChange}
         rightSection={lookupPending ? <Loader size="xs" /> : undefined}
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter' || customer) return
-          e.preventDefault()
-          if (!nameLocked) nameRef.current?.focus()
-        }}
+        onKeyDown={handlePhoneKeyDown}
       />
       {customerCard}
       {inactive && (
@@ -365,40 +399,27 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
         disabled={nameLocked}
         placeholder={isValidPhone(phone) ? 'Nguyễn Văn A' : 'Nhập số điện thoại trước'}
         {...form.getInputProps('customerName')}
-        onChange={(e) => setFieldValue('customerName', stripDigits(e.currentTarget.value))}
-        onBlur={(e) => {
-          setFieldValue('customerName', formatPersonName(e.currentTarget.value))
-          form.getInputProps('customerName').onBlur?.()
-        }}
+        onChange={handleNameChange}
+        onBlur={handleNameBlur}
       />
     </>
   )
 
-  const orderPlans = (
-    <>
-      <Text
-        size="sm"
-        c="dimmed"
-        bg="var(--ds-muted)"
-        p="sm"
-        style={{ borderRadius: 'var(--radius-control)' }}
-      >
-        {splitMessage}
-      </Text>
-      {plans.map((p) => (
-        <PlannedOrderCard
-          key={p.orderType}
-          plan={p}
-          dueKey={sel.dueKey[p.orderType]}
-          now={now}
-          whitesFee={whitesFee}
-          error={orderErrors[p.orderType]}
-          onDueChange={(v) => setDue(p.orderType, v)}
-          onQuickDue={(o) => pickQuickDue(p.orderType, o)}
-          onWhitesChange={(c) => setWhites(p.orderType, c)}
-        />
-      ))}
-    </>
+  const orderPlan = mode && serviceIds.length > 0 && (
+    <PlannedOrderCard
+      mode={mode}
+      services={applicable}
+      dueAt={dueAt}
+      dueKey={dueKey}
+      now={now}
+      whitesFee={whitesFee}
+      whitesAvailable={whitesAvailable}
+      whites={whites}
+      error={errors.dueAt}
+      onDueChange={setDue}
+      onQuickDue={pickQuickDue}
+      onWhitesChange={setWhitesChecked}
+    />
   )
 
   const submitBar = (
@@ -411,11 +432,16 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
         loading={createIntake.isPending}
         disabled={!!blockReason || lookupPending}
       >
-        {ctaLabel(Math.max(plans.length, 1))}
+        Tạo đơn & in phiếu (2 liên)
       </Button>
       <Text size="sm" c="dimmed" ta="center" aria-live="polite" mih={20}>
         {blockReason}
       </Text>
+      {notApplicable.length > 0 && (
+        <Button variant="secondary" onClick={dropNotApplicable}>
+          Bỏ các dịch vụ này
+        </Button>
+      )}
     </Stack>
   )
 
@@ -432,17 +458,9 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
             Xem trước phiếu (liên khách giữ)
           </InfoLabel>
         </Title>
-        {plans.length > 1 && (
-          <SegmentedControl
-            fullWidth
-            value={activeTab}
-            onChange={handleTabChange}
-            data={tabOptions}
-          />
-        )}
         {/* Phiếu dài hơn màn hình thì cuộn bên trong, khung xem trước vẫn đứng yên */}
         <Box mih={0} style={{ flex: 1, overflowY: twoColumns ? 'auto' : undefined }}>
-          <ReceiptSheet data={previewOf(previewPlan)} copies={1} />
+          <ReceiptSheet data={previewData} copies={1} />
         </Box>
       </Stack>
     </Card>
@@ -457,26 +475,24 @@ export function IntakeForm({ initialPhone = '', onCreated }: IntakeFormProps) {
               {customerFields}
             </Step>
 
+            <Step n={2} title="Hình thức giặt">
+              {modeBody}
+            </Step>
+
             <Step
-              n={2}
+              n={3}
               title="Dịch vụ khách mang đến"
-              aside={sel.serviceIds.length ? `Đã chọn ${sel.serviceIds.length}` : 'Chưa chọn'}
+              aside={serviceIds.length ? `Đã chọn ${serviceIds.length}` : 'Chưa chọn'}
             >
               {servicesBody}
             </Step>
 
-            <Step n={3} title="Yêu cầu thêm">
-              <ExpressPicker
-                services={selectedServices}
-                enabled={sel.express}
-                expressIds={sel.expressIds}
-                onToggleEnabled={toggleExpress}
-                onToggleService={handleToggleExpressService}
-              />
-            </Step>
-
             <Step n={4} title="Đơn sẽ tạo">
-              {orderPlans}
+              {orderPlan || (
+                <Text size="sm" c="dimmed">
+                  Chọn dịch vụ ở bước 3 để xem đơn.
+                </Text>
+              )}
             </Step>
 
             {submitBar}

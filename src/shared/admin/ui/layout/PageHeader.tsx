@@ -14,14 +14,20 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, info, actions, meta }: PageHeaderProps) {
   return (
-    <Group justify="space-between" align="flex-start" mb="lg">
-      <Stack gap={4}>
+    <Group justify="space-between" align="flex-start" pt="md" mb="xs">
+      <Stack gap={2}>
         <Group gap={6} wrap="nowrap">
-          <Title order={2}>{title}</Title>
+          <Title order={2} size="h4">
+            {title}
+          </Title>
           {info && <InfoTooltip content={info} />}
         </Group>
         {meta && <Group gap="xs">{meta}</Group>}
-        {description && <Text c="dimmed">{description}</Text>}
+        {description && (
+          <Text size="sm" c="dimmed">
+            {description}
+          </Text>
+        )}
       </Stack>
       {/* Xuống dòng khi hẹp vẫn giữ nút bên phải */}
       {actions && <Box ml="auto">{actions}</Box>}

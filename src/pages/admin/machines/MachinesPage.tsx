@@ -1,4 +1,4 @@
-import { Button, SegmentedControl, SimpleGrid, Skeleton } from '@mantine/core'
+import { Button, Select, SimpleGrid, Skeleton } from '@mantine/core'
 import { useState } from 'react'
 import { LuCloudOff, LuPlus, LuWashingMachine, LuWind } from 'react-icons/lu'
 import { selectHasRole, useAuthStore } from '@/features/admin/auth'
@@ -19,7 +19,7 @@ import {
   summaryText,
   useMachines,
 } from '@/features/admin/machines'
-import { EmptyState, PageHeader, RowActions } from '@/shared/admin/ui'
+import { EmptyState, PageHeader, RowActions, FILTER_SELECT_PROPS } from '@/shared/admin/ui'
 
 type Tab = MachineType | 'ALL'
 type FormModalState = { mode: 'create' } | { mode: 'edit'; machine: Machine } | null
@@ -29,7 +29,7 @@ const TAB_LABEL: Record<Tab, string> = { ALL: 'Tất cả', ...MACHINE_TYPE_LABE
 const GRID_COLS = { base: 1, md: 3, xl: 4 }
 const SKELETONS = [1, 2, 3, 4]
 const PAGE_INFO =
-  'Mọi lần đổi trạng thái máy được ghi nhật ký. Máy không bị xóa – chỉ Ngừng sử dụng (Admin).'
+  'Mọi lần đổi trạng thái máy được ghi nhật ký. Máy không bị xóa – chỉ Ngừng hoạt động (Admin).'
 
 export default function MachinesPage() {
   const canManage = useAuthStore(selectHasRole('ADMIN'))
@@ -47,7 +47,7 @@ export default function MachinesPage() {
   const brands = brandOptions(machines)
 
   const handleRetry = () => refetch()
-  const handleTabChange = (v: string) => setTab(v as Tab)
+  const handleTabChange = (v: string | null) => setTab(v as Tab)
   const openCreate = () => setFormModal({ mode: 'create' })
   const openEdit = (machine: Machine) => setFormModal({ mode: 'edit', machine })
   const closeForm = () => setFormModal(null)
@@ -62,7 +62,10 @@ export default function MachinesPage() {
     openEdit(detail)
   }
 
-  const tabOptions = TABS.map((t) => ({ value: t, label: `${TAB_LABEL[t]} (${typeCounts[t]})` }))
+  const tabOptions = TABS.map((t) => ({
+    value: t,
+    label: `Loại: ${TAB_LABEL[t]} (${typeCounts[t]})`,
+  }))
 
   const addButton = canManage && (
     <Button leftSection={<LuPlus size={16} />} onClick={openCreate}>
@@ -77,7 +80,7 @@ export default function MachinesPage() {
   const menuItems = (m: Machine) => [
     { label: 'Sửa', onClick: () => openEdit(m), hidden: m.status === 'RETIRED' },
     {
-      label: 'Ngừng sử dụng',
+      label: 'Ngừng hoạt động',
       onClick: () => openStatus(m, 'RETIRED'),
       danger: true,
       hidden: m.status === 'RETIRED',
@@ -140,7 +143,15 @@ export default function MachinesPage() {
         info={PAGE_INFO}
         actions={addButton}
       />
-      <SegmentedControl mb="lg" value={tab} onChange={handleTabChange} data={tabOptions} />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        mb="lg"
+        w={200}
+        value={tab}
+        onChange={handleTabChange}
+        data={tabOptions}
+        allowDeselect={false}
+      />
       {body}
 
       <MachineFormModal

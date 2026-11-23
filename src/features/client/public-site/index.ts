@@ -13,11 +13,13 @@ export { Estimator } from './presentation/Estimator'
 export { Faq } from './presentation/Faq'
 export { FinalCta } from './presentation/FinalCta'
 export { usePublicServices } from './application/queries/usePublicServices'
+export { usePublicWashModes } from './application/queries/usePublicWashModes'
 export { usePublicServiceAreas } from './application/queries/usePublicServiceAreas'
 export { UNIT_LABEL } from './domain/types'
 export type {
   PublicStore,
   PublicService,
   PublicServiceArea,
+  PublicWashMode,
   PublicServiceUnit,
 } from './domain/types'

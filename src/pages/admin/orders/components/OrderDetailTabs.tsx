@@ -132,7 +132,17 @@ export function OrderDetailTabs({
           <Tabs.Tab
             value="payment"
             rightSection={
-              unpaid && <Badge size="xs" circle color="warning" aria-label="Chưa thanh toán" />
+              unpaid && (
+                <Badge
+                  size="sm"
+                  circle
+                  color="warning"
+                  variant="filled"
+                  aria-label="Chưa thanh toán"
+                >
+                  !
+                </Badge>
+              )
             }
           >
             Thanh toán

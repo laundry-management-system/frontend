@@ -34,6 +34,7 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
       ? `${inv.receiver.name}${inv.receiver.relation ? ` (${inv.receiver.relation})` : ''}`
       : 'Khách hàng'
     : null
+  const paid = inv.method != null
   const adjustments = [
     { label: 'Giảm giá', value: -inv.discountAmount },
     { label: 'Giảm giá sự cố', value: -inv.incidentDiscount },
@@ -51,16 +52,17 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
         </Text>
         {inv.hotline && <Text {...SMALL}>Hotline {inv.hotline}</Text>}
         <Text fz={13} fw={700} lh="18px" mt={6}>
-          HÓA ĐƠN THANH TOÁN
+          {paid ? 'HÓA ĐƠN THANH TOÁN' : 'HÓA ĐƠN'}
         </Text>
-        <EntityCode code={inv.invoiceNo} size="sm" />
-        <Text {...SMALL}>{dateTime(inv.paidAt)}</Text>
+        {inv.invoiceNo && <EntityCode code={inv.invoiceNo} size="sm" />}
+        {inv.paidAt && <Text {...SMALL}>{dateTime(inv.paidAt)}</Text>}
       </Stack>
 
       <Divider variant="dashed" my={4} />
       <Row label="Mã đơn">
         <EntityCode code={inv.orderCode} size="sm" />
       </Row>
+      {inv.washModeName && <Row label="Hình thức">{inv.washModeName}</Row>}
       <Row label="Khách hàng">{inv.customerName}</Row>
       <Row label="SĐT">{formatPhone(inv.customerPhone)}</Row>
       <Row label="Ngày nhận đồ">{dateTime(inv.receivedAt)}</Row>
@@ -111,13 +113,13 @@ export function InvoiceSheet({ invoice: inv }: { invoice: Invoice }) {
         }}
       >
         <Text fz={13} fw={700}>
-          TỔNG THANH TOÁN
+          {paid ? 'TỔNG THANH TOÁN' : 'TỔNG CẦN THANH TOÁN'}
         </Text>
         <Text fz={15} fw={700} style={TABULAR}>
           {formatMoney(inv.totalAmount)}
         </Text>
       </Group>
-      <Row label="Thanh toán">{METHOD_LABEL[inv.method]}</Row>
+      <Row label="Thanh toán">{inv.method ? METHOD_LABEL[inv.method] : 'Chưa thanh toán'}</Row>
       {inv.referenceCode && <Row label="Mã tham chiếu">{inv.referenceCode}</Row>}
       {inv.cash && (
         <>

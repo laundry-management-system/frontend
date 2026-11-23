@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { createFormContext } from '@mantine/form'
 import { draftStorage } from '../data/draftStorage'
 import { notify } from '@/shared/common/lib/notify'
-import { emptyDraft, gapHoursOf, itemsForTier, pruneDraft, type BookingStep } from '../domain/draft'
-import type { BookingDraft, BookingSettings } from '../domain/types'
+import { emptyDraft, gapHoursOf, priceOf, pruneDraft, type BookingStep } from '../domain/draft'
+import type {
+  BookingDraft,
+  BookingSettings,
+  BookingService,
+  BookingWashMode,
+} from '../domain/types'
 
 export const [BookingFormProvider, useBookingFormContext, useBookingFormBase] =
   createFormContext<BookingDraft>()
@@ -17,20 +22,22 @@ interface Profile {
 
 interface Options {
   profile: Profile | undefined
-  services: readonly { id: number; expressSupported: boolean; whitesApplicable: boolean }[] | undefined
+  services:
+    readonly (Pick<BookingService, 'id' | 'prices'> & { whitesApplicable: boolean })[] | undefined
+  modes: readonly BookingWashMode[] | undefined
   areas: readonly { id: number }[] | undefined
   settings: BookingSettings | undefined
   store: { openingTime: string; closingTime: string } | undefined
 }
 
-export function useBookingForm({ profile, services, areas, settings, store }: Options) {
+export function useBookingForm({ profile, services, modes, areas, settings, store }: Options) {
   const [stored] = useState(draftStorage.load)
   const form = useBookingFormBase({ initialValues: stored?.values ?? emptyDraft() })
   const [step, setStep] = useState<BookingStep>(stored?.step ?? 1)
   const meta = useRef({ owner: stored?.owner ?? null, prefilled: stored?.prefilled ?? false })
 
   // form.reset() sau khi gửi phải về form trống, không về bản nháp đã nạp.
-  useEffect(() => form.setInitialValues(emptyDraft()), []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => form.setInitialValues(emptyDraft()), [])
 
   useEffect(() => {
     if (!profile) return
@@ -54,24 +61,49 @@ export function useBookingForm({ profile, services, areas, settings, store }: Op
     }
     meta.current = { owner: profile.customerCode, prefilled: true }
     form.setValues(v)
-  }, [profile]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [profile])
 
   useEffect(() => {
-    if (!services || !areas || !settings || !store) return
+    if (!services || !modes || !areas || !settings || !store) return
     const v = form.getValues()
-    const rules = { open: store.openingTime, close: store.closingTime, gapHours: gapHoursOf(settings, v.orderType) }
-    const expressIds = services.filter((s) => s.expressSupported).map((s) => s.id)
-    const pruned = pruneDraft(v, services.map((s) => s.id), areas.map((a) => a.id), settings.deliveryEnabled, rules, expressIds, services.filter((s) => s.whitesApplicable).map((s) => s.id))
+    // Hình thức đã ngừng / chưa chọn → hình thức mặc định.
+    const modeId = modes.some((m) => m.id === v.washModeId)
+      ? v.washModeId
+      : ((modes.find((m) => m.isDefault) ?? modes[0])?.id ?? null)
+    const rules = {
+      open: store.openingTime,
+      close: store.closingTime,
+      gapHours: gapHoursOf(modes, modeId),
+    }
+    const priced = services.filter((s) => priceOf(s, modeId) !== null)
+    const pruned = pruneDraft(
+      modeId === v.washModeId ? v : { ...v, washModeId: modeId },
+      priced.map((s) => s.id),
+      areas.map((a) => a.id),
+      settings.deliveryEnabled,
+      rules,
+      services.filter((s) => s.whitesApplicable).map((s) => s.id),
+    )
     if (pruned !== v) {
       form.setValues(pruned)
-      if (itemsForTier(v.items, v.orderType, expressIds).length < v.items.length) {
-        notify.warning('Một số dịch vụ không hỗ trợ giặt nhanh đã được bỏ khỏi lựa chọn')
-      } else if (pruned.items.length < v.items.length) {
-        notify.warning('Một số dịch vụ đã ngừng kinh doanh và đã được bỏ khỏi lựa chọn')
+      if (pruned.items.length < v.items.length) {
+        notify.warning(
+          'Một số dịch vụ không áp dụng cho hình thức này hoặc đã ngừng đã được bỏ khỏi lựa chọn',
+        )
       }
     }
     // Đổi giờ gửi đồ phải xoá giờ nhận lại không còn hợp lệ.
-  }, [services, areas, settings, store, form.values.appointmentDate, form.values.appointmentHour, form.values.items, form.values.orderType]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    services,
+    modes,
+    areas,
+    settings,
+    store,
+    form.values.appointmentDate,
+    form.values.appointmentHour,
+    form.values.items,
+    form.values.washModeId,
+  ]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     draftStorage.save({ values: form.values, step, ...meta.current })

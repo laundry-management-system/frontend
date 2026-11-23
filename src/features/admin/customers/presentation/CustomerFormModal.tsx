@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { toApiError } from '@/shared/common/api/apiError'
 import { formatPersonName, stripDigits, formatPhone } from '@/shared/common/lib/format'
 import { notify } from '@/shared/common/lib/notify'
-import { ConfirmModal, ModalFooter } from '@/shared/admin/ui'
+import { ConfirmModal, EntityCode, ModalFooter } from '@/shared/admin/ui'
 import {
   findCustomerByPhone,
   useCreateCustomer,
@@ -31,11 +31,22 @@ interface CustomerFormModalProps {
 }
 
 export function CustomerFormModal(props: CustomerFormModalProps) {
+  const { initial } = props
+  const title =
+    props.mode === 'create' ? (
+      'Thêm khách'
+    ) : initial ? (
+      <>
+        Sửa thông tin khách <EntityCode code={initial.code} /> – {initial.fullName}
+      </>
+    ) : (
+      'Sửa thông tin khách'
+    )
   return (
     <Modal
       opened={props.opened}
       onClose={props.onClose}
-      title={props.mode === 'create' ? 'Thêm khách' : 'Sửa thông tin khách'}
+      title={title}
       centered
       size={520}
       closeOnClickOutside={false}

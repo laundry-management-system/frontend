@@ -18,14 +18,14 @@ import {
 } from '@mantine/core'
 import { useState } from 'react'
 import { LuImagePlus, LuPlus, LuTrash2, LuX } from 'react-icons/lu'
-import { UNIT_LABEL, type Service } from '@/features/admin/services'
+import { priceFor, UNIT_LABEL, type Service } from '@/features/admin/services'
 import { useObjectUrl } from '@/shared/admin/hooks/useObjectUrl'
 import { formatMoney } from '@/shared/common/lib/format'
 import { notify } from '@/shared/common/lib/notify'
 import { IconButton, InfoLabel } from '@/shared/admin/ui'
 import { billable, isBelowMinimum } from '../../domain/pricing'
 import { IMAGE_TYPES, splitImages, type validateLine } from '../../domain/rules'
-import { CONDITION_TAGS, type OrderLine, type OrderType } from '../../domain/types'
+import { CONDITION_TAGS, type OrderLine } from '../../domain/types'
 
 const DASHED = { border: '1px dashed var(--ds-border)' }
 const ADD_TILE = {
@@ -38,13 +38,17 @@ const ADD_TILE = {
   color: 'var(--ds-muted-foreground)',
 }
 
+/** Giá theo hình thức của đơn; chưa có giá hình thức thì 0. */
+const priceOf = (s: Service, washModeId: number | null) =>
+  (washModeId != null ? priceFor(s, washModeId) : null) ?? 0
+
 const LINE_BOX = { border: '1px solid var(--ds-border)', borderRadius: 'var(--radius-control)' }
 
 interface ItemLineEditorProps {
   index: number
   line: OrderLine
   services: Service[]
-  orderType: OrderType
+  washModeId: number | null
   lineTotal: number
   errors: ReturnType<typeof validateLine>
   /** Đơn tiếp nhận v3: dòng theo dịch vụ (tên dịch vụ là loại đồ), tính theo tối thiểu */
@@ -90,7 +94,7 @@ export function ItemLineEditor({
   index,
   line,
   services,
-  orderType,
+  washModeId,
   lineTotal,
   errors,
   byService,
@@ -101,15 +105,21 @@ export function ItemLineEditor({
   const [showCondition, setShowCondition] = useState(
     line.conditionTags.length > 0 || !!line.conditionText || line.localImages.length > 0,
   )
-  const service = services.find((s) => s.id === line.serviceId)
   const unitLabel = UNIT_LABEL[line.unit]
-  const noExpress = orderType === 'EXPRESS' && service && !service.expressSupported
+  // BE từ chối dịch vụ không có giá theo hình thức của đơn; giữ dịch vụ đang chọn để Select còn nhãn
+  const offered = services.filter(
+    (s) => s.id === line.serviceId || (washModeId != null && priceFor(s, washModeId) != null),
+  )
 
   const pickService = (id: string | null) => {
     const s = services.find((x) => x.id === Number(id))
     // Chốt đơn giá hiện hành tại thời điểm chọn
     if (!s) return
-    const base = { serviceId: s.id, unit: s.unit ?? 'PIECE', unitPrice: s.price } as const
+    const base = {
+      serviceId: s.id,
+      unit: s.unit ?? 'PIECE',
+      unitPrice: priceOf(s, washModeId),
+    } as const
     onChange(byService ? { ...base, itemType: s.name, minQuantity: s.minQuantity } : base)
   }
   const belowMin = isBelowMinimum(line)
@@ -154,7 +164,7 @@ export function ItemLineEditor({
             label="Dịch vụ"
             searchable
             placeholder="Chọn dịch vụ"
-            data={services.map((s) => ({
+            data={offered.map((s) => ({
               value: String(s.id),
               label: `${s.name}${s.unit ? ` (${UNIT_LABEL[s.unit]})` : ''}`,
             }))}
@@ -275,11 +285,6 @@ export function ItemLineEditor({
         </Group>
       )}
       {lineFields}
-      {noExpress && (
-        <Text size="sm" c="var(--ds-warning, orange)">
-          Dịch vụ không hỗ trợ giặt nhanh – không tính phụ phí cho dòng này
-        </Text>
-      )}
       {showCondition ? conditionEditor : conditionToggle}
     </Stack>
   )

@@ -7,7 +7,7 @@ const feeText = (fee: number) => (fee === 0 ? 'Miễn phí' : formatMoney(fee))
 export function OrderMoneySummary({ order: o }: { order: CustomerOrderDetail }) {
   const f = o.fulfillment
   const m = o.money
-  const rows: [string, string, string?][] = []
+  const rows: [string, string, string?][] = [['Hình thức giặt', o.washModeName]]
   if (o.classified) {
     rows.push(['Tổng tiền dịch vụ', formatMoney(m.subtotal)])
     if (m.expressFee > 0) rows.push(['Phí giặt nhanh', formatMoney(m.expressFee)])

@@ -1,4 +1,4 @@
-import { Button, Modal, Stack, TextInput } from '@mantine/core'
+import { Button, Modal, Stack, Text, TextInput } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { toApiError } from '@/shared/common/api/apiError'
 import { notify } from '@/shared/common/lib/notify'
@@ -52,6 +52,7 @@ export function StartDeliveryModal({
     >
       <form onSubmit={submit} noValidate>
         <Stack>
+          <Text size="sm">Hoá đơn sẽ được in.</Text>
           <TextInput
             label="Mã vận đơn chặng giao"
             data-autofocus
@@ -62,7 +63,7 @@ export function StartDeliveryModal({
               Quay lại
             </Button>
             <Button type="submit" loading={start.isPending}>
-              Bắt đầu giao
+              Bắt đầu giao & in hoá đơn
             </Button>
           </ModalFooter>
         </Stack>

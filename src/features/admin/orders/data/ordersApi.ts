@@ -134,13 +134,14 @@ export const ordersApi = {
   },
 
   /** Danh sách công việc: lọc và phân trang ở BE, cùng ngày hẹn thì xếp theo giờ nhận. */
-  listWork: async ({ tab, channel, q, dueFrom, dueTo, page, size }: WorkListParams) => {
+  listWork: async ({ tab, channel, washModeId, q, dueFrom, dueTo, page, size }: WorkListParams) => {
     const { statuses, ...filter } = tabParams(tab)
     const { data } = await httpClient.get<SpringPage<OrderResponseDto>>('/orders', {
       params: {
         statuses: statuses.join(','),
         ...filter,
         channel,
+        washModeId,
         ...termParams(q),
         dueFrom,
         dueTo,
@@ -169,9 +170,9 @@ export const ordersApi = {
       RECEIVED: data.received,
       PROCESSING: data.processing,
       LATE: data.late,
-      EXPRESS: data.express,
       pendingConfirmation: data.pendingConfirmation,
       awaitingDropoff: data.awaitingDropoff,
+      byMode: Object.fromEntries((data.byMode ?? []).map((m) => [m.washModeId, m.count])),
     }
     return counts
   },
@@ -228,11 +229,12 @@ export const ordersApi = {
   appointment: (id: number, dto: AppointmentRequestDto) =>
     detail(httpClient.patch<OrderDetailResponseDto>(`/orders/${id}/appointment`, dto)),
 
-  /** Mã vận đơn tùy chọn; chỉ gửi khi đơn có chặng lấy (PICKUP) */
-  completeDropoff: (id: number, pickupTrackingCode?: string) =>
+  /** Mã vận đơn tùy chọn (chỉ khi PICKUP); dueAt null = server lấy minDue (FR-039) */
+  completeDropoff: (id: number, pickupTrackingCode?: string, dueAt?: string | null) =>
     detail(
       httpClient.post<OrderDetailResponseDto>(`/orders/${id}/fulfillment/dropoff`, {
         pickupTrackingCode,
+        dueAt,
       }),
     ),
 

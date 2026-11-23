@@ -5,6 +5,8 @@ import { LuClock, LuPause, LuPlay, LuSparkle, LuTag, LuTimer } from 'react-icons
 import { UNIT_LABEL } from '../domain/types'
 import { formatMoney } from '@/shared/common/lib/format'
 import { usePublicServices } from '../application/queries/usePublicServices'
+import { usePublicWashModes } from '../application/queries/usePublicWashModes'
+import { priceFor } from '../domain/estimate'
 import { usePublicStore } from '../application/queries/usePublicStore'
 
 interface Fact {
@@ -61,6 +63,7 @@ function WordBand({ words }: { words: string[] }) {
 export function QuickFacts() {
   const store = usePublicStore()
   const services = usePublicServices()
+  const modes = usePublicWashModes()
   const list = services.data ?? []
 
   const facts: Fact[] = []
@@ -70,10 +73,17 @@ export function QuickFacts() {
       label: 'Mở cửa mỗi ngày',
       value: `${store.data.openingTime} – ${store.data.closingTime}`,
     })
-  if (list.length > 0) {
-    const fastest = Math.min(...list.map((s) => s.standardHours))
-    const cheapest = list.reduce((a, b) => (b.price < a.price ? b : a))
-    facts.push({ icon: LuTimer, label: 'Xử lý chuẩn nhanh nhất', value: `${fastest} giờ` })
+  if (modes.data?.length) {
+    const fastest = Math.min(...modes.data.map((m) => m.completionHours))
+    facts.push({ icon: LuTimer, label: 'Xử lý nhanh nhất', value: `${fastest} giờ` })
+  }
+  const defaultId = modes.data?.find((m) => m.isDefault)?.id ?? null
+  const priced = list.flatMap((s) => {
+    const price = priceFor(s, defaultId)
+    return price === null ? [] : [{ price, unit: s.unit }]
+  })
+  if (priced.length > 0) {
+    const cheapest = priced.reduce((a, b) => (b.price < a.price ? b : a))
     facts.push({
       icon: LuTag,
       label: 'Giá dịch vụ',
@@ -82,7 +92,7 @@ export function QuickFacts() {
   }
   const words = [...new Set([...list.map((s) => s.name), ...PROMISE_WORDS])]
 
-  const loading = store.isPending || services.isPending
+  const loading = store.isPending || services.isPending || modes.isPending
   const factList =
     !loading && facts.length === 0 ? null : (
       <dl className="pub-container grid gap-8 py-10 sm:grid-cols-3 sm:gap-0 sm:py-12">

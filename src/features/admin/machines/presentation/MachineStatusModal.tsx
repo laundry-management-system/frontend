@@ -19,7 +19,7 @@ interface MachineStatusModalProps {
 }
 
 function titleOf({ machine, target }: StatusChange) {
-  if (target === 'RETIRED') return `Ngừng sử dụng ${machine.name}`
+  if (target === 'RETIRED') return `Ngừng hoạt động ${machine.name}`
   if (target === 'MAINTENANCE') return `Chuyển ${machine.name} sang Bảo trì`
   return machine.status === 'RETIRED'
     ? `Kích hoạt lại ${machine.name}`
@@ -87,7 +87,7 @@ function StatusForm({ change, onClose }: { change: StatusChange; onClose: () => 
           loading={mutation.isPending}
           onClick={submit}
         >
-          {retiring ? 'Ngừng sử dụng' : 'Xác nhận'}
+          {retiring ? 'Ngừng hoạt động' : 'Xác nhận'}
         </Button>
       </ModalFooter>
     </Stack>

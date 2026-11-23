@@ -1,8 +1,10 @@
-import { Anchor, Group, SegmentedControl, Select, Stack, Text, TextInput } from '@mantine/core'
+import { FILTER_SELECT_PROPS } from '@/shared/admin/ui'
+import { Select, TextInput } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react'
 import { LuCalendar, LuSearch } from 'react-icons/lu'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useWashModes } from '@/features/admin/services'
 import {
   useFindOpenOrderByCode,
   useWorkCounts,
@@ -25,7 +27,9 @@ const DUE_OPTIONS = [
 
 export function WorkListFilters() {
   const navigate = useNavigate()
-  const { q, setQ, search, tab, setStatus, due, range, setDue, commitSearch } = useWorkListParams()
+  const { q, setQ, search, tab, setStatus, modeId, setMode, due, range, setDue, commitSearch } =
+    useWorkListParams()
+  const { data: modes = [] } = useWashModes()
   const { data: counts } = useWorkCounts({ q: search, ...range })
   const findByCode = useFindOpenOrderByCode()
 
@@ -37,7 +41,7 @@ export function WorkListFilters() {
     setPicking(!PRESET_DUES.includes(due))
   }
 
-  const handleTabChange = (v: string) => setStatus(v as WorkTab)
+  const handleTabChange = (v: string | null) => setStatus(v as WorkTab)
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
   // Quét QR / gõ đúng mã rồi Enter: mở thẳng đơn; không khớp đúng một đơn thì chỉ lọc như thường
   const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
@@ -55,52 +59,67 @@ export function WorkListFilters() {
 
   const tabOptions = TABS.map((t) => ({
     value: t,
-    label: counts ? `${WORK_TAB_LABEL[t]} (${counts[t]})` : WORK_TAB_LABEL[t],
+    label: counts
+      ? `Trạng thái: ${WORK_TAB_LABEL[t]} (${counts[t]})`
+      : `Trạng thái: ${WORK_TAB_LABEL[t]}`,
   }))
 
+  // Hình thức đang hoạt động luôn hiện (kể cả 0 đơn); đã ngừng chỉ hiện khi còn đơn mở
+  const modeOptions = [
+    { value: '', label: 'Hình thức: Tất cả' },
+    ...modes
+      .filter((m) => m.active || (counts?.byMode[m.id] ?? 0) > 0)
+      .map((m) => ({
+        value: String(m.id),
+        label: `Hình thức: ${m.name}${m.active ? '' : ' (ngừng)'} (${counts?.byMode[m.id] ?? 0})`,
+      })),
+  ]
+
   return (
-    <Stack gap="sm" w="100%">
-      <SegmentedControl value={tab} onChange={handleTabChange} data={tabOptions} />
-      {counts && (
-        <Group gap="md">
-          <Anchor component={Link} to={`${PATHS.orders}?status=PENDING_CONFIRMATION`} size="sm">
-            Chờ xác nhận ({counts.pendingConfirmation})
-          </Anchor>
-          <Anchor component={Link} to={`${PATHS.orders}?status=AWAITING_DROPOFF`} size="sm">
-            Chờ nhận đồ ({counts.awaitingDropoff})
-          </Anchor>
-          <Text size="xs" c="dimmed">
-            Đơn online chưa nhận đồ, chưa vào danh sách công việc
-          </Text>
-        </Group>
+    <>
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={300}
+        value={tab}
+        onChange={handleTabChange}
+        data={tabOptions}
+        allowDeselect={false}
+      />
+
+      <TextInput
+        w={320}
+        placeholder="Lọc theo mã đơn / tên / SĐT"
+        leftSection={<LuSearch size={16} />}
+        value={q}
+        onChange={handleSearchChange}
+        onKeyDown={handleSearchKeyDown}
+      />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={300}
+        data={modeOptions}
+        value={modeId ? String(modeId) : ''}
+        onChange={setMode}
+        allowDeselect={false}
+      />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={220}
+        data={DUE_OPTIONS}
+        value={picking ? PICK_DATE : due}
+        onChange={handleDueChange}
+        allowDeselect={false}
+      />
+      {picking && (
+        <DatePickerInput
+          w={160}
+          placeholder="Chọn ngày"
+          valueFormat="DD/MM/YYYY"
+          leftSection={<LuCalendar size={16} />}
+          value={PRESET_DUES.includes(due) ? null : due}
+          onChange={handleDateChange}
+        />
       )}
-      <Group gap="sm">
-        <TextInput
-          w={320}
-          placeholder="Lọc theo mã đơn / tên / SĐT"
-          leftSection={<LuSearch size={16} />}
-          value={q}
-          onChange={handleSearchChange}
-          onKeyDown={handleSearchKeyDown}
-        />
-        <Select
-          w={200}
-          data={DUE_OPTIONS}
-          value={picking ? PICK_DATE : due}
-          onChange={handleDueChange}
-          allowDeselect={false}
-        />
-        {picking && (
-          <DatePickerInput
-            w={160}
-            placeholder="Chọn ngày"
-            valueFormat="DD/MM/YYYY"
-            leftSection={<LuCalendar size={16} />}
-            value={PRESET_DUES.includes(due) ? null : due}
-            onChange={handleDateChange}
-          />
-        )}
-      </Group>
-    </Stack>
+    </>
   )
 }

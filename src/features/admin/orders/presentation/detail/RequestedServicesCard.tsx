@@ -1,10 +1,9 @@
 import { Card, Group, Stack, Text, Title } from '@mantine/core'
 import { LuClipboardList } from 'react-icons/lu'
-import { UNIT_LABEL, useActiveServices } from '@/features/admin/services'
+import { priceFor, UNIT_LABEL, useActiveServices } from '@/features/admin/services'
 import { formatMoney } from '@/shared/common/lib/format'
 import { EmptyState } from '@/shared/admin/ui'
 import type { OrderDetail } from '../../domain/types'
-import { OrderServiceTags } from '../OrderServiceTags'
 
 export function RequestedServicesCard({ order }: { order: OrderDetail }) {
   const { data: services = [], isPending } = useActiveServices()
@@ -15,11 +14,16 @@ export function RequestedServicesCard({ order }: { order: OrderDetail }) {
     <Card>
       <Title order={5}>Dịch vụ khách chọn</Title>
       <div className="mt-1 mb-3 empty:hidden">
-        <OrderServiceTags
-          orderType={order.orderType}
-          washWhitesSeparately={washWhitesSeparately}
-          direction="row"
-        />
+        {order.washModeName && (
+          <Text size="sm" fw={500}>
+            Hình thức giặt: {order.washModeName}
+          </Text>
+        )}
+        {washWhitesSeparately && (
+          <Text size="xs" c="dimmed">
+            + Đồ trắng
+          </Text>
+        )}
       </div>
       {hasAny ? (
         <Stack gap="xs">
@@ -31,8 +35,12 @@ export function RequestedServicesCard({ order }: { order: OrderDetail }) {
             >
               {requestedServices.map((r, i) => {
                 const active = services.find((s) => s.id === r.id)
-                const express = order.orderType === 'EXPRESS' && active?.expressSurcharge != null
                 const inactive = r.name !== null && !isPending && !active
+                // Giá đã chụp lúc tạo đơn; đơn không có ảnh chụp thì giá hình thức hiện hành
+                const price =
+                  r.unitPrice ??
+                  (active && order.washModeId != null ? priceFor(active, order.washModeId) : null)
+                const unit = r.unit ?? active?.unit
                 return (
                   <Group
                     key={r.id}
@@ -55,10 +63,9 @@ export function RequestedServicesCard({ order }: { order: OrderDetail }) {
                         </Text>
                       )}
                     </Text>
-                    {active && (
+                    {price != null && (
                       <Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                        {formatMoney(active.price + (express ? active.expressSurcharge! : 0))}/
-                        {active.unit ? UNIT_LABEL[active.unit] : 'đơn vị'}
+                        {formatMoney(price)}/{unit ? UNIT_LABEL[unit] : 'đơn vị'}
                       </Text>
                     )}
                   </Group>

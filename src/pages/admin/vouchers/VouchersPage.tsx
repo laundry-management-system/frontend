@@ -61,13 +61,13 @@ export default function VouchersPage() {
   const rowActions = (v: Voucher) => [
     { label: 'Sửa', onClick: () => setModal({ kind: 'edit', voucher: v }) },
     {
-      label: 'Tắt voucher',
+      label: 'Ngừng hoạt động',
       danger: true,
       hidden: v.status === 'DISABLED',
       onClick: () => setModal({ kind: 'status', voucher: v }),
     },
     {
-      label: 'Bật voucher',
+      label: 'Kích hoạt lại',
       hidden: v.status === 'ACTIVE',
       onClick: () => setModal({ kind: 'status', voucher: v }),
     },

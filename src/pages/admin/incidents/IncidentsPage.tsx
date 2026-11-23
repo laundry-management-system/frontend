@@ -1,14 +1,4 @@
-import {
-  Badge,
-  Button,
-  Card,
-  Group,
-  SegmentedControl,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core'
+import { Badge, Button, Card, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import dayjs from 'dayjs'
 import type { ChangeEvent } from 'react'
@@ -34,6 +24,7 @@ import {
   ListPage,
   Money,
   StatusBadge,
+  FILTER_SELECT_PROPS,
 } from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 
@@ -41,7 +32,10 @@ import { PATHS } from '@/shared/common/config/paths'
 const TABS = ['approved', 'rejected', 'all'] as const
 type Tab = (typeof TABS)[number] | 'ALL'
 const DATE = 'YYYY-MM-DD'
-const TYPE_OPTIONS = Object.entries(INCIDENT_TYPE_LABEL).map(([value, label]) => ({ value, label }))
+const TYPE_OPTIONS = Object.entries(INCIDENT_TYPE_LABEL).map(([value, label]) => ({
+  value,
+  label: `Loại: ${label}`,
+}))
 const statusOfTab = (tab: Tab) => (tab === 'ALL' ? 'pending' : tab === 'all' ? undefined : tab)
 const withCount = (label: string, n: number | undefined) => (n == null ? label : `${label} (${n})`)
 
@@ -82,7 +76,7 @@ export default function IncidentsPage() {
   const handleRetry = () => refetch()
   const rowKey = (i: IncidentSummary) => i.id
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
-  const handleStatusChange = (v: string) => setStatus(v as Tab)
+  const handleStatusChange = (v: string | null) => setStatus(v as Tab)
   const handleTypeChange = (v: string | null) => writeParam({ type: v })
   // Chọn đủ hai đầu mới áp dụng; xóa thì bỏ lọc ngày
   const handleRangeChange = ([start, end]: DatesRangeValue) => {
@@ -98,10 +92,10 @@ export default function IncidentsPage() {
   const primaryAction = { label: 'Lập phiếu sự cố', onClick: goCreate }
 
   const tabOptions = [
-    { value: 'ALL', label: withCount('Chờ duyệt', stats?.pending) },
-    { value: 'approved', label: withCount('Đã duyệt', stats?.approved) },
-    { value: 'rejected', label: withCount('Từ chối', stats?.rejected) },
-    { value: 'all', label: withCount('Tất cả', stats?.all) },
+    { value: 'ALL', label: `Trạng thái: ${withCount('Chờ duyệt', stats?.pending)}` },
+    { value: 'approved', label: `Trạng thái: ${withCount('Đã duyệt', stats?.approved)}` },
+    { value: 'rejected', label: `Trạng thái: ${withCount('Từ chối', stats?.rejected)}` },
+    { value: 'all', label: `Trạng thái: ${withCount('Tất cả', stats?.all)}` },
   ]
   const rangeValue: [Date | null, Date | null] = [
     createdFrom ? dayjs(createdFrom).toDate() : null,
@@ -115,38 +109,45 @@ export default function IncidentsPage() {
   )
 
   const filters = (
-    <Stack gap="sm" w="100%">
-      <SegmentedControl value={status} onChange={handleStatusChange} data={tabOptions} />
-      <Group gap="sm">
-        <TextInput
-          w={320}
-          placeholder="Mã sự cố / mã đơn / SĐT"
-          leftSection={<LuSearch size={16} />}
-          value={q}
-          onChange={handleSearchChange}
-        />
-        <Select
-          w={180}
-          placeholder="Loại: Tất cả"
-          data={TYPE_OPTIONS}
-          clearable
-          value={type ?? null}
-          onChange={handleTypeChange}
-        />
-        <DatePickerInput
-          type="range"
-          w={280}
-          placeholder="Ngày lập"
-          valueFormat="DD/MM/YYYY"
-          leftSection={<LuCalendar size={16} />}
-          maxDate={new Date()}
-          allowSingleDateInRange
-          clearable
-          value={rangeValue}
-          onChange={handleRangeChange}
-        />
-      </Group>
-    </Stack>
+    <>
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={260}
+        value={status}
+        onChange={handleStatusChange}
+        data={tabOptions}
+        allowDeselect={false}
+      />
+
+      <TextInput
+        w={320}
+        placeholder="Mã sự cố / mã đơn / SĐT"
+        leftSection={<LuSearch size={16} />}
+        value={q}
+        onChange={handleSearchChange}
+      />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={180}
+        placeholder="Loại: Tất cả"
+        data={TYPE_OPTIONS}
+        clearable
+        value={type ?? null}
+        onChange={handleTypeChange}
+      />
+      <DatePickerInput
+        type="range"
+        w={280}
+        placeholder="Ngày lập"
+        valueFormat="DD/MM/YYYY"
+        leftSection={<LuCalendar size={16} />}
+        maxDate={new Date()}
+        allowSingleDateInRange
+        clearable
+        value={rangeValue}
+        onChange={handleRangeChange}
+      />
+    </>
   )
 
   const summary = (

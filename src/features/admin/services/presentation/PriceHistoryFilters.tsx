@@ -1,3 +1,4 @@
+import { FILTER_SELECT_PROPS } from '@/shared/admin/ui'
 import { Button, Select } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import { useState } from 'react'
@@ -7,7 +8,10 @@ import { useServices } from '../application/queries/useServices'
 import type { PriceHistoryParams } from '../application/usePriceHistoryParams'
 import { PRICE_FIELD_LABEL, PRICE_FIELDS } from '../domain/types'
 
-const FIELD_OPTIONS = PRICE_FIELDS.map((f) => ({ value: f, label: PRICE_FIELD_LABEL[f] }))
+const FIELD_OPTIONS = PRICE_FIELDS.map((f) => ({
+  value: f,
+  label: `Loại thay đổi: ${PRICE_FIELD_LABEL[f]}`,
+}))
 // shortcut: tối đa 100 dịch vụ / nhân viên trong ô chọn, quá thì đổi sang ô tìm gọi API
 const SERVICE_QUERY = { search: '', page: 0, size: 100 }
 const USER_QUERY = { page: 0, size: 100 }
@@ -39,17 +43,18 @@ export function PriceHistoryFilters({ params }: { params: PriceHistoryParams }) 
 
   const serviceOptions = (services?.content ?? []).map((s) => ({
     value: String(s.id),
-    label: `${s.code} · ${s.name}`,
+    label: `Dịch vụ: ${s.code} · ${s.name}`,
   }))
   const userOptions = (users?.content ?? [])
     // User seed `system` (id 0) không sửa giá được
     .filter((u) => u.id !== 0)
-    .map((u) => ({ value: String(u.id), label: `${u.fullName} (${u.username})` }))
+    .map((u) => ({ value: String(u.id), label: `Người sửa: ${u.fullName} (${u.username})` }))
 
   return (
     <>
       <Select
-        w={220}
+        {...FILTER_SELECT_PROPS}
+        w={280}
         placeholder="Dịch vụ: Tất cả"
         searchable
         clearable
@@ -69,7 +74,8 @@ export function PriceHistoryFilters({ params }: { params: PriceHistoryParams }) 
         onChange={handleRangeChange}
       />
       <Select
-        w={220}
+        {...FILTER_SELECT_PROPS}
+        w={280}
         placeholder="Người sửa: Tất cả"
         searchable
         clearable
@@ -78,7 +84,8 @@ export function PriceHistoryFilters({ params }: { params: PriceHistoryParams }) 
         onChange={handleUserChange}
       />
       <Select
-        w={220}
+        {...FILTER_SELECT_PROPS}
+        w={260}
         placeholder="Loại thay đổi: Tất cả"
         clearable
         data={FIELD_OPTIONS}

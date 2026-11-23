@@ -1,9 +1,15 @@
 import { Badge, Checkbox, Group, Stack, Text } from '@mantine/core'
-import { type Service, UNIT_LABEL } from '@/features/admin/services'
+import {
+  isBookable,
+  priceFor,
+  type Service,
+  UNIT_LABEL,
+  useWashModes,
+} from '@/features/admin/services'
 import { formatMoney } from '@/shared/common/lib/format'
 import { isExtraService } from '../../domain/extraService'
 import type { validateLine } from '../../domain/rules'
-import type { OrderLine, OrderType } from '../../domain/types'
+import type { OrderLine } from '../../domain/types'
 import { ExtraServiceTag } from '../ExtraServiceTag'
 import { ItemLineEditor } from './ItemLineEditor'
 
@@ -11,7 +17,9 @@ interface ClassifyServiceListProps {
   services: Service[]
   /** Dịch vụ khách chọn lúc tiếp nhận (ghi chú tham khảo của đơn) */
   requestedIds: number[]
-  orderType: OrderType
+  washModeId: number | null
+  /** Đơn giá dòng: giá đã chụp với dịch vụ khách chọn, giá hình thức hiện hành với dịch vụ thêm */
+  unitPriceOf: (service: Service) => number
   lines: OrderLine[]
   /** Thành tiền từng dòng, cùng thứ tự `lines` */
   perLine: number[]
@@ -29,20 +37,28 @@ const LIST_BOX = {
 
 /**
  * Dòng đồ của đơn tiếp nhận v3 dạng checklist dịch vụ: dịch vụ khách chọn lúc nhận được tick sẵn,
- * tick thêm / bỏ tick để sửa. Mỗi dịch vụ tối đa một dòng; đơn giặt nhanh chỉ có dịch vụ hỗ trợ nhanh.
+ * tick thêm / bỏ tick để sửa. Mỗi dịch vụ tối đa một dòng; dịch vụ thêm chỉ gồm dịch vụ có giá cho hình thức của đơn và đặt được.
  */
 export function ClassifyServiceList({
   services,
   requestedIds,
-  orderType,
+  washModeId,
+  unitPriceOf,
   lines,
   perLine,
   errors,
   onToggle,
   onChange,
 }: ClassifyServiceListProps) {
+  const { data: modes = [] } = useWashModes()
+  const defaultModeId = modes.find((m) => m.isDefault)?.id
+  // Dịch vụ khách chọn lúc nhận luôn hiện (BE tính theo giá đã chụp dù liên kết đã đổi)
   const visible = services
-    .filter((s) => orderType !== 'EXPRESS' || s.expressSupported)
+    .filter(
+      (s) =>
+        requestedIds.includes(s.id) ||
+        ((washModeId == null || priceFor(s, washModeId) != null) && isBookable(s, defaultModeId)),
+    )
     // Dịch vụ khách chọn lúc nhận lên đầu, còn lại giữ thứ tự bảng giá
     .sort((a, b) => Number(requestedIds.includes(b.id)) - Number(requestedIds.includes(a.id)))
 
@@ -77,7 +93,7 @@ export function ClassifyServiceList({
                 <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
                   <Text fw={600}>{s.name}</Text>
                   <Text size="sm" c="dimmed">
-                    {`${formatMoney(s.price)}/${unit}`}
+                    {`${formatMoney(unitPriceOf(s))}/${unit}`}
                     {s.minQuantity > 0 && ` · tối thiểu ${s.minQuantity} ${unit}`}
                   </Text>
                 </Stack>
@@ -95,7 +111,7 @@ export function ClassifyServiceList({
                   index={index}
                   line={line}
                   services={services}
-                  orderType={orderType}
+                  washModeId={washModeId}
                   lineTotal={perLine[index]}
                   errors={errors[index]}
                   byService
