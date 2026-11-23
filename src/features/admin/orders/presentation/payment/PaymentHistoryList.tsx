@@ -1,14 +1,21 @@
-import { Button, Group, Loader, Paper, Stack, Text } from '@mantine/core'
+import type { ReactNode } from 'react'
+import { Box, Button, Divider, Group, Loader, Paper, Stack, Text } from '@mantine/core'
 import { LuCloudOff, LuReceiptText } from 'react-icons/lu'
 import { useUserName } from '@/features/admin/users'
-import { formatDateTime, formatMoney } from '@/shared/common/lib/format'
-import { EmptyState, EntityCode, RowActions, StatusBadge } from '@/shared/admin/ui'
+import { formatDateTime } from '@/shared/common/lib/format'
+import {
+  CopyableCode,
+  EmptyState,
+  FieldGrid,
+  Money,
+  RowActions,
+  StatusBadge,
+} from '@/shared/admin/ui'
 import { usePayments } from '../../application/queries/usePayments'
 import { PAYMENT_METHOD_KEY, PAYMENT_TXN_KEY } from '../../domain/payment'
 import type { PaymentTxn } from '../../domain/types'
 
 const dateTime = (iso: string) => formatDateTime(iso).slice(0, 16)
-const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const
 
 function UserName({ id }: { id: number | null }) {
   return <>{useUserName(id)}</>
@@ -39,24 +46,42 @@ function PaymentRow({ txn, onResolve }: { txn: PaymentTxn; onResolve?: (p: Payme
               <StatusBadge group="payment-txn" statusKey={PAYMENT_TXN_KEY[txn.status]} size="sm" />
             )}
           </Group>
-          <Group gap={2} wrap="nowrap">
-            <Text fw={600} td={active ? undefined : 'line-through'} style={TABULAR}>
-              {formatMoney(txn.amount)}
-            </Text>
-            <RowActions items={actions} />
-          </Group>
+          <RowActions items={actions} />
         </Group>
-        <Text size="xs" c="dimmed">
-          {dateTime(txn.paidAt)} · <UserName id={txn.confirmedBy} />
-          {txn.referenceCode && <> · Mã tham chiếu {txn.referenceCode}</>}
-        </Text>
-        <EntityCode code={txn.invoiceNo} size="sm" />
-        {!active && (
-          <Text size="xs" c="dimmed">
-            Lý do: {txn.voidReason ?? '—'} · <UserName id={txn.voidedBy} />
-            {txn.voidedAt && ` · ${dateTime(txn.voidedAt)}`}
-          </Text>
-        )}
+        <FieldGrid
+          rows={[
+            ['Thời gian', dateTime(txn.paidAt)],
+            ['Người ghi nhận', <UserName key="by" id={txn.confirmedBy} />],
+            ['Mã tham chiếu', txn.referenceCode],
+            ['Mã hoá đơn', <CopyableCode key="inv" code={txn.invoiceNo} size="sm" />],
+            ...(active
+              ? []
+              : ([
+                  ['Lý do', txn.voidReason],
+                  ['Người hủy', txn.voidedBy ? <UserName key="vby" id={txn.voidedBy} /> : ''],
+                  ['Hủy lúc', txn.voidedAt ? dateTime(txn.voidedAt) : ''],
+                ] as [string, ReactNode][])),
+          ]}
+        />
+        <Divider mt={4} />
+        {/* gap 6 + pt 6 = 12px, bằng padding dưới của thẻ (p=sm) */}
+        <Box pt={6}>
+          <FieldGrid
+            rows={[
+              [
+                'Số tiền',
+                <Text
+                  key="amount"
+                  fw={700}
+                  td={active ? undefined : 'line-through'}
+                  component="span"
+                >
+                  <Money value={txn.amount} />
+                </Text>,
+              ],
+            ]}
+          />
+        </Box>
       </Stack>
     </Paper>
   )

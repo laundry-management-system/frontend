@@ -7,7 +7,7 @@ import { AreaList } from './AreaList'
 import { StoreContact } from './StoreContact'
 import { StorePanel } from './StorePanel'
 
-const TITLE_ID = 'khu-vuc-title'
+const TITLE_ID = 'service-areas-title'
 const SKELETON_ROWS = [0, 1, 2, 3]
 
 function ServiceAreasSkeleton() {
@@ -53,7 +53,7 @@ export function ServiceAreas() {
 
   return (
     <section
-      id="khu-vuc"
+      id="service-areas"
       aria-labelledby={TITLE_ID}
       aria-busy={areas.isPending}
       className="pub-section"

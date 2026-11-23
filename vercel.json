@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/dat-don", "destination": "/booking", "permanent": true },
+    { "source": "/gioi-thieu", "destination": "/about", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://REPLACE-ME.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }

@@ -53,7 +53,7 @@ export interface NavRoute {
   menuRoles?: Role[]
   element: ReactNode
   hideInMenu?: boolean
-  badge?: 'incidents' | 'registrations'
+  badge?: 'incidents' | 'registrations' | 'orders'
 }
 
 export interface NavModule {
@@ -129,6 +129,7 @@ export const NAV_MODULES: NavModule[] = [
         icon: LuReceiptText,
         roles: ALL,
         element: <OrderTabsPage />,
+        badge: 'orders',
       },
       {
         path: PATHS.orderDetail(':id'),

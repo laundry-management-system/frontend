@@ -1,4 +1,8 @@
 import type {
+  DropoffStatus,
+  OrderChannel,
+  OrderFulfillment,
+  ReturnStatus,
   HistoryActionType,
   ItemUnit,
   OrderStatus,
@@ -17,14 +21,24 @@ export interface OrderResponseDto {
   status: OrderStatus
   paymentStatus: PaymentStatus
   totalItemsCount: number
-  receivedAt: string
+  receivedAt: string | null
   dueAt: string
   orderType: OrderType
   totalAmount: number | string
+  payableAmount: number | string
+  channel: OrderChannel
+  createdAt?: string | null
+  appointmentAt?: string | null
+  appointmentOverdue?: boolean
+  dropoffStatus?: DropoffStatus | null
+  returnStatus?: ReturnStatus | null
+  pickupTrackingCode?: string | null
+  deliveryTrackingCode?: string | null
   isOverdue?: boolean
   overdue?: boolean
   intakeCode?: string | null
   washWhitesSeparately?: boolean | null
+  paymentClaimedAt?: string | null
 }
 
 export interface OrderItemDto {
@@ -56,8 +70,11 @@ export interface OrderHistoryDto {
 
 export interface OrderDetailResponseDto extends Omit<
   OrderResponseDto,
-  'totalItemsCount' | 'totalAmount'
+  'totalItemsCount' | 'totalAmount' | 'payableAmount'
 > {
+  confirmedAt?: string | null
+  confirmedBy?: string | null
+  fulfillment?: OrderFulfillment | null
   receiptPrintedAt: string | null
   note: string | null
   items: OrderItemDto[]
@@ -68,6 +85,7 @@ export interface OrderDetailResponseDto extends Omit<
   voucherCode?: string | null
   expressFee: number | string | null
   totalAmount: number | string | null
+  payableAmount: number | string | null
   receiverName: string | null
   receiverRelation: string | null
   completedAt: string | null
@@ -81,6 +99,7 @@ export interface OrderDetailResponseDto extends Omit<
   incidentCodes?: string[] | null
   compensationMultiplier?: number | null
   compensationCap?: number | string | null
+  paymentClaimRejectedReason?: string | null
 }
 
 export interface OrderReceiptResponseDto {
@@ -152,7 +171,8 @@ export interface CompleteOrderRequestDto {
 }
 
 export interface CancelOrderRequestDto {
-  reason: string
+  reason?: string
+  customerReason?: string
 }
 
 export interface RevertStatusRequestDto {
@@ -250,6 +270,23 @@ export interface WorkCountsResponseDto {
   processing: number
   late: number
   express: number
+  pendingConfirmation: number
+  awaitingDropoff: number
+}
+
+export interface RejectOrderRequestDto {
+  customerReason: string
+  reason?: string
+}
+
+export interface TrackingRequestDto {
+  pickupTrackingCode?: string
+  deliveryTrackingCode?: string
+}
+
+export interface AppointmentRequestDto {
+  appointmentAt?: string
+  returnAt?: string
 }
 
 export interface OverdueOrderResponseDto {

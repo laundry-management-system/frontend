@@ -391,6 +391,32 @@
   }
 }
 
+/* Card bấm được (xem chi tiết) */
+@layer components {
+  .ds-card-link {
+    cursor: pointer;
+    transition: border-color 150ms;
+  }
+  .ds-card-link:hover {
+    border-color: var(--ds-primary);
+  }
+}
+
+/* DataTable: dòng trễ (đơn trễ hẹn trả / quá giờ hẹn gửi đồ): nền đỏ nhạt + viền trái đỏ */
+@layer components {
+  .ds-row-late > td,
+  .ds-row-late > td.ds-fixed-col {
+    background: color-mix(in srgb, var(--ds-destructive) 8%, var(--ds-card));
+  }
+  .ds-row-late:hover > td,
+  .ds-row-late:hover > td.ds-fixed-col {
+    background: color-mix(in srgb, var(--ds-destructive) 14%, var(--ds-card));
+  }
+  .ds-row-late > td:first-child {
+    box-shadow: inset 4px 0 0 var(--ds-destructive);
+  }
+}
+
 /* Chấm "đang diễn ra" (ca đang mở): vòng sáng lan ra; tắt khi người dùng chọn giảm chuyển động */
 @layer components {
   .ds-live-dot {

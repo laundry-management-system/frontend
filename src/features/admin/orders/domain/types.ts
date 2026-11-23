@@ -1,4 +1,53 @@
-export type OrderStatus = 'RECEIVED' | 'PROCESSING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED'
+export type OrderStatus =
+  | 'PENDING_CONFIRMATION'
+  | 'AWAITING_DROPOFF'
+  | 'RECEIVED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+
+export type OrderChannel = 'ONLINE' | 'OFFLINE'
+export type DropoffMethod = 'AT_STORE' | 'PICKUP'
+export type ReturnMethod = 'AT_STORE' | 'DELIVERY'
+export type DropoffStatus =
+  'AWAITING_CUSTOMER_DROPOFF' | 'CUSTOMER_DROPPED_OFF' | 'AWAITING_PICKUP' | 'PICKED_UP'
+export type ReturnStatus =
+  | 'AWAITING_CUSTOMER_COLLECT'
+  | 'CUSTOMER_COLLECTED'
+  | 'AWAITING_DELIVERY'
+  | 'DELIVERING'
+  | 'DELIVERED'
+
+export const ORDER_CHANNEL_LABEL: Record<OrderChannel, string> = {
+  ONLINE: 'Online',
+  OFFLINE: 'Tại quầy',
+}
+
+export const DROPOFF_METHOD_LABEL: Record<DropoffMethod, string> = {
+  AT_STORE: 'Khách mang tới',
+  PICKUP: 'Cửa hàng lấy tại nhà',
+}
+
+export const RETURN_METHOD_LABEL: Record<ReturnMethod, string> = {
+  AT_STORE: 'Khách tới nhận',
+  DELIVERY: 'Giao tận nơi',
+}
+
+export const DROPOFF_STATUS_LABEL: Record<DropoffStatus, string> = {
+  AWAITING_CUSTOMER_DROPOFF: 'Chờ khách mang đồ tới',
+  CUSTOMER_DROPPED_OFF: 'Khách đã tới đưa đồ',
+  AWAITING_PICKUP: 'Chờ lấy đồ',
+  PICKED_UP: 'Đã lấy đồ từ khách',
+}
+
+export const RETURN_STATUS_LABEL: Record<ReturnStatus, string> = {
+  AWAITING_CUSTOMER_COLLECT: 'Chờ khách tới nhận',
+  CUSTOMER_COLLECTED: 'Khách đã nhận đồ',
+  AWAITING_DELIVERY: 'Chờ giao',
+  DELIVERING: 'Đang giao',
+  DELIVERED: 'Đã giao thành công',
+}
 
 export type PaymentStatus = 'UNPAID' | 'PAID'
 
@@ -7,6 +56,8 @@ export type OrderType = 'NORMAL' | 'EXPRESS'
 export type ItemUnit = 'KG' | 'PIECE' | 'SET' | 'PRODUCT'
 
 export const ORDER_STATUSES = [
+  'PENDING_CONFIRMATION',
+  'AWAITING_DROPOFF',
   'RECEIVED',
   'PROCESSING',
   'COMPLETED',
@@ -15,6 +66,8 @@ export const ORDER_STATUSES = [
 ] as const satisfies readonly OrderStatus[]
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  PENDING_CONFIRMATION: 'Chờ xác nhận',
+  AWAITING_DROPOFF: 'Chờ nhận đồ',
   RECEIVED: 'Mới nhận',
   PROCESSING: 'Đang xử lý',
   COMPLETED: 'Hoàn thành',
@@ -45,13 +98,27 @@ export interface OrderSummary {
   status: OrderStatus
   paymentStatus: PaymentStatus
   totalItemsCount: number
-  receivedAt: string
+  /** null với đơn online chưa nhận đồ */
+  receivedAt: string | null
   dueAt: string
+  channel: OrderChannel
+  createdAt: string | null
+  /** null với đơn tại quầy */
+  appointmentAt: string | null
+  appointmentOverdue: boolean
+  dropoffStatus: DropoffStatus | null
+  returnStatus: ReturnStatus | null
+  pickupTrackingCode: string | null
+  deliveryTrackingCode: string | null
+  /** Khách báo đã chuyển khoản, chờ tiệm xác nhận (FR-048) */
+  paymentClaimedAt: string | null
 }
 
 export interface OrderListItem extends OrderSummary {
   orderType: OrderType
   totalAmount: number
+  /** Tiền dịch vụ + phí lấy + phí giao (FR-042) */
+  payableAmount: number
   isOverdue: boolean
   /** Mã lượt nhận NH-…; null với đơn tạo trước tiếp nhận v3 */
   intakeCode: string | null
@@ -79,10 +146,14 @@ export const WORK_TAB_LABEL: Record<WorkTab, string> = {
   EXPRESS: 'Giặt nhanh',
 }
 
-export type WorkCounts = Record<WorkTab, number>
+export type WorkCounts = Record<WorkTab, number> & {
+  pendingConfirmation: number
+  awaitingDropoff: number
+}
 
 export interface WorkListParams {
   tab: WorkTab
+  channel?: OrderChannel
   q: string
   /** yyyy-MM-dd, gồm cả hai đầu */
   dueFrom?: string
@@ -137,6 +208,12 @@ export type HistoryActionType =
   | 'PRICE_ADJUST'
   | 'ITEMS_UPDATED'
   | 'CANCELLED'
+  | 'CONFIRMED'
+  | 'DROPOFF_STATUS_CHANGE'
+  | 'RETURN_STATUS_CHANGE'
+  | 'TRACKING_CODE_CHANGE'
+  | 'PAYMENT_CLAIM'
+  | 'PAYMENT_CLAIM_REJECTED'
 
 export interface OrderHistoryEntry {
   id: number
@@ -180,7 +257,33 @@ export interface OrderLine {
   billableQuantity?: number
 }
 
+export interface OrderFulfillment {
+  dropoffMethod: DropoffMethod
+  returnMethod: ReturnMethod
+  pickupAreaId: number | null
+  pickupAreaName: string | null
+  deliveryAreaId: number | null
+  deliveryAreaName: string | null
+  pickupAddress: string | null
+  deliveryAddress: string | null
+  appointmentAt: string | null
+  appointmentOverdue: boolean
+  contactName: string
+  contactPhone: string
+  termsAcceptedAt: string | null
+  pickupFee: number
+  deliveryFee: number
+  dropoffStatus: DropoffStatus | null
+  returnStatus: ReturnStatus | null
+  pickupTrackingCode: string | null
+  deliveryTrackingCode: string | null
+  customerRejectReason: string | null
+}
+
 export interface OrderDetail extends OrderSummary {
+  confirmedAt: string | null
+  confirmedBy: string | null
+  fulfillment: OrderFulfillment | null
   orderType: OrderType
   receiptPrintedAt: string | null
   note: string | null
@@ -193,6 +296,7 @@ export interface OrderDetail extends OrderSummary {
   voucherCode: string | null
   expressFee: number
   totalAmount: number
+  payableAmount: number
   receiverName: string | null
   receiverRelation: string | null
   completedAt: string | null
@@ -212,6 +316,7 @@ export interface OrderDetail extends OrderSummary {
   /** Điều khoản bồi thường chốt theo đơn (đơn cũ: cấu hình hiện hành) */
   compensationMultiplier: number
   compensationCap: number
+  paymentClaimRejectedReason: string | null
 }
 
 /** Nội dung in trên phiếu nhận đồ (khớp `OrderReceiptResponse`) */
@@ -261,6 +366,8 @@ export interface PricingService {
 
 // Khớp key nhóm `order` trong shared/config/domainStatuses
 export const ORDER_STATUS_KEY: Record<OrderStatus, string> = {
+  PENDING_CONFIRMATION: 'pending-confirmation',
+  AWAITING_DROPOFF: 'awaiting-dropoff',
   RECEIVED: 'new',
   PROCESSING: 'processing',
   COMPLETED: 'completed',
@@ -320,6 +427,7 @@ export interface InvoiceLine {
   unit: ItemUnit
   unitPrice: number
   lineTotal: number
+  extra: boolean
 }
 
 export interface Invoice {
@@ -341,6 +449,8 @@ export interface Invoice {
   incidentCodes: string[]
   expressFee: number
   whitesFee: number
+  pickupFee: number
+  deliveryFee: number
   totalAmount: number
   /** Chỉ có ở lần in ngay sau khi thu tiền mặt (BE không lưu) */
   cash: { given: number; change: number } | null

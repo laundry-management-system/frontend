@@ -7,34 +7,46 @@ import { barHeights, compactMoney, niceTicks } from '../domain/dashboard'
 import { periodBounds, periodLabel } from '../domain/report'
 import type { DateRange, ReportMode, RevenueRow } from '../domain/types'
 import { BANK_COLOR, CASH_COLOR } from './paymentColors'
+import type { OrderChannel } from '@/features/admin/orders'
 import { RevenueDayModal } from './RevenueDayModal'
 
 const CHART_HEIGHT = 180
 const AXIS_WIDTH = 44
-const LEGEND = [
-  { label: 'Tiền mặt', color: CASH_COLOR },
-  { label: 'Chuyển khoản', color: BANK_COLOR },
+export interface BarSeries {
+  label: string
+  color: string
+  value: (r: RevenueRow) => number
+}
+// Thứ tự: phần dưới trước, phần trên sau
+const METHOD_SERIES: BarSeries[] = [
+  { label: 'Tiền mặt', color: CASH_COLOR, value: (r) => r.cash },
+  { label: 'Chuyển khoản', color: BANK_COLOR, value: (r) => r.bankTransfer },
 ]
 // Không có kỳ thì cột tháng lấy trọn tháng
 const NO_CLIP = { from: '0000-01-01', to: '9999-12-31' }
 
 interface RevenueBarsProps {
   rows: RevenueRow[]
-  /** Tách mỗi cột thành tiền mặt (dưới) và chuyển khoản (trên) */
+  /** Tách mỗi cột thành các phần của series */
   split?: boolean
+  /** Các phần xếp chồng khi split; mặc định tiền mặt / chuyển khoản */
+  series?: BarSeries[]
   mode?: ReportMode
   /** Kỳ đang xem, để cắt khoảng ngày của cột tháng đầu / cuối */
   range?: DateRange
   emptyText?: string
+  channel?: OrderChannel
 }
 
 /** Cột doanh thu theo ngày / tháng; bấm vào cột để xem các giao dịch tạo nên cột đó. */
 export function RevenueBars({
   rows,
   split = false,
+  series = METHOD_SERIES,
   mode = 'day',
   range,
   emptyText = 'Doanh thu 14 ngày gần nhất sẽ hiện ở đây.',
+  channel,
 }: RevenueBarsProps) {
   const [openRow, setOpenRow] = useState<RevenueRow | null>(null)
   const openColumn = (r: RevenueRow) => setOpenRow(r)
@@ -55,21 +67,22 @@ export function RevenueBars({
   const tooltipOf = (r: RevenueRow) => {
     const head = `${periodLabel(r.period, mode)}: ${formatMoney(r.total)}`
     return split
-      ? `${head} · Tiền mặt ${formatMoney(r.cash)} · Chuyển khoản ${formatMoney(r.bankTransfer)}`
+      ? [head, ...series.map((s) => `${s.label} ${formatMoney(s.value(r))}`)].join(' · ')
       : head
   }
   const barFill = (r: RevenueRow, height: number) =>
     split ? (
       <Box h={height} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Box style={{ flex: r.bankTransfer, background: BANK_COLOR }} />
-        <Box style={{ flex: r.cash, background: CASH_COLOR }} />
+        {[...series].reverse().map((s) => (
+          <Box key={s.label} style={{ flex: s.value(r), background: s.color }} />
+        ))}
       </Box>
     ) : (
       <Box h={height} />
     )
   const legend = split && (
     <Group gap="md" mt="sm" justify="center">
-      {LEGEND.map((l) => (
+      {series.map((l) => (
         <Group key={l.label} gap={6}>
           <ColorSwatch color={l.color} size={10} withShadow={false} />
           <Text size="xs" c="dimmed">
@@ -86,6 +99,7 @@ export function RevenueBars({
       range={periodBounds(openRow.period, mode, range ?? NO_CLIP)}
       title={`Doanh thu ${mode === 'month' ? 'tháng' : 'ngày'} ${periodLabel(openRow.period, mode)}`}
       expectedCount={openRow.paymentCount}
+      channel={channel}
       onClose={closeModal}
     />
   )

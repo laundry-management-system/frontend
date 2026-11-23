@@ -1,11 +1,16 @@
 import type {
   ItemUnit,
   OrderDetail,
+  OrderFulfillment,
   OrderLine,
   OrderStatus,
   OrderSummary,
   PrimaryAction,
 } from './types'
+
+/** Đơn giao tận nơi online: chỉ khách tự áp voucher, nhân viên chỉ xem (FR-044). */
+export const isVoucherLocked = (o: Pick<OrderDetail, 'channel' | 'fulfillment'>) =>
+  o.channel === 'ONLINE' && o.fulfillment?.returnMethod === 'DELIVERY'
 
 export const ITEM_TYPE_MAX = 100
 
@@ -63,8 +68,65 @@ export function previousStatus(s: OrderStatus): OrderStatus | null {
   return null
 }
 
-/** BR-D05: chỉ hủy khi đơn còn Mới nhận. */
-export const canCancel = (o: Pick<OrderSummary, 'status'>) => o.status === 'RECEIVED'
+type Online = Pick<OrderSummary, 'status' | 'channel'>
+
+const isPending = (o: Online) => o.channel === 'ONLINE' && o.status === 'PENDING_CONFIRMATION'
+
+export const canConfirm = isPending
+export const canReject = isPending
+
+/** FR-032: chỉ hủy ở Chờ nhận đồ; Chờ xác nhận dùng "Từ chối". */
+export const canCancel = (o: Pick<OrderSummary, 'status'>) => o.status === 'AWAITING_DROPOFF'
+
+/** Lý do khóa thao tác xử lý (phân loại, thu tiền, in phiếu) trước khi nhận đồ; null = không khóa. */
+export const preReceiptLockReason = (o: Pick<OrderSummary, 'status'>) =>
+  o.status === 'PENDING_CONFIRMATION' || o.status === 'AWAITING_DROPOFF'
+    ? 'Đơn online chưa nhận đồ, chưa thể thực hiện thao tác này'
+    : null
+
+type Fulfil = Online &
+  Pick<OrderSummary, 'returnStatus' | 'paymentStatus'> & {
+    fulfillment: Pick<OrderFulfillment, 'dropoffMethod' | 'returnMethod'> | null
+  }
+
+export const canCompleteDropoff = (o: Online) =>
+  o.channel === 'ONLINE' && o.status === 'AWAITING_DROPOFF'
+
+const awaitingDelivery = (o: Fulfil) =>
+  o.channel === 'ONLINE' &&
+  o.status === 'COMPLETED' &&
+  o.fulfillment?.returnMethod === 'DELIVERY' &&
+  o.returnStatus === 'AWAITING_DELIVERY'
+
+/** FR-036: đơn online giao tận nơi phải thanh toán trước khi giao. */
+export const canStartDelivery = (o: Fulfil) => awaitingDelivery(o) && o.paymentStatus === 'PAID'
+
+export const isAwaitingPayment = (o: Fulfil) => awaitingDelivery(o) && o.paymentStatus === 'UNPAID'
+
+/** FR-048: có báo thanh toán của khách đang chờ và đơn còn UNPAID. */
+export const canRejectPaymentClaim = (
+  o: Pick<OrderSummary, 'paymentStatus' | 'paymentClaimedAt'>,
+) => o.paymentClaimedAt != null && o.paymentStatus === 'UNPAID'
+
+export const canUndoDelivery = (o: Pick<OrderSummary, 'returnStatus'>) =>
+  o.returnStatus === 'DELIVERING'
+
+/** FR-037: mã vận đơn chỉ ở chặng có thật, đơn chưa kết thúc. */
+export const canEditPickupTracking = (o: Fulfil) =>
+  o.channel === 'ONLINE' && !isTerminal(o.status) && o.fulfillment?.dropoffMethod === 'PICKUP'
+
+export const canEditDeliveryTracking = (o: Fulfil) =>
+  o.channel === 'ONLINE' && !isTerminal(o.status) && o.fulfillment?.returnMethod === 'DELIVERY'
+
+/** Đơn online không được bỏ qua "Đang giao" khi trả đồ (FR-021). */
+export const canDeliver = (o: Pick<OrderSummary, 'channel' | 'returnStatus'>) =>
+  o.channel !== 'ONLINE' ||
+  o.returnStatus === 'DELIVERING' ||
+  o.returnStatus === 'AWAITING_CUSTOMER_COLLECT'
+
+/** FR-059: đơn giao tận nơi đang giao do khách tự xác nhận đã nhận; nhân viên chỉ có đường thay khách. */
+export const awaitsCustomerReceipt = (o: Pick<OrderSummary, 'channel' | 'returnStatus'>) =>
+  o.channel === 'ONLINE' && o.returnStatus === 'DELIVERING'
 
 export function primaryActionOf(o: Pick<OrderDetail, 'status' | 'items'>): PrimaryAction | null {
   if (o.status === 'RECEIVED') return o.items.length ? 'START' : 'CLASSIFY'
@@ -81,12 +143,70 @@ export interface ActionAvailability {
 const on = (): ActionAvailability => ({ enabled: true })
 const off = (reason: string): ActionAvailability => ({ enabled: false, reason })
 
-export function adminActionsOf(o: Pick<OrderSummary, 'status'>) {
+export const canRevertStatus = (o: Partial<Pick<OrderSummary, 'returnStatus'>>) =>
+  o.returnStatus !== 'DELIVERING'
+
+export function adminActionsOf(
+  o: Pick<OrderSummary, 'status'> & Partial<Pick<OrderSummary, 'returnStatus'>>,
+) {
   const ended = isTerminal(o.status)
   return {
-    revert: previousStatus(o.status) ? on() : off('Không có bước trước để lùi về'),
+    revert: !canRevertStatus(o)
+      ? off('Đơn đang giao, hãy hoàn tác Đang giao trước')
+      : previousStatus(o.status)
+        ? on()
+        : off('Không có bước trước để lùi về'),
+    undoDelivery: canUndoDelivery({ returnStatus: o.returnStatus ?? null })
+      ? on()
+      : off('Đơn không ở trạng thái Đang giao'),
     reschedule: ended ? off('Đơn đã kết thúc') : on(),
     price: ended ? off('Đơn đã kết thúc') : on(),
-    cancel: canCancel(o) ? on() : off('Chỉ hủy được khi đơn còn Mới nhận'),
+    cancel: canCancel(o) ? on() : off('Chỉ hủy được đơn chưa nhận đồ'),
   }
+}
+
+export const DETAIL_TABS = [
+  'overview',
+  'items',
+  'fulfillment',
+  'payment',
+  'incidents',
+  'history',
+] as const
+export type DetailTab = (typeof DETAIL_TABS)[number]
+
+export interface DetailTabInput extends Pick<OrderSummary, 'status' | 'paymentStatus' | 'channel'> {
+  hasItems: boolean
+  hasIncidents: boolean
+  hasPayments: boolean
+}
+
+/** Tab nào có nội dung theo giai đoạn của đơn; chưa nhận đồ / chưa phân loại thì chưa có gì để xem hay thu. */
+export function visibleDetailTabs(o: DetailTabInput): DetailTab[] {
+  const beforeReceipt = o.status === 'PENDING_CONFIRMATION' || o.status === 'AWAITING_DROPOFF'
+  const cancelled = o.status === 'CANCELLED'
+  const live = !beforeReceipt && !cancelled
+  const show: Record<DetailTab, boolean> = {
+    overview: true,
+    items: o.hasItems || live,
+    fulfillment: o.channel === 'ONLINE',
+    payment: o.hasPayments || (live && o.hasItems),
+    incidents: o.hasIncidents || live,
+    history: true,
+  }
+  return DETAIL_TABS.filter((t) => show[t])
+}
+
+export function defaultDetailTab(o: DetailTabInput): DetailTab {
+  const visible = visibleDetailTabs(o)
+  const wanted: DetailTab =
+    o.channel === 'ONLINE' &&
+    (o.status === 'PENDING_CONFIRMATION' || o.status === 'AWAITING_DROPOFF')
+      ? 'fulfillment'
+      : o.status === 'RECEIVED' || o.status === 'PROCESSING'
+        ? 'items'
+        : o.status === 'COMPLETED' && o.paymentStatus === 'UNPAID'
+          ? 'payment'
+          : 'overview'
+  return visible.includes(wanted) ? wanted : 'overview'
 }

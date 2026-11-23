@@ -25,6 +25,8 @@ export class CheckoutError extends Error {
 export interface CheckoutVars {
   order: OrderDetail
   mode: CheckoutMode
+  /** Chỉ ghi nhận thanh toán, không trả đồ (đơn giao hàng) */
+  payOnly?: boolean
   method: PaymentMethod
   referenceCode?: string
   /** Bỏ trống khi khách tự nhận */
@@ -34,7 +36,7 @@ export interface CheckoutVars {
 
 export interface CheckoutResult {
   payment: PaymentTxn | null
-  delivery: DeliveryResult
+  delivery: DeliveryResult | null
 }
 
 // BE chưa có lệnh gộp (handoff 011 #1): luôn thu tiền trước, vì BE chặn giao đơn chưa thanh toán
@@ -42,11 +44,12 @@ async function checkout(v: CheckoutVars): Promise<CheckoutResult> {
   const payment =
     v.mode === 'checkout'
       ? await ordersApi.confirmPayment(v.order.orderCode, {
-          amount: v.order.totalAmount,
+          amount: v.order.payableAmount,
           method: v.method,
           referenceCode: v.referenceCode?.trim() || undefined,
         })
       : null
+  if (v.payOnly) return { payment, delivery: null }
   try {
     const delivery = await ordersApi.deliver(
       v.order.orderCode,

@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, Button, Checkbox, Modal, Stack } from '@mantine/core'
+import { Alert, Autocomplete, Button, Checkbox, Modal, Stack, Textarea } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { toApiError } from '@/shared/common/api/apiError'
 import { notify } from '@/shared/common/lib/notify'
@@ -13,17 +13,18 @@ const REASONS = ['Khách đổi ý', 'Khách không gửi nữa', 'Nhập nhầm
 /** WF-D05: chỉ mở khi đơn còn Mới nhận (`canCancel`). Mount khi mở. */
 export function CancelOrderModal({ order, onClose }: { order: OrderDetail; onClose: () => void }) {
   const paid = order.paymentStatus === 'PAID'
+  const online = order.channel === 'ONLINE'
   const cancel = useCancelOrder()
   const form = useForm<CancelOrderValues>({
-    initialValues: { reason: '', refunded: false },
-    validate: schemaResolver(cancelOrderSchema(paid), { sync: true }),
+    initialValues: { reason: '', customerReason: '', refunded: false },
+    validate: schemaResolver(cancelOrderSchema(paid, online), { sync: true }),
     validateInputOnChange: true,
   })
-  const valid = cancelOrderSchema(paid).safeParse(form.values).success
+  const valid = cancelOrderSchema(paid, online).safeParse(form.values).success
 
   const submit = form.onSubmit((values) =>
     cancel.mutate(
-      { orderId: order.id, reason: values.reason },
+      { orderId: order.id, reason: values.reason, customerReason: values.customerReason },
       {
         onSuccess: () => {
           notify.success('Đã hủy đơn')
@@ -53,21 +54,40 @@ export function CancelOrderModal({ order, onClose }: { order: OrderDetail; onClo
               color="warning"
               title={
                 <>
-                  Đơn đã thanh toán trước <Money value={order.totalAmount} />
+                  Đơn đã thanh toán trước <Money value={order.payableAmount} />
                 </>
               }
             >
               Ghi nhận hoàn tiền ở màn Thanh toán.
             </Alert>
           )}
-          <Autocomplete
-            label="Lý do hủy"
-            required
-            data-autofocus
-            placeholder="Chọn hoặc nhập lý do"
-            data={REASONS}
-            {...form.getInputProps('reason')}
-          />
+          {online ? (
+            <>
+              <Textarea
+                label="Lý do gửi khách"
+                required
+                autosize
+                minRows={2}
+                data-autofocus
+                {...form.getInputProps('customerReason')}
+              />
+              <Textarea
+                label="Lý do nội bộ (không hiện cho khách)"
+                autosize
+                minRows={2}
+                {...form.getInputProps('reason')}
+              />
+            </>
+          ) : (
+            <Autocomplete
+              label="Lý do hủy"
+              required
+              data-autofocus
+              placeholder="Chọn hoặc nhập lý do"
+              data={REASONS}
+              {...form.getInputProps('reason')}
+            />
+          )}
           {paid && (
             <Checkbox
               label="Đã hoàn tiền cho khách"

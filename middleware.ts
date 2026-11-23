@@ -1,5 +1,5 @@
 // Vercel Routing Middleware: chèn thẻ SEO/OG thật vào HTML ban đầu cho crawler (FR-043, research R3)
-export const config = { matcher: ['/', '/gioi-thieu'] }
+export const config = { matcher: ['/', '/about'] }
 
 interface PublicStore {
   name: string

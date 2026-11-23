@@ -17,6 +17,7 @@ export {
   validatePeriod,
 } from './domain/report'
 export type {
+  ChannelRow,
   Dashboard,
   DashboardPreset,
   DateRange,
@@ -27,8 +28,11 @@ export type {
   RevenueRow,
   ServiceRow,
 } from './domain/types'
+export { BANK_COLOR, CASH_COLOR } from './presentation/paymentColors'
+export { RevenueDonut, type DonutSlice } from './presentation/RevenueDonut'
+export { ChannelBreakdown } from './presentation/ChannelBreakdown'
 export { OrdersLine } from './presentation/OrdersLine'
 export { PaymentSplit } from './presentation/PaymentSplit'
 export { ReportPeriodPicker } from './presentation/ReportPeriodPicker'
-export { RevenueBars } from './presentation/RevenueBars'
+export { RevenueBars, type BarSeries } from './presentation/RevenueBars'
 export { ServiceShareRing } from './presentation/ServiceShareRing'

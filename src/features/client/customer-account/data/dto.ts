@@ -1,4 +1,4 @@
-import type { OrderStatus } from '../domain/types'
+import type { CustomerOrder, CustomerOrderDetail, PaymentQr } from '../domain/types'
 
 export interface AuthenticationResponseDto {
   accessToken: string
@@ -35,9 +35,6 @@ export interface ChangeMyPasswordRequestDto {
   newPassword: string
 }
 
-export interface CustomerOrderDto {
-  orderCode: string
-  receivedAt: string
-  status: OrderStatus
-  totalAmount: number | null
-}
+export type CustomerOrderDto = CustomerOrder
+export type PaymentQrDto = PaymentQr
+export type CustomerOrderDetailDto = CustomerOrderDetail

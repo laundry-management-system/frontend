@@ -8,9 +8,11 @@ interface PageHeaderProps {
   /** Ghi chú phụ hiện trong InfoTooltip cạnh tiêu đề */
   info?: ReactNode
   actions?: ReactNode
+  /** Hàng thẻ (kênh, thanh toán…) ngay dưới tiêu đề */
+  meta?: ReactNode
 }
 
-export function PageHeader({ title, description, info, actions }: PageHeaderProps) {
+export function PageHeader({ title, description, info, actions, meta }: PageHeaderProps) {
   return (
     <Group justify="space-between" align="flex-start" mb="lg">
       <Stack gap={4}>
@@ -18,6 +20,7 @@ export function PageHeader({ title, description, info, actions }: PageHeaderProp
           <Title order={2}>{title}</Title>
           {info && <InfoTooltip content={info} />}
         </Group>
+        {meta && <Group gap="xs">{meta}</Group>}
         {description && <Text c="dimmed">{description}</Text>}
       </Stack>
       {/* Xuống dòng khi hẹp vẫn giữ nút bên phải */}

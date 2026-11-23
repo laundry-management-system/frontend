@@ -22,21 +22,25 @@ import {
 } from '../../application/schemas'
 import { useAdjustPrice } from '../../application/mutations/useAdjustPrice'
 import { useRescheduleOrder } from '../../application/mutations/useRescheduleOrder'
+import { useUndoDelivery } from '../../application/mutations/useUndoDelivery'
 import { useRevertStatus } from '../../application/mutations/useRevertStatus'
 import { clampToOpeningHours } from '../../domain/dueDate'
-import { adminActionsOf, previousStatus } from '../../domain/rules'
+import { previousStatus } from '../../domain/rules'
+import { allowedAdminActions } from '../detail/adminMenuItems'
 import { ORDER_STATUS_LABEL, type OrderDetail, type OrderStatus } from '../../domain/types'
 
-const MODES: { value: AdminMode; label: string; action: 'revert' | 'reschedule' | 'price' }[] = [
-  { value: 'revert', label: 'Lùi trạng thái', action: 'revert' },
-  { value: 'reschedule', label: 'Sửa ngày hẹn', action: 'reschedule' },
-  { value: 'price', label: 'Sửa giá đơn', action: 'price' },
+const MODES: { value: AdminMode; label: string }[] = [
+  { value: 'revert', label: 'Lùi trạng thái' },
+  { value: 'reschedule', label: 'Sửa ngày hẹn' },
+  { value: 'price', label: 'Sửa giá đơn' },
+  { value: 'undoDelivery', label: 'Hoàn tác Đang giao' },
 ]
 
 const SUCCESS: Record<AdminMode, string> = {
   revert: 'Đã lùi trạng thái đơn',
   reschedule: 'Đã dời ngày hẹn trả',
   price: 'Đã sửa tổng tiền đơn',
+  undoDelivery: 'Đã hoàn tác Đang giao',
 }
 
 interface AdminReasonModalProps {
@@ -47,16 +51,24 @@ interface AdminReasonModalProps {
 
 /** WF-D04: một modal cho các thao tác Admin cần lý do (BR-D06, BR-D08, BR-D12). Mount khi mở. */
 export function AdminReasonModal({ order, initialMode, onClose }: AdminReasonModalProps) {
-  const available = adminActionsOf(order)
   const target = previousStatus(order.status)
   const revert = useRevertStatus()
   const reschedule = useRescheduleOrder()
   const price = useAdjustPrice()
-  const busy = revert.isPending || reschedule.isPending || price.isPending
+  const undo = useUndoDelivery()
+  const busy = revert.isPending || reschedule.isPending || price.isPending || undo.isPending
+  // Hoàn tác Đang giao là thao tác riêng, không lẫn vào các chế độ còn lại
+  const allowed = allowedAdminActions(order)
+  const modes = MODES.filter(
+    (m) =>
+      allowed.includes(m.value) &&
+      (m.value === 'undoDelivery') === (initialMode === 'undoDelivery'),
+  )
+  const startMode = modes.some((m) => m.value === initialMode) ? initialMode : modes[0]?.value
 
   const form = useForm<AdminReasonValues>({
     initialValues: {
-      mode: initialMode,
+      mode: startMode ?? initialMode,
       targetStatus: target,
       dueAt: new Date(order.dueAt),
       newTotalAmount: order.totalAmount,
@@ -84,6 +96,8 @@ export function AdminReasonModal({ order, initialMode, onClose }: AdminReasonMod
         { orderId: order.id, dueAt: v.dueAt!, reason },
         { onSuccess: done, onError: failed },
       )
+    else if (v.mode === 'undoDelivery')
+      undo.mutate({ orderId: order.id, reason }, { onSuccess: done, onError: failed })
     else
       price.mutate(
         { orderId: order.id, newTotalAmount: Number(v.newTotalAmount), reason },
@@ -104,16 +118,14 @@ export function AdminReasonModal({ order, initialMode, onClose }: AdminReasonMod
     >
       <form onSubmit={submit} noValidate>
         <Stack>
-          <SegmentedControl
-            fullWidth
-            value={mode}
-            onChange={(v) => form.setFieldValue('mode', v as AdminMode)}
-            data={MODES.map((m) => ({
-              value: m.value,
-              label: m.label,
-              disabled: !available[m.action].enabled,
-            }))}
-          />
+          {modes.length > 1 && (
+            <SegmentedControl
+              fullWidth
+              value={mode}
+              onChange={(v) => form.setFieldValue('mode', v as AdminMode)}
+              data={modes}
+            />
+          )}
           {mode === 'revert' && (
             <Group grow align="flex-start">
               <TextInput

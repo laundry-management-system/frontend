@@ -12,22 +12,12 @@ interface ServicePickerProps {
 
 const unitOf = (s: Service) => (s.unit ? UNIT_LABEL[s.unit] : 'đơn vị')
 
-function ExpressTag({ service, goesExpress }: { service: Service; goesExpress: boolean }) {
-  if (goesExpress)
-    return (
-      <Badge color="warning" variant="filled">
-        Đi đơn giặt nhanh
-      </Badge>
-    )
-  if (service.expressSupported)
-    return (
-      <Badge color="warning" variant="light">
-        {`Có giặt nhanh · ${service.expressHours} giờ`}
-      </Badge>
-    )
+/** Chỉ hiện khi dịch vụ đang đi đơn giặt nhanh; khả năng giặt nhanh của dịch vụ không hiện ở danh sách chọn. */
+function ExpressTag({ goesExpress }: { goesExpress: boolean }) {
+  if (!goesExpress) return null
   return (
-    <Badge color="gray" variant="outline">
-      Không giặt nhanh
+    <Badge color="warning" variant="filled">
+      Đi đơn giặt nhanh
     </Badge>
   )
 }
@@ -68,7 +58,7 @@ export function ServicePicker({ services, selectedIds, expressIds, onToggle }: S
                   {` · xong trong ${s.standardHours} giờ`}
                 </Text>
               </Stack>
-              <ExpressTag service={s} goesExpress={expressIds.includes(s.id)} />
+              <ExpressTag goesExpress={expressIds.includes(s.id)} />
             </Group>
           </Checkbox.Card>
         )

@@ -39,13 +39,13 @@ function Services({ data }: { data: ReceiptData }) {
       <Text className="text-print-small">Dịch vụ đã chọn (giá tham khảo)</Text>
       {data.services.map((s) => {
         const unit = UNIT_LABEL[s.unit]
-        const surcharge = s.expressSurcharge ? ` + ${formatMoney(s.expressSurcharge)}` : ''
+        const price = s.unitPrice + (s.expressSurcharge ?? 0)
         return (
           <Group key={s.name} justify="space-between" wrap="nowrap" gap="xs" align="flex-start">
             <Text className="text-print-body">{s.name}</Text>
             <Stack gap={0} align="flex-end">
               <Text className="text-print-body" style={{ whiteSpace: 'nowrap' }}>
-                {`${formatMoney(s.unitPrice)}${surcharge}/${unit}`}
+                {`${formatMoney(price)}/${unit}`}
               </Text>
               {s.minQuantity > 0 && (
                 <Text className="text-print-small" c="dimmed">

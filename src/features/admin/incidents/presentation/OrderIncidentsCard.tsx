@@ -1,34 +1,34 @@
-import { Button, Card, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { Button, Card, Group, Stack, Text } from '@mantine/core'
+import type { ReactNode } from 'react'
 import { LuCloudOff, LuPlus } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { formatDateTime, formatMoney } from '@/shared/common/lib/format'
-import { EmptyState, EntityCode, StatusBadge } from '@/shared/admin/ui'
+import { formatDateTime } from '@/shared/common/lib/format'
+import { CopyableCode, EmptyState, FieldGrid, Money, StatusBadge } from '@/shared/admin/ui'
 import { useIncidents } from '../application/queries/useIncidents'
 import { payoutState } from '../domain/rules'
 import { INCIDENT_TYPE_LABEL, RESOLUTION_LABEL, type IncidentSummary } from '../domain/types'
 import { PATHS } from '@/shared/common/config/paths'
 
-const ITEM_STYLE = {
-  border: '1px solid var(--ds-border)',
-  borderRadius: 'var(--mantine-radius-sm)',
-  padding: 'var(--mantine-spacing-sm)',
-  width: '100%',
-}
-
-const summaryOf = (i: IncidentSummary) =>
-  [
-    INCIDENT_TYPE_LABEL[i.type],
-    i.resolution ? RESOLUTION_LABEL[i.resolution] : 'Chưa chọn phương án',
-    formatMoney(i.amount),
-  ].join(' · ')
-
-function settlementOf(i: IncidentSummary) {
-  if (i.status !== 'approved') return null
-  const parts = i.deductedAmount > 0 ? [`Trừ vào đơn ${formatMoney(i.deductedAmount)}`] : []
-  if (i.reviewedAt)
-    parts.push(`duyệt ${formatDateTime(i.reviewedAt).slice(0, 16)} bởi ${i.reviewedBy ?? ''}`)
-  if (payoutState(i) === 'due') parts.push(`Cần chi ${formatMoney(i.payoutDue)}`)
-  return parts.join(' · ')
+/** Các dòng nhãn/giá trị của một sự cố; dòng không có giá trị thì bỏ. */
+function fieldsOf(i: IncidentSummary): [string, ReactNode | false | null][] {
+  const rows: [string, ReactNode | false | null][] = [
+    ['Loại sự cố', INCIDENT_TYPE_LABEL[i.type]],
+    ['Phương án', i.resolution ? RESOLUTION_LABEL[i.resolution] : ''],
+    [
+      'Số tiền',
+      <Text key="amount" span inherit fw={700}>
+        <Money value={i.amount} />
+      </Text>,
+    ],
+    [
+      'Trừ vào đơn',
+      i.deductedAmount > 0 && i.deductedAmount !== i.amount && <Money value={i.deductedAmount} />,
+    ],
+    ['Cần chi', payoutState(i) === 'due' && <Money value={i.payoutDue} />],
+    ['Duyệt lúc', i.reviewedAt ? formatDateTime(i.reviewedAt).slice(0, 16) : ''],
+    ['Người duyệt', i.reviewedBy ?? ''],
+  ]
+  return rows
 }
 
 export function OrderIncidentsCard({
@@ -41,29 +41,33 @@ export function OrderIncidentsCard({
   const navigate = useNavigate()
   const { data, isError, refetch } = useIncidents({ orderId, page: 0, size: 50 })
   const incidents = data?.content ?? []
-  const openIncident = (id: number) => navigate(PATHS.incidentDetail(id))
   const createIncident = () => navigate(`${PATHS.incidentNew}?orderId=${orderId}`)
   const handleRetry = () => refetch()
 
-  const list = incidents.map((i) => {
-    const settlement = settlementOf(i)
-    return (
-      <UnstyledButton key={i.id} style={ITEM_STYLE} onClick={() => openIncident(i.id)}>
-        <Stack gap={4}>
-          <Group justify="space-between">
-            <EntityCode code={i.code} />
+  const list = incidents.map((i) => (
+    <Card
+      key={i.id}
+      withBorder
+      role="link"
+      tabIndex={0}
+      aria-label={`Xem sự cố ${i.code}`}
+      className="ds-focus ds-card-link"
+      onClick={() => navigate(PATHS.incidentDetail(i.id))}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && e.target === e.currentTarget) navigate(PATHS.incidentDetail(i.id))
+      }}
+    >
+      <Stack gap="sm">
+        <Group justify="space-between" wrap="nowrap">
+          <CopyableCode code={i.code} />
+          <Group gap="sm" wrap="nowrap">
             <StatusBadge group="incident" statusKey={i.status} size="sm" />
           </Group>
-          <Text size="sm">{summaryOf(i)}</Text>
-          {settlement && (
-            <Text size="xs" c="dimmed">
-              {settlement}
-            </Text>
-          )}
-        </Stack>
-      </UnstyledButton>
-    )
-  })
+        </Group>
+        <FieldGrid rows={fieldsOf(i)} />
+      </Stack>
+    </Card>
+  ))
 
   const retryAction = (
     <Button variant="default" size="xs" onClick={handleRetry}>
@@ -84,22 +88,15 @@ export function OrderIncidentsCard({
   )
 
   return (
-    <Card>
-      <Stack gap="sm">
-        <Title order={5}>Sự cố</Title>
-        {incidents.length ? list : empty}
-        {!cancelled && (
-          <Button
-            variant="secondary"
-            size="sm"
-            fullWidth
-            leftSection={<LuPlus size={16} />}
-            onClick={createIncident}
-          >
+    <Stack gap="md">
+      {!cancelled && (
+        <Group justify="flex-end">
+          <Button variant="secondary" leftSection={<LuPlus size={16} />} onClick={createIncident}>
             Lập phiếu sự cố
           </Button>
-        )}
-      </Stack>
-    </Card>
+        </Group>
+      )}
+      {incidents.length ? <Stack gap="sm">{list}</Stack> : empty}
+    </Stack>
   )
 }

@@ -14,9 +14,16 @@ export type SettingKey =
   | 'MAX_LOGIN_FAIL'
   | 'LOCK_MINUTES'
   | 'STORE_PHONE'
+  | 'BOOKING_ENABLED'
+  | 'BOOKING_DELIVERY_ENABLED'
+  | 'BOOKING_MIN_LEAD_HOURS'
+  | 'BOOKING_MAX_OPEN_PER_CUSTOMER'
+  | 'BOOKING_PICKUP_MIN_AMOUNT'
+  | 'BOOKING_RETURN_GAP_HOURS_NORMAL'
+  | 'BOOKING_RETURN_GAP_HOURS_EXPRESS'
 
 /** BANK chỉ có ở FE (ô chọn ngân hàng); BE coi BANK_BIN là số nguyên dương */
-export type SettingType = 'TIME' | 'POSITIVE_INT' | 'NON_NEGATIVE_INT' | 'STRING' | 'BANK' | 'PHONE'
+export type SettingType = 'TIME' | 'POSITIVE_INT' | 'NON_NEGATIVE_INT' | 'STRING' | 'BANK' | 'PHONE' | 'BOOLEAN'
 
 export type SettingGroup =
   'RECEIPT' | 'COMPENSATION' | 'VIETQR' | 'OPERATION' | 'SECURITY' | 'OTHER'

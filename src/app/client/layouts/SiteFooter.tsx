@@ -7,7 +7,7 @@ import { SectionError, usePublicStore, ZaloLink } from '@/features/client/public
 import { PATHS } from '@/shared/common/config/paths'
 import { NAV, useAnchorNav } from './useSectionNav'
 
-const FOOTER_LINKS = NAV.filter((n) => n.id !== 'lien-he')
+const FOOTER_LINKS = NAV.filter((n) => n.id !== 'contact')
 
 // Ảnh thay thế có giấy phép trong public/landing; thay bằng ảnh chụp chính tiệm thì bỏ dòng ghi công này
 const PHOTO_CREDITS = [
@@ -93,15 +93,15 @@ export function SiteFooter() {
 
   return (
     <footer
-      id="lien-he"
-      aria-labelledby="lien-he-title"
+      id="contact"
+      aria-labelledby="contact-title"
       className="scroll-mt-20 bg-(--pub-primary) text-(--pub-on-primary)"
     >
       <div className="pub-container pt-16 pb-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div className="flex flex-col gap-2">
             <h2
-              id="lien-he-title"
+              id="contact-title"
               tabIndex={-1}
               className="text-(length:--pub-text-sm) font-semibold tracking-[0.14em] text-(--pub-accent) uppercase focus:outline-none"
             >

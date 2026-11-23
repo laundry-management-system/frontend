@@ -1,5 +1,7 @@
 import { Skeleton } from '@mantine/core'
 import { LuArrowDown, LuCheck } from 'react-icons/lu'
+import { Link } from 'react-router-dom'
+import { PATHS } from '@/shared/common/config/paths'
 import { useHeroRef } from '../application/heroRef'
 import { usePublicServiceAreas } from '../application/queries/usePublicServiceAreas'
 import { usePublicStore } from '../application/queries/usePublicStore'
@@ -41,9 +43,9 @@ export function Hero() {
 
   return (
     <section
-      id="mo-dau"
+      id="intro"
       ref={heroRef}
-      aria-labelledby="mo-dau-title"
+      aria-labelledby="intro-title"
       data-enter
       className="flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden bg-(image:--pub-hero-gradient) pt-10 pb-16 md:pt-12 md:pb-16"
     >
@@ -53,7 +55,7 @@ export function Hero() {
             <OpenStatusPill />
           </div>
           <h1
-            id="mo-dau-title"
+            id="intro-title"
             className="max-w-[16ch] text-(length:--pub-text-hero) text-(--pub-ink)"
           >
             Giặt sạch, sấy thơm, <span className="pub-accent-word">gấp gọn</span> giúp bạn
@@ -64,11 +66,11 @@ export function Hero() {
               : 'Mang đồ đến tiệm, tiệm cân, đếm và ghi biên nhận ngay khi nhận đồ, giặt xong báo để bạn qua lấy.'}
           </p>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link to={PATHS.customerBooking} className="pub-btn pub-btn--primary pub-btn--lg">
+              Đặt đơn ngay
+            </Link>
             <CallButton phone={phone} size="lg" />
-            <a
-              href="#bang-gia"
-              className={`pub-btn pub-btn--lg ${phone ? 'pub-btn--ghost' : 'pub-btn--primary'}`}
-            >
+            <a href="#pricing" className="pub-btn pub-btn--ghost pub-btn--lg">
               Xem bảng giá
               <LuArrowDown size={18} aria-hidden="true" />
             </a>

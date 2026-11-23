@@ -1,7 +1,8 @@
-import { Button, Group, Modal, Text } from '@mantine/core'
+import { Badge, Button, Group, Modal, Text } from '@mantine/core'
 import dayjs from 'dayjs'
 import { LuCloudOff, LuWallet } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
+import { ORDER_CHANNEL_LABEL, type OrderChannel } from '@/features/admin/orders'
 import { formatNumber } from '@/shared/common/lib/format'
 import {
   CopyableCode,
@@ -22,13 +23,20 @@ interface RevenueDayModalProps {
   title: string
   /** Số giao dịch của cột; nhiều hơn số dòng tải về nghĩa là API đã cắt bớt */
   expectedCount?: number
+  channel?: OrderChannel
   onClose: () => void
 }
 
 /** Các giao dịch được cộng vào doanh thu của một cột; tổng khớp với cột trên biểu đồ. */
-export function RevenueDayModal({ range, title, expectedCount, onClose }: RevenueDayModalProps) {
+export function RevenueDayModal({
+  range,
+  title,
+  expectedCount,
+  channel,
+  onClose,
+}: RevenueDayModalProps) {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = useRevenuePayments(range)
+  const { data, isLoading, isError, refetch } = useRevenuePayments(range, channel)
   const payments = data ?? []
   const total = payments.reduce((sum, p) => sum + p.amount, 0)
   const oneDay = range.from === range.to
@@ -55,6 +63,16 @@ export function RevenueDayModal({ range, title, expectedCount, onClose }: Revenu
       render: (p) => <CopyableCode code={p.orderCode} />,
     },
     { name: 'customer', label: 'Khách hàng', render: (p) => p.customerName },
+    {
+      name: 'channel',
+      label: 'Kênh',
+      width: 100,
+      render: (p) => (
+        <Badge variant="light" color={p.channel === 'ONLINE' ? 'blue' : 'gray'} size="sm">
+          {ORDER_CHANNEL_LABEL[p.channel]}
+        </Badge>
+      ),
+    },
     {
       name: 'method',
       label: 'Phương thức',

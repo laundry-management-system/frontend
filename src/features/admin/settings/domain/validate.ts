@@ -23,6 +23,8 @@ export function validateSetting(type: SettingType, raw: string): string | null {
       return DIGITS.test(v) && Number(v) > 0 ? null : 'Phải là số nguyên lớn hơn 0'
     case 'NON_NEGATIVE_INT':
       return DIGITS.test(v) ? null : 'Phải là số nguyên không âm'
+    case 'BOOLEAN':
+      return v === 'true' || v === 'false' ? null : 'Chỉ nhận true hoặc false'
     case 'STRING':
       return v ? null : 'Không được để trống'
     case 'PHONE': {

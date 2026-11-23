@@ -1,5 +1,7 @@
 import { Skeleton } from '@mantine/core'
 import { LuMapPin } from 'react-icons/lu'
+import { Link } from 'react-router-dom'
+import { PATHS } from '@/shared/common/config/paths'
 import { usePublicStore } from '../application/queries/usePublicStore'
 import { CallButton } from './CallButton'
 import { ZaloLink } from './ZaloLink'
@@ -47,6 +49,9 @@ export function FinalCta() {
             <p className="max-w-xl text-(length:--pub-text-lg) text-white/85">
               Gọi hoặc nhắn cho tiệm để hỏi giá, hẹn lấy đồ tận nơi hay đơn giản là ghé qua.
             </p>
+            <Link to={PATHS.customerBooking} className="pub-btn pub-btn--accent pub-btn--lg">
+              Đặt đơn ngay
+            </Link>
             {action}
           </div>
         </div>
