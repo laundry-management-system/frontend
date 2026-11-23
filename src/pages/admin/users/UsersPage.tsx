@@ -1,4 +1,4 @@
-import { Badge, Button, SegmentedControl, Text, TextInput } from '@mantine/core'
+import { Badge, Button, Select, Text, TextInput } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
 import { LuSearch, LuSearchX, LuUsers } from 'react-icons/lu'
 import {
@@ -23,14 +23,15 @@ import {
   EmptyState,
   ListPage,
   RowActions,
+  FILTER_SELECT_PROPS,
 } from '@/shared/admin/ui'
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly UserStatus[]
 
 const STATUS_OPTIONS = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: 'Đang làm', value: 'ACTIVE' },
-  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
+  { label: 'Trạng thái: Tất cả', value: 'ALL' },
+  { label: 'Trạng thái: Đang làm', value: 'ACTIVE' },
+  { label: 'Trạng thái: Ngừng hoạt động', value: 'INACTIVE' },
 ]
 
 type ModalState =
@@ -72,7 +73,7 @@ export default function UsersPage() {
   const totalPages = data?.page.totalPages ?? 1
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
-  const handleStatusChange = (v: string) => setStatus(v as UserStatus | 'ALL')
+  const handleStatusChange = (v: string | null) => setStatus(v as UserStatus | 'ALL')
 
   const filters = (
     <>
@@ -84,14 +85,21 @@ export default function UsersPage() {
         onChange={handleSearchChange}
         w={320}
       />
-      <SegmentedControl value={status} onChange={handleStatusChange} data={STATUS_OPTIONS} />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={240}
+        value={status}
+        onChange={handleStatusChange}
+        data={STATUS_OPTIONS}
+        allowDeselect={false}
+      />
     </>
   )
 
   const rowActions = (u: User) => [
     { label: 'Sửa', onClick: () => setModal({ kind: 'edit', user: u }) },
     {
-      label: 'Vô hiệu hóa',
+      label: 'Ngừng hoạt động',
       danger: true,
       hidden: !(u.status === 'ACTIVE' && u.role !== 'ADMIN'),
       onClick: () => setModal({ kind: 'disable', user: u }),
@@ -217,8 +225,8 @@ export default function UsersPage() {
         onClose={close}
         onConfirm={confirmDisable}
         kind="destructive"
-        title="Vô hiệu hóa nhân viên"
-        confirmLabel="Vô hiệu hóa"
+        title="Ngừng hoạt động nhân viên"
+        confirmLabel="Ngừng hoạt động"
         loading={disableUser.isPending}
       >
         {target &&

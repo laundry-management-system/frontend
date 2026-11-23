@@ -48,17 +48,13 @@ export const workColumns = (now: number): DataTableColumn<OrderListItem>[] => [
   },
   {
     name: 'type',
-    label: 'Loại đơn',
+    label: 'Hình thức',
     width: 150,
     render: (o) =>
       isUnclassified(o) ? (
         <StatusBadge group="flag" statusKey="unclassified" size="sm" />
-      ) : o.orderType === 'EXPRESS' ? (
-        <StatusBadge group="flag" statusKey="express" size="sm" />
       ) : (
-        <Text size="sm" c="dimmed">
-          Thường
-        </Text>
+        <Text size="sm">{o.washModeName ?? '—'}</Text>
       ),
   },
   {

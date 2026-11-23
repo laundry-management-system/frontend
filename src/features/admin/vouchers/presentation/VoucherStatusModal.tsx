@@ -37,8 +37,8 @@ export function VoucherStatusModal({ voucher, onClose }: VoucherStatusModalProps
       onClose={onClose}
       onConfirm={confirm}
       kind={disabling ? 'destructive' : 'confirm'}
-      title={disabling ? 'Tắt voucher' : 'Bật lại voucher'}
-      confirmLabel={disabling ? 'Tắt voucher' : 'Bật voucher'}
+      title={disabling ? 'Ngừng hoạt động voucher' : 'Kích hoạt lại voucher'}
+      confirmLabel={disabling ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
       loading={changeStatus.isPending}
     >
       {voucher && (

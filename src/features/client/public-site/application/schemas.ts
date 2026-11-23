@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { rematch, validateQuantity } from '../domain/estimate'
-import type { EstimateInput, PublicService, PublicServiceArea, PublicStore } from '../domain/types'
+import type {
+  EstimateInput,
+  PublicService,
+  PublicServiceArea,
+  PublicStore,
+  PublicWashMode,
+} from '../domain/types'
 
 const money = z.number().int().nonnegative()
 
@@ -21,14 +27,19 @@ export const publicServicesSchema = z.array(
     id: z.number(),
     name: z.string(),
     unit: z.enum(['KG', 'PIECE', 'SET', 'PRODUCT']),
-    price: money,
     minQuantity: z.number().nonnegative(),
-    standardHours: z.number(),
-    expressSupported: z.boolean(),
-    expressSurcharge: money.nullable(),
-    expressHours: z.number().nullable(),
     whitesApplicable: z.boolean(),
+    prices: z.array(z.object({ washModeId: z.number(), price: money })),
   }) satisfies z.ZodType<PublicService>,
+)
+
+export const publicWashModesSchema = z.array(
+  z.object({
+    id: z.number(),
+    name: z.string(),
+    completionHours: z.number(),
+    isDefault: z.boolean(),
+  }) satisfies z.ZodType<PublicWashMode>,
 )
 
 export const publicServiceAreasSchema = z.array(

@@ -1,4 +1,4 @@
-import { Button, SegmentedControl, Text, TextInput } from '@mantine/core'
+import { Button, Select, Text, TextInput } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
 import { LuSearch, LuSearchX, LuUserPlus, LuUsers } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
@@ -21,6 +21,7 @@ import {
   EntityCode,
   ListPage,
   RowActions,
+  FILTER_SELECT_PROPS,
 } from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 import { notify } from '@/shared/common/lib/notify'
@@ -31,9 +32,9 @@ import { usePendingAccountParam } from './components/usePendingAccountParam'
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly CustomerStatus[]
 
 const STATUS_OPTIONS = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: CUSTOMER_STATUS_LABEL.ACTIVE, value: 'ACTIVE' },
-  { label: CUSTOMER_STATUS_LABEL.INACTIVE, value: 'INACTIVE' },
+  { label: `Trạng thái: Tất cả`, value: 'ALL' },
+  { label: `Trạng thái: ${CUSTOMER_STATUS_LABEL.ACTIVE}`, value: 'ACTIVE' },
+  { label: `Trạng thái: ${CUSTOMER_STATUS_LABEL.INACTIVE}`, value: 'INACTIVE' },
 ]
 
 type ReviewState = { kind: 'activate' | 'reject'; target: Customer } | null
@@ -76,7 +77,7 @@ export default function CustomersPage() {
   const handleRetry = () => refetch()
   const rowKey = (c: Customer) => c.id
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
-  const handleStatusChange = (v: string) => setStatus(v as CustomerStatus | 'ALL')
+  const handleStatusChange = (v: string | null) => setStatus(v as CustomerStatus | 'ALL')
 
   const handleReviewError = (e: Error) => notify.error(e.message)
   const confirmActivate = () => {
@@ -111,7 +112,14 @@ export default function CustomersPage() {
         value={q}
         onChange={handleSearchChange}
       />
-      <SegmentedControl value={status} onChange={handleStatusChange} data={STATUS_OPTIONS} />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={240}
+        value={status}
+        onChange={handleStatusChange}
+        data={STATUS_OPTIONS}
+        allowDeselect={false}
+      />
       {isAdmin && <PendingAccountFilter />}
     </>
   )

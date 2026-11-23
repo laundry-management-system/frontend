@@ -2,22 +2,25 @@ export interface BookingSettings {
   bookingEnabled: boolean
   deliveryEnabled: boolean
   minLeadHours: number
-  returnGapHoursNormal: number
-  returnGapHoursExpress: number
 }
 
 export type DropoffMethod = 'AT_STORE' | 'PICKUP'
 export type ReturnMethod = 'AT_STORE' | 'DELIVERY'
 export type BookingUnit = 'KG' | 'PIECE' | 'SET' | 'PRODUCT'
-export type OrderType = 'NORMAL' | 'EXPRESS'
+export interface BookingWashMode {
+  id: number
+  name: string
+  completionHours: number
+  isDefault: boolean
+}
 
 export interface BookingItemDraft {
   serviceId: number
 }
 
 export interface BookingDraft {
-  /** Hình thức giặt của cả đơn. */
-  orderType: OrderType
+  /** Hình thức giặt của cả đơn; null = chưa có (đợi danh sách hình thức để chọn mặc định). */
+  washModeId: number | null
   items: BookingItemDraft[]
   dropoffMethod: DropoffMethod
   returnMethod: ReturnMethod
@@ -50,9 +53,7 @@ export interface BookingService {
   id: number
   name: string
   unit: BookingUnit
-  price: number
-  expressSupported: boolean
-  expressSurcharge: number | null
+  prices: { washModeId: number; price: number }[]
   whitesApplicable: boolean
 }
 
@@ -71,7 +72,8 @@ export interface BookingStore {
 /** Một đơn trong OnlineBookingResponse (contract 029 §1). */
 export interface BookingOrder {
   orderCode: string
-  orderType: OrderType
+  washModeId: number
+  washModeName: string
   status: string
   createdAt: string
   appointmentAt: string

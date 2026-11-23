@@ -51,8 +51,6 @@ export const RETURN_STATUS_LABEL: Record<ReturnStatus, string> = {
 
 export type PaymentStatus = 'UNPAID' | 'PAID'
 
-export type OrderType = 'NORMAL' | 'EXPRESS'
-
 export type ItemUnit = 'KG' | 'PIECE' | 'SET' | 'PRODUCT'
 
 export const ORDER_STATUSES = [
@@ -73,11 +71,6 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   COMPLETED: 'Hoàn thành',
   DELIVERED: 'Đã giao',
   CANCELLED: 'Đã hủy',
-}
-
-export const ORDER_TYPE_LABEL: Record<OrderType, string> = {
-  NORMAL: 'Tiêu chuẩn',
-  EXPRESS: 'Giặt nhanh',
 }
 
 export const CONDITION_TAGS = [
@@ -115,7 +108,8 @@ export interface OrderSummary {
 }
 
 export interface OrderListItem extends OrderSummary {
-  orderType: OrderType
+  washModeId: number | null
+  washModeName: string | null
   totalAmount: number
   /** Tiền dịch vụ + phí lấy + phí giao (FR-042) */
   payableAmount: number
@@ -126,7 +120,7 @@ export interface OrderListItem extends OrderSummary {
 }
 
 /** Tab của Danh sách công việc; các tab chồng nhau, không cộng thành tổng. */
-export type WorkTab = 'ALL' | 'UNCLASSIFIED' | 'RECEIVED' | 'PROCESSING' | 'LATE' | 'EXPRESS'
+export type WorkTab = 'ALL' | 'UNCLASSIFIED' | 'RECEIVED' | 'PROCESSING' | 'LATE'
 
 /** Tab khác 'ALL', dùng cho `useListParams` */
 export const WORK_TABS = [
@@ -134,7 +128,6 @@ export const WORK_TABS = [
   'RECEIVED',
   'PROCESSING',
   'LATE',
-  'EXPRESS',
 ] as const satisfies readonly WorkTab[]
 
 export const WORK_TAB_LABEL: Record<WorkTab, string> = {
@@ -143,17 +136,19 @@ export const WORK_TAB_LABEL: Record<WorkTab, string> = {
   RECEIVED: 'Mới nhận',
   PROCESSING: 'Đang xử lý',
   LATE: 'Chỉ TRỄ',
-  EXPRESS: 'Giặt nhanh',
 }
 
 export type WorkCounts = Record<WorkTab, number> & {
   pendingConfirmation: number
   awaitingDropoff: number
+  /** Số đơn mở theo hình thức; thiếu = 0 */
+  byMode: Record<number, number>
 }
 
 export interface WorkListParams {
   tab: WorkTab
   channel?: OrderChannel
+  washModeId?: number
   q: string
   /** yyyy-MM-dd, gồm cả hai đầu */
   dueFrom?: string
@@ -186,12 +181,14 @@ export interface StoredOrderList {
 /** Khớp `setMaxResults(200)` của GET /orders/overdue */
 export const STORED_ORDERS_LIMIT = 200
 
-/** Dịch vụ chọn ở quầy: ghi chú tham khảo để tách đơn / gợi ý dòng, không có giá */
+/** Dịch vụ chọn ở quầy: gợi ý dòng phân loại, kèm đơn giá đã chụp lúc tạo đơn */
 export interface RequestedService {
   id: number
   /** null nếu dịch vụ đã bị xóa */
   name: string | null
   unit: ItemUnit | null
+  /** Đơn giá đã chụp (FR-012); null nếu đơn không có ảnh chụp giá */
+  unitPrice: number | null
 }
 
 export interface OrderImage {
@@ -284,7 +281,10 @@ export interface OrderDetail extends OrderSummary {
   confirmedAt: string | null
   confirmedBy: string | null
   fulfillment: OrderFulfillment | null
-  orderType: OrderType
+  washModeId: number | null
+  washModeName: string | null
+  /** Giờ hoàn thành đã chụp trên đơn */
+  washModeHours: number | null
   receiptPrintedAt: string | null
   note: string | null
   items: OrderLine[]
@@ -328,7 +328,7 @@ export interface ReceiptData {
   dueAt: string
   shopName: string
   hotline: string
-  orderType?: OrderType
+  washModeName?: string
   /** Chỉ in khi lượt có 2 đơn */
   intakeCode?: string | null
   intakeOrderIndex?: number
@@ -356,12 +356,6 @@ export interface Totals {
   whitesFee: number
   total: number
   perLine: number[]
-}
-
-/** Thông tin dịch vụ cần để tính tiền, khớp `Service` của features/services */
-export interface PricingService {
-  expressSupported: boolean
-  expressSurcharge: number | null
 }
 
 // Khớp key nhóm `order` trong shared/config/domainStatuses
@@ -431,15 +425,17 @@ export interface InvoiceLine {
 }
 
 export interface Invoice {
+  washModeName: string | null
   shopName: string
   hotline: string
-  invoiceNo: string
+  /** Các trường thanh toán là `null` khi in hóa đơn cho đơn chưa thanh toán */
+  invoiceNo: string | null
   orderCode: string
   customerName: string
   customerPhone: string
   receivedAt: string
-  paidAt: string
-  method: PaymentMethod
+  paidAt: string | null
+  method: PaymentMethod | null
   referenceCode: string | null
   confirmedByName: string
   lines: InvoiceLine[]

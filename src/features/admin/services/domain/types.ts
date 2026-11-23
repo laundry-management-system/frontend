@@ -2,30 +2,51 @@ export type ServiceUnit = 'KG' | 'PIECE' | 'SET' | 'PRODUCT'
 
 export type ServiceStatus = 'ACTIVE' | 'INACTIVE'
 
+export interface WashMode {
+  id: number
+  code: string
+  name: string
+  completionHours: number
+  active: boolean
+  isDefault: boolean
+}
+
+export interface ServicePrice {
+  washModeId: number
+  price: number
+}
+
+export interface ModeServiceLine {
+  serviceId: number
+  price: number
+}
+
+export type WashModeDetail = WashMode & { services: ModeServiceLine[] }
+
+export type WashModeRequest = Omit<WashMode, 'id' | 'code'> & { services: ModeServiceLine[] }
+
 export interface Service {
   id: number
   code: string
   name: string
   unit: ServiceUnit | null
-  price: number
-  standardHours: number
-  expressSupported: boolean
-  expressSurcharge: number | null
-  expressHours: number | null
   minQuantity: number
   whitesApplicable: boolean
   status: ServiceStatus
+  prices: ServicePrice[]
 }
 
-/** `''` là giá trị rỗng của NumberInput */
+/** Một dòng hình thức đang hoạt động trên form dịch vụ; `''` là giá trị rỗng của NumberInput */
+export interface ServiceFormPrice {
+  mode: WashMode
+  enabled: boolean
+  price: number | ''
+}
+
 export interface ServiceFormValues {
   name: string
   unit: ServiceUnit | null
-  price: number | ''
-  standardHours: number | ''
-  expressSupported: boolean
-  expressSurcharge: number | ''
-  expressHours: number | ''
+  prices: ServiceFormPrice[]
   minQuantity: number | ''
   whitesApplicable: boolean
   status: ServiceStatus
@@ -45,10 +66,11 @@ export const SERVICE_STATUS_LABEL: Record<ServiceStatus, string> = {
 
 /** Trường của dịch vụ được ghi vào lịch sử thay đổi giá (BR-C02) */
 export type PriceField =
-  'PRICE' | 'EXPRESS_SURCHARGE' | 'STANDARD_HOURS' | 'EXPRESS_HOURS' | 'STATUS'
+  'PRICE' | 'MODE_PRICE' | 'EXPRESS_SURCHARGE' | 'STANDARD_HOURS' | 'EXPRESS_HOURS' | 'STATUS'
 
 export const PRICE_FIELDS: readonly PriceField[] = [
   'PRICE',
+  'MODE_PRICE',
   'EXPRESS_SURCHARGE',
   'STANDARD_HOURS',
   'EXPRESS_HOURS',
@@ -57,6 +79,7 @@ export const PRICE_FIELDS: readonly PriceField[] = [
 
 export const PRICE_FIELD_LABEL: Record<PriceField, string> = {
   PRICE: 'Đơn giá',
+  MODE_PRICE: 'Giá theo hình thức',
   EXPRESS_SURCHARGE: 'Phụ phí giặt nhanh',
   STANDARD_HOURS: 'Thời gian xử lý',
   EXPRESS_HOURS: 'Thời gian giặt nhanh',
@@ -72,6 +95,8 @@ export interface PriceHistoryRow {
   serviceName: string
   unit: ServiceUnit | null
   field: PriceField
+  washModeId: number | null
+  washModeName: string | null
   oldValue: string | null
   newValue: string | null
   changedById: number

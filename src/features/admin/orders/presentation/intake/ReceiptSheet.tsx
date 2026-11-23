@@ -1,4 +1,4 @@
-import { Badge, Box, Divider, Group, Stack, Text } from '@mantine/core'
+import { Box, Divider, Group, Stack, Text } from '@mantine/core'
 import { compensationTermsText } from '@/shared/common/lib/compensationTerms'
 import { formatDateTime, formatMoney } from '@/shared/common/lib/format'
 import { OrderCode } from '@/shared/admin/ui'
@@ -39,14 +39,18 @@ function Services({ data }: { data: ReceiptData }) {
       <Text className="text-print-small">Dịch vụ đã chọn (giá tham khảo)</Text>
       {data.services.map((s) => {
         const unit = UNIT_LABEL[s.unit]
-        const price = s.unitPrice + (s.expressSurcharge ?? 0)
         return (
           <Group key={s.name} justify="space-between" wrap="nowrap" gap="xs" align="flex-start">
             <Text className="text-print-body">{s.name}</Text>
             <Stack gap={0} align="flex-end">
               <Text className="text-print-body" style={{ whiteSpace: 'nowrap' }}>
-                {`${formatMoney(price)}/${unit}`}
+                {`${formatMoney(s.unitPrice)}/${unit}`}
               </Text>
+              {(s.expressSurcharge ?? 0) > 0 && (
+                <Text className="text-print-small" c="dimmed">
+                  {`Phụ phí giặt nhanh +${formatMoney(s.expressSurcharge ?? 0)}/${unit}`}
+                </Text>
+              )}
               {s.minQuantity > 0 && (
                 <Text className="text-print-small" c="dimmed">
                   {`tối thiểu ${s.minQuantity} ${unit}`}
@@ -61,7 +65,6 @@ function Services({ data }: { data: ReceiptData }) {
 }
 
 function Copy({ data, qrSvg, label }: { data: ReceiptData; qrSvg?: string | null; label: string }) {
-  const express = data.orderType === 'EXPRESS'
   const multi = (data.intakeOrderCount ?? 1) > 1
   return (
     <Stack
@@ -83,10 +86,10 @@ function Copy({ data, qrSvg, label }: { data: ReceiptData; qrSvg?: string | null
       <Divider variant="dashed" />
       <Stack gap={2} align="center">
         <OrderCode code={data.orderCode} />
-        {data.orderType && (
-          <Badge size="sm" radius="xs" color="dark" variant={express ? 'filled' : 'outline'}>
-            {express ? 'GIẶT NHANH' : 'TIÊU CHUẨN'}
-          </Badge>
+        {data.washModeName && (
+          <Text className="text-print-small" fw={600}>
+            {data.washModeName.toUpperCase()}
+          </Text>
         )}
         <Text className="text-print-small">Nhận lúc {formatDue(data.receivedAt)}</Text>
         {multi && data.intakeCode && (

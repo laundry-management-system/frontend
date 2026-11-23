@@ -8,7 +8,7 @@ interface ConfirmModalProps {
   onConfirm: (reason?: string) => void
   /** confirm: xác nhận thường · destructive: hủy/xóa · reason: bắt buộc nhập lý do (ghi nhật ký) */
   kind: 'confirm' | 'destructive' | 'reason'
-  title: string
+  title: ReactNode
   children?: ReactNode
   confirmLabel?: string
   loading?: boolean

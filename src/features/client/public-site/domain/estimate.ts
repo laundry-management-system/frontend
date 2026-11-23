@@ -43,14 +43,12 @@ export function estimate(
   area: PublicServiceArea | null,
 ): EstimateResult | null {
   if (validateQuantity(input.quantity, service.unit) !== null) return null
+  const price = priceFor(service, input.washModeId)
+  if (price === null) return null
   const qty = Math.round(Number(normalize(input.quantity)) * 100)
   const min = Math.round(service.minQuantity * 100)
   const billable = Math.max(qty, min)
-  const subtotal = Math.round((service.price * billable) / 100)
-  const expressFee =
-    input.express && service.expressSupported
-      ? Math.round(((service.expressSurcharge ?? 0) * billable) / 100)
-      : 0
+  const subtotal = Math.round((price * billable) / 100)
   const door = input.mode === 'DOOR' && area !== null
   const deliveryFee = door
     ? (input.pickup ? area.pickupFee : 0) + (input.delivery ? area.deliveryFee : 0)
@@ -59,11 +57,14 @@ export function estimate(
     billableQty: billable / 100,
     belowMinimum: qty < min,
     subtotal,
-    expressFee,
     deliveryFee,
-    total: subtotal + expressFee + deliveryFee,
+    total: subtotal + deliveryFee,
   }
 }
+
+/** Đơn giá của dịch vụ theo hình thức giặt; hình thức không áp dụng thì `null`. */
+export const priceFor = (service: PublicService, washModeId: number | null) =>
+  service.prices.find((p) => p.washModeId === washModeId)?.price ?? null
 
 /** Khớp lại lựa chọn khi danh sách tải lại: cùng vị trí và tên → giữ; không thì vị trí đầu tiên cùng tên; không còn → `null`. */
 export function rematch(pick: Pick | null, list: readonly { name: string }[]): Pick | null {

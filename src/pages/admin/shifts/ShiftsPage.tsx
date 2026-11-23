@@ -1,4 +1,4 @@
-import { Group, SegmentedControl, SimpleGrid, Stack, Text } from '@mantine/core'
+import { Group, Select, SimpleGrid, Stack, Text } from '@mantine/core'
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { LuCalendar, LuSearchX, LuWalletCards } from 'react-icons/lu'
@@ -22,13 +22,14 @@ import {
   EmptyState,
   ListPage,
   StatTile,
+  FILTER_SELECT_PROPS,
 } from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 
 const STATUSES = ['OPEN', 'CLOSED', 'APPROVED'] as const satisfies readonly ShiftStatus[]
 const STATUS_OPTIONS = [
-  { label: 'Tất cả', value: 'ALL' },
-  ...STATUSES.map((s) => ({ label: SHIFT_STATUS_LABEL[s], value: s })),
+  { label: 'Trạng thái: Tất cả', value: 'ALL' },
+  ...STATUSES.map((s) => ({ label: `Trạng thái: ${SHIFT_STATUS_LABEL[s]}`, value: s })),
 ]
 const TABULAR = { fontVariantNumeric: 'tabular-nums' } as const
 const DATE = 'YYYY-MM-DD'
@@ -142,7 +143,7 @@ export default function ShiftsPage() {
   const { data: summary } = useShiftSummary({ from, to })
 
   const handleRetry = () => refetch()
-  const handleStatusChange = (value: string) => setStatus(value as ShiftStatus | 'ALL')
+  const handleStatusChange = (value: string | null) => setStatus(value as ShiftStatus | 'ALL')
   // Đổi khoảng ngày thì về trang 1; chọn đủ hai đầu mới áp dụng
   const handleRangeChange = ([start, end]: DatesRangeValue) => {
     if (!start || !end) return
@@ -201,7 +202,14 @@ export default function ShiftsPage() {
         value={[dayjs(from).toDate(), dayjs(to).toDate()]}
         onChange={handleRangeChange}
       />
-      <SegmentedControl data={STATUS_OPTIONS} value={status} onChange={handleStatusChange} />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={240}
+        data={STATUS_OPTIONS}
+        value={status}
+        onChange={handleStatusChange}
+        allowDeselect={false}
+      />
     </Group>
   )
 

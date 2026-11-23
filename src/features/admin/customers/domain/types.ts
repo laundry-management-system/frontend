@@ -34,7 +34,7 @@ export interface CustomerOrder {
   id: number
   code: string
   receivedAt: string | null
-  serviceName: string | null
+  washModeName: string | null
   totalAmount: number
   status: OrderStatus
   paymentStatus: PaymentStatus

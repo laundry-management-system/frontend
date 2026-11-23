@@ -1,8 +1,13 @@
-import { Badge, Group, Stack, Text, Tooltip } from '@mantine/core'
+import { Badge, Group, Text, Tooltip } from '@mantine/core'
 import { LuArrowRight } from 'react-icons/lu'
 import { CopyableCode, type DataTableColumn } from '@/shared/admin/ui'
-import { formatChangedAt, formatPriceValue, priceRowDelta } from '../domain/priceHistory'
-import { PRICE_FIELD_LABEL, type PriceHistoryRow } from '../domain/types'
+import {
+  formatChangedAt,
+  formatPriceValue,
+  priceFieldLabel,
+  priceRowDelta,
+} from '../domain/priceHistory'
+import type { PriceHistoryRow } from '../domain/types'
 
 const NOWRAP = { whiteSpace: 'nowrap' } as const
 const DELTA_COLOR = { up: 'success', down: 'warning', same: 'neutral' } as const
@@ -16,19 +21,18 @@ export const PRICE_HISTORY_COLUMNS: DataTableColumn<PriceHistoryRow>[] = [
     render: (r) => formatChangedAt(r.changedAt),
   },
   {
-    name: 'service',
-    label: 'Dịch vụ',
-    width: 170,
-    render: (r) => (
-      <Stack gap={2} align="flex-start">
-        <Text size="sm" fw={500}>
-          {r.serviceName}
-        </Text>
-        {r.serviceCode && <CopyableCode code={r.serviceCode} size="sm" />}
-      </Stack>
-    ),
+    name: 'serviceCode',
+    label: 'Mã',
+    width: 100,
+    render: (r) => r.serviceCode && <CopyableCode code={r.serviceCode} size="sm" />,
   },
-  { name: 'field', label: 'Thay đổi', width: 180, render: (r) => PRICE_FIELD_LABEL[r.field] },
+  { name: 'service', label: 'Dịch vụ', width: 170, render: (r) => r.serviceName },
+  {
+    name: 'field',
+    label: 'Thay đổi',
+    width: 180,
+    render: (r) => priceFieldLabel(r.field, r.washModeName),
+  },
   {
     name: 'values',
     label: 'Cũ → Mới',

@@ -1,12 +1,13 @@
 import { Skeleton } from '@mantine/core'
 import type { IconType } from 'react-icons'
-import { LuClock, LuRuler, LuShirt, LuSparkles, LuWashingMachine, LuZap } from 'react-icons/lu'
+import { LuShirt, LuSparkles, LuWashingMachine } from 'react-icons/lu'
 import { UNIT_LABEL } from '../domain/types'
-import { expressParts } from './formatFee'
 import { formatMoney, formatNumber, formatPhone } from '@/shared/common/lib/format'
 import { usePublicServices } from '../application/queries/usePublicServices'
 import { usePublicStore } from '../application/queries/usePublicStore'
-import type { PublicService } from '../domain/types'
+import { usePublicWashModes } from '../application/queries/usePublicWashModes'
+import { priceFor } from '../domain/estimate'
+import type { PublicService, PublicWashMode } from '../domain/types'
 import { SectionError } from './SectionError'
 import { SectionHeading } from './SectionHeading'
 
@@ -40,65 +41,99 @@ function PriceListSkeleton() {
   )
 }
 
-function ServiceCard({ service, whitesFee }: { service: PublicService; whitesFee: number | null }) {
-  const Icon = UNIT_ICON[service.unit]
-  const unit = UNIT_LABEL[service.unit]
-  const express = expressParts(service)
+interface PriceTableProps {
+  services: PublicService[]
+  modes: PublicWashMode[]
+  whitesFee: number | null
+}
+
+function PriceTable({ services, modes, whitesFee }: PriceTableProps) {
+  const showWhites = !!whitesFee && services.some((s) => s.whitesApplicable)
   return (
-    <li className="pub-card pub-card--lift pub-card--shine flex flex-col gap-3 p-6">
-      <span className="pub-icon-tile" aria-hidden="true">
-        <Icon size={24} />
-      </span>
-      <h3 className="text-(length:--pub-text-lg) font-semibold">{service.name}</h3>
-      <p>
-        <span className="font-(family-name:--pub-font-display) text-[1.5rem] font-semibold text-(--pub-ink) tabular-nums">
-          {formatMoney(service.price)}
-        </span>
-        <span className="text-(--pub-ink-muted)">/{unit}</span>
-      </p>
-      <ul className="flex flex-col gap-1.5 border-t border-(--pub-border) pt-4 text-(--pub-ink-muted)">
-        {service.minQuantity > 0 && (
-          <li className="flex items-start gap-2">
-            <LuRuler size={18} className="mt-0.5 flex-none" aria-hidden="true" />
-            Tối thiểu {formatNumber(service.minQuantity)} {unit}
-          </li>
-        )}
-        <li className="flex items-start gap-2">
-          <LuClock size={18} className="mt-0.5 flex-none" aria-hidden="true" />
-          Xong trong {service.standardHours} giờ
-        </li>
-        {express && (
-          <li className="flex items-start gap-2">
-            <LuZap
-              size={18}
-              className="mt-0.5 flex-none text-(--pub-accent-ink)"
-              aria-hidden="true"
-            />
-            Giặt nhanh {express.surcharge}, xong trong {express.hours}
-          </li>
-        )}
-      </ul>
+    <>
+      <div className="pub-card overflow-x-auto">
+        <table className="w-full min-w-120 text-left">
+          <thead>
+            <tr className="border-b border-(--pub-border)">
+              <th scope="col" className="p-4 font-semibold">
+                Dịch vụ
+              </th>
+              {modes.map((m) => (
+                <th key={m.id} scope="col" className="p-4 text-right font-semibold">
+                  {m.name}
+                  <span className="block text-(length:--pub-text-sm) font-normal text-(--pub-ink-muted)">
+                    Xong trong {m.completionHours} giờ
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {services.map((s, i) => {
+              const Icon = UNIT_ICON[s.unit]
+              const unit = UNIT_LABEL[s.unit]
+              return (
+                <tr key={`${i}-${s.name}`} className="border-b border-(--pub-border) last:border-0">
+                  <th scope="row" className="p-4 font-semibold">
+                    <span className="flex items-center gap-3">
+                      <Icon size={20} className="flex-none" aria-hidden="true" />
+                      <span>
+                        {s.name}
+                        {s.minQuantity > 0 && (
+                          <span className="block text-(length:--pub-text-sm) font-normal text-(--pub-ink-muted)">
+                            Tối thiểu {formatNumber(s.minQuantity)} {unit}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </th>
+                  {modes.map((m) => {
+                    const price = priceFor(s, m.id)
+                    return (
+                      <td key={m.id} className="p-4 text-right tabular-nums">
+                        {price === null ? (
+                          <span aria-label="Không áp dụng">—</span>
+                        ) : (
+                          <>
+                            {formatMoney(price)}
+                            <span className="text-(--pub-ink-muted)">/{unit}</span>
+                          </>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
       {/* Phí 0đ thì không có gì để báo nên không hiện */}
-      {service.whitesApplicable && !!whitesFee && (
-        <p className="mt-auto rounded-(--pub-radius-md) bg-(--pub-accent-soft) px-3 py-2 text-(length:--pub-text-sm)">
+      {showWhites && (
+        <p className="mt-4 rounded-(--pub-radius-md) bg-(--pub-accent-soft) px-3 py-2 text-(length:--pub-text-sm)">
           Đồ trắng giặt riêng: phụ phí {formatMoney(whitesFee)} mỗi đơn
         </p>
       )}
-    </li>
+    </>
   )
 }
 
 /** Dịch vụ và bảng giá: các dịch vụ đang hoạt động, đúng thứ tự trên màn Bảng giá. */
 export function PriceList() {
   const services = usePublicServices()
+  const modes = usePublicWashModes()
   const store = usePublicStore()
   const phone = store.data?.phone ?? null
-  const handleRetry = () => services.refetch()
+  const handleRetry = () => {
+    services.refetch()
+    modes.refetch()
+  }
 
   let body
-  if (services.isPending) body = <PriceListSkeleton />
-  else if (services.isError) body = <SectionError what="bảng giá" onRetry={handleRetry} />
-  else if (services.data.length === 0)
+  if (services.isPending || modes.isPending) body = <PriceListSkeleton />
+  else if (services.isError || modes.isError)
+    body = <SectionError what="bảng giá" onRetry={handleRetry} />
+  else if (services.data.length === 0 || modes.data.length === 0)
     body = (
       <div className="pub-card p-6">
         <p className="font-medium">Tiệm đang cập nhật bảng giá, vui lòng gọi để được báo giá.</p>
@@ -111,22 +146,18 @@ export function PriceList() {
     )
   else
     body = (
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {services.data.map((s, i) => (
-          <ServiceCard
-            key={`${i}-${s.name}`}
-            service={s}
-            whitesFee={store.data?.whitesFee ?? null}
-          />
-        ))}
-      </ul>
+      <PriceTable
+        services={services.data}
+        modes={modes.data}
+        whitesFee={store.data?.whitesFee ?? null}
+      />
     )
 
   return (
     <section
       id="pricing"
       aria-labelledby={TITLE_ID}
-      aria-busy={services.isPending}
+      aria-busy={services.isPending || modes.isPending}
       className="pub-section"
     >
       <div className="pub-container">

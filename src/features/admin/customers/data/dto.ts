@@ -38,7 +38,7 @@ export interface ChangeCustomerStatusRequestDto {
 export interface CustomerOrderDto {
   id: number
   orderCode: string
-  serviceName: string | null
+  washModeName: string | null
   totalAmount: number | string
   status: OrderStatus
   paymentStatus: PaymentStatus

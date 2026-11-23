@@ -1,6 +1,6 @@
 import { Button, Card, Flex, Skeleton, Stack } from '@mantine/core'
 import { LuCloudOff } from 'react-icons/lu'
-import { ServiceAreasCard, SettingsForm, useSettings } from '@/features/admin/settings'
+import { SettingsForm, useSettings } from '@/features/admin/settings'
 import { EmptyState, PageHeader } from '@/shared/admin/ui'
 
 export default function SettingsPage() {
@@ -33,12 +33,10 @@ export default function SettingsPage() {
     )
   )
 
-  // Card khu vực tải riêng: lỗi của nó không chặn form cài đặt và ngược lại
   return (
     <>
       {!data && <PageHeader title="Cài đặt cửa hàng" description="Áp dụng cho toàn hệ thống" />}
       {body}
-      <ServiceAreasCard />
     </>
   )
 }

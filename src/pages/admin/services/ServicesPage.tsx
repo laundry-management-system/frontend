@@ -1,37 +1,46 @@
-import { Button, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
+import { Button, Select, Stack, Text, TextInput, Tooltip } from '@mantine/core'
 import { type ChangeEvent, useState } from 'react'
 import { LuPlus, LuSearch, LuSearchX, LuTags } from 'react-icons/lu'
 import { selectHasRole, useAuthStore } from '@/features/admin/auth'
 import {
-  expressParts,
+  isBookable,
+  priceFor,
+  useWashModes,
   SERVICE_STATUS_LABEL,
   type Service,
   type ServiceStatus,
   PriceTimelineDrawer,
   ServiceFormModal,
   ServiceStatusBadge,
+  toStatusChangeDto,
+  useUpdateService,
   UNIT_LABEL,
   usePriceIssued,
   useServices,
 } from '@/features/admin/services'
 import { useListParams } from '@/shared/admin/hooks/useListParams'
-import { formatDate, formatNumber } from '@/shared/common/lib/format'
+import { toApiError } from '@/shared/common/api/apiError'
+import { notify } from '@/shared/common/lib/notify'
+import { formatDate, formatMoney, formatNumber } from '@/shared/common/lib/format'
 import {
   type DataTableColumn,
   EmptyState,
+  ConfirmModal,
   ListPage,
-  Money,
   RowActions,
   CopyableCode,
+  FILTER_SELECT_PROPS,
 } from '@/shared/admin/ui'
+
+const MISSING_DEFAULT_HINT = 'Dịch vụ chưa có giá cho hình thức mặc định'
 
 type ModalState = { mode: 'create' } | { mode: 'edit'; service: Service } | null
 
 const STATUSES = ['ACTIVE', 'INACTIVE'] as const satisfies readonly ServiceStatus[]
 
 const STATUS_OPTIONS = [
-  { label: 'Tất cả', value: 'ALL' },
-  ...STATUSES.map((st) => ({ label: SERVICE_STATUS_LABEL[st], value: st })),
+  { label: 'Trạng thái: Tất cả', value: 'ALL' },
+  ...STATUSES.map((st) => ({ label: `Trạng thái: ${SERVICE_STATUS_LABEL[st]}`, value: st })),
 ]
 
 export default function ServicesPage() {
@@ -50,16 +59,44 @@ export default function ServicesPage() {
   const [timelineFor, setTimelineFor] = useState<Service | null>(null)
   const closeTimeline = () => setTimelineFor(null)
   const handleRetry = () => refetch()
+  const updateService = useUpdateService()
+  const [stopTarget, setStopTarget] = useState<Service | null>(null)
+  const closeStop = () => setStopTarget(null)
   const rowKey = (s: Service) => s.id
+  const { data: modes } = useWashModes()
+  const sortedModes = modes ?? []
+  const defaultModeId = modes?.find((m) => m.isDefault)?.id
+  // Chỉ cảnh báo khi đã tải xong hình thức, tránh nháy cảnh báo lúc đang tải
+  const missingDefault = (s: Service) => !!modes && !isBookable(s, defaultModeId)
   const rowProps = (s: Service) => ({
+    className: missingDefault(s) ? 'ds-row-warning' : undefined,
     style: { opacity: s.status === 'INACTIVE' ? 0.6 : undefined },
   })
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setQ(e.currentTarget.value)
-  const handleStatusChange = (v: string) => setStatus(v as ServiceStatus | 'ALL')
+  const handleStatusChange = (v: string | null) => setStatus(v as ServiceStatus | 'ALL')
+
+  const changeStatus = (s: Service, next: ServiceStatus) => {
+    const activeModes = sortedModes.filter((m) => m.active)
+    updateService.mutate(
+      { id: s.id, dto: toStatusChangeDto(s, activeModes, next) },
+      {
+        onSuccess: () =>
+          notify.success(
+            next === 'ACTIVE' ? 'Đã kích hoạt lại dịch vụ' : 'Đã ngừng hoạt động dịch vụ',
+          ),
+        onError: (err) => notify.error(toApiError(err).message),
+        onSettled: closeStop,
+      },
+    )
+  }
+  const confirmStop = () => stopTarget && changeStatus(stopTarget, 'INACTIVE')
 
   const rowActions = (s: Service) => [
     { label: 'Sửa', onClick: () => setModal({ mode: 'edit', service: s }) },
     { label: 'Diễn biến đơn giá', onClick: () => setTimelineFor(s) },
+    s.status === 'ACTIVE'
+      ? { label: 'Ngừng hoạt động', danger: true, onClick: () => setStopTarget(s) }
+      : { label: 'Kích hoạt lại', onClick: () => changeStatus(s, 'ACTIVE') },
   ]
 
   const columns: DataTableColumn<Service>[] = [
@@ -75,7 +112,11 @@ export default function ServicesPage() {
       label: 'Tên dịch vụ',
       width: 250,
       fixed: 'left',
-      render: (s) => <Text fw={600}>{s.name}</Text>,
+      render: (s) => (
+        <Tooltip label={MISSING_DEFAULT_HINT} disabled={!missingDefault(s)}>
+          <Text tabIndex={missingDefault(s) ? 0 : undefined}>{s.name}</Text>
+        </Tooltip>
+      ),
     },
     {
       name: 'unit',
@@ -84,10 +125,25 @@ export default function ServicesPage() {
       render: (s) => (s.unit ? UNIT_LABEL[s.unit] : '—'),
     },
     {
-      name: 'price',
-      label: 'Đơn giá',
-      width: 120,
-      render: (s) => <Money value={s.price} />,
+      name: 'prices',
+      label: 'Giá theo hình thức',
+      width: 260,
+      render: (s) => (
+        <Stack gap={4} style={{ whiteSpace: 'nowrap' }}>
+          {sortedModes.map((m) => {
+            const price = priceFor(s, m.id)
+            return price == null ? null : (
+              <Text key={m.id} size="sm" c={m.active ? undefined : 'dimmed'}>
+                <Text span fw={600} inherit>
+                  {m.name}:
+                </Text>{' '}
+                {formatMoney(price)}/{s.unit ? UNIT_LABEL[s.unit] : 'đơn vị'}
+                {!m.active && ' (ngừng)'}
+              </Text>
+            )
+          })}
+        </Stack>
+      ),
     },
     {
       name: 'minQuantity',
@@ -96,32 +152,6 @@ export default function ServicesPage() {
       width: 110,
       render: (s) =>
         s.minQuantity ? `${formatNumber(s.minQuantity)} ${s.unit ? UNIT_LABEL[s.unit] : ''}` : '—',
-    },
-    {
-      name: 'standardHours',
-      label: 'Xử lý chuẩn',
-      align: 'center',
-      width: 140,
-      render: (s) => `${s.standardHours} giờ`,
-    },
-    {
-      name: 'express',
-      label: 'Giặt nhanh',
-      width: 200,
-      render: (s) => {
-        const e = expressParts(s)
-        if (!e) return <Text c="dimmed">Không</Text>
-        return (
-          <Stack gap={0} style={{ whiteSpace: 'nowrap' }}>
-            <Text fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {e.surcharge}
-            </Text>
-            <Text size="sm" c="dimmed">
-              Xong trong {e.hours}
-            </Text>
-          </Stack>
-        )
-      },
     },
     {
       name: 'whites',
@@ -164,7 +194,14 @@ export default function ServicesPage() {
         value={q}
         onChange={handleSearchChange}
       />
-      <SegmentedControl value={status} onChange={handleStatusChange} data={STATUS_OPTIONS} />
+      <Select
+        {...FILTER_SELECT_PROPS}
+        w={240}
+        value={status}
+        onChange={handleStatusChange}
+        data={STATUS_OPTIONS}
+        allowDeselect={false}
+      />
     </>
   )
 
@@ -221,6 +258,18 @@ export default function ServicesPage() {
         mode={modal?.mode ?? 'create'}
         initial={modal?.mode === 'edit' ? modal.service : undefined}
       />
+      <ConfirmModal
+        opened={!!stopTarget}
+        onClose={closeStop}
+        onConfirm={confirmStop}
+        kind="destructive"
+        title="Ngừng hoạt động dịch vụ"
+        confirmLabel="Ngừng hoạt động"
+        loading={updateService.isPending}
+      >
+        {stopTarget &&
+          `Dịch vụ "${stopTarget.name}" không còn trong lựa chọn khi phân loại đơn mới; đơn cũ giữ nguyên.`}
+      </ConfirmModal>
       <PriceTimelineDrawer service={timelineFor} onClose={closeTimeline} />
     </>
   )

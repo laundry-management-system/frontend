@@ -8,10 +8,12 @@ export function useCompleteDropoff() {
     mutationFn: ({
       orderId,
       pickupTrackingCode,
+      dueAt,
     }: {
       orderId: number
       pickupTrackingCode?: string
-    }) => ordersApi.completeDropoff(orderId, pickupTrackingCode?.trim() || undefined),
+      dueAt?: string | null
+    }) => ordersApi.completeDropoff(orderId, pickupTrackingCode?.trim() || undefined, dueAt),
     onSettled: () => queryClient.invalidateQueries({ queryKey: orderKeys.all }),
   })
 }

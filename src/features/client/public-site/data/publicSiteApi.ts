@@ -4,5 +4,6 @@ import { httpClient } from '@/shared/common/api/httpClient'
 export const publicSiteApi = {
   store: async () => (await httpClient.get<unknown>('/public/store')).data,
   services: async () => (await httpClient.get<unknown>('/public/services')).data,
+  washModes: async () => (await httpClient.get<unknown>('/public/wash-modes')).data,
   serviceAreas: async () => (await httpClient.get<unknown>('/public/service-areas')).data,
 }

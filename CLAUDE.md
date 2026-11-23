@@ -36,6 +36,7 @@ Mọi mã định danh do hệ thống cấp (mã đơn `LD-…`, mã khách `KH
 - Cột mã trong bảng listing dùng `CopyableCode` (mã kèm nút sao chép, tự chặn click lan ra dòng); nơi khác dùng `EntityCode` / `OrderCode`.
 - Không render mã bằng chuỗi trần (`{customer.code}`, `` `${code} · …` ``) và không tự gắn class `text-code-*` lẻ. Cột `DataTable` chứa mã phải có `render` trả về `CopyableCode` (hoặc `EntityCode` ngoài trang listing).
 - Khi prop chỉ nhận `string` mà cần chèn mã (VD `description` của `PageHeader`), đổi prop đó sang `ReactNode` thay vì nối chuỗi.
+- Modal sửa một bản ghi có mã: mã nằm trên **tiêu đề modal** theo mẫu `Sửa <loại> <EntityCode> – <tên>` (mẫu: `ServiceFormModal`, `WashModeFormModal`). Không đặt mã thành field chỉ-đọc trong thân modal. Modal tạo mới không có mã.
 
 ## Empty state
 
@@ -66,6 +67,7 @@ Màn danh sách có thao tác trên dòng dùng **cùng một kiểu cột thao 
 - Cột cố định khi bảng cuộn ngang (`DataTableColumn.fixed`): cột **Mã** và cột **Tên** `fixed: 'left'`, cột thao tác `fixed: 'right'`. Các cột cố định liền kề phải có `width` để tính vị trí (riêng cột cố định trong cùng có thể bỏ trống).
 - Không đặt nút chữ/icon rời ("Sửa", bút chì…) trực tiếp trong dòng, kể cả khi chỉ có một thao tác.
 - Thao tác hủy / vô hiệu hóa / ngừng hoạt động: `danger: true`. Thao tác không áp dụng cho dòng đó: `hidden: true` (không disable).
+- Bật/tắt trạng thái hoạt động MUST đi qua menu `RowActions`: dòng đang hoạt động có mục "Ngừng hoạt động" (`danger: true` – nền/chữ đỏ, qua `ConfirmModal`), dòng đã ngừng có mục "Kích hoạt lại". Form tạo/sửa KHÔNG có toggle/Select trạng thái hoạt động (tạo mới mặc định đang hoạt động).
 - Cột chỉ hiện với vai trò có quyền thao tác (VD `canManage`); thao tác nguy hiểm vẫn qua `ConfirmModal`.
 - **Dòng chỉ để xem chi tiết** (không có thao tác nào khác ngoài mở trang chi tiết): **không có cột thao tác**, không đặt nút "›". Bấm thẳng vào dòng để mở chi tiết qua `rowProps` (`onClick` + `style: { cursor: 'pointer' }`). `DataTable` tự cho dòng có `onClick` nhận focus và mở bằng phím Enter. Mẫu: `OrdersPage`, `CustomersPage`, `CustomerOrdersCard`.
 - Chỉ thêm cột thao tác (`RowActions`) khi dòng có thao tác thật (sửa, vô hiệu hóa, gửi lại mail…), VD `UsersPage`, `ServicesPage`.
@@ -126,9 +128,8 @@ Thứ tự ưu tiên:
 
 - Page hiển thị **danh sách dữ liệu** → ưu tiên `ListPage` (`@/shared/admin/ui`): đã gồm `PageHeader` (title, description, `info`, `primaryAction` / `actions`), khối `filters`, `DataTable` có phân trang, `EmptyState` lỗi tải + Thử lại. Không tự ghép lại `PageHeader` + `Card` + `Table`.
 - Truyền `empty` cho trạng thái rỗng / tìm không ra (mục Empty state); cột thao tác theo mục "Thao tác trên từng dòng bảng"; ghi chú dưới bảng qua `children`.
-- Thứ tự trong khối `filters` có tab trạng thái (`SegmentedControl`):
-  - Vừa **một hàng** → ô tìm / Select / bộ lọc khác **trước**, tab trạng thái **sau** (mẫu: `CustomersPage`, `UsersPage`, `ServicesPage`).
-  - Phải xuống **hai hàng** (nhiều tab, tab có số đếm) → bọc `Stack`: tab trạng thái ở **hàng trên**, các bộ lọc còn lại ở hàng dưới (mẫu: `OrdersPage`, `WorkListPage`). Không để `Group` tự xuống dòng làm tab rơi xuống dưới.
+- Bộ lọc trạng thái trên màn listing dùng `Select` (`allowDeselect={false}`, số đếm trong nhãn option, vd `Mới nhận (16)`), không dùng `SegmentedControl`. Giá trị đang chọn của mọi Select lọc MUST kèm tên trường làm tiền tố: `Trạng thái: Đang xử lý (13)`, `Hình thức: Tất cả` — không hiển thị mỗi value. Select lọc spread `FILTER_SELECT_PROPS` (`@/shared/admin/ui`) và đặt `w` đủ hiện trọn nhãn dài nhất (không cắt chữ, option không xuống dòng).
+- Mọi bộ lọc của một trang nằm **chung một hàng** tự xuống dòng: khối `filters` là fragment phẳng, mỗi control là con trực tiếp của `Group` (wrap) mà `ListPage` dựng sẵn. Không bọc `Stack` / `Group` lồng để tách hàng. Một ô chỉ được đứng riêng một dòng khi nó là phần tử cuối bị đẩy xuống trên màn hẹp (mẫu: `OrdersPage`, `WorkListFilters`).
 - Chỉ dựng layout riêng khi màn không phải danh sách (trang chi tiết, form nhiều bước, dashboard); khi đó vẫn dùng `PageHeader` cho tiêu đề.
 - Nhiều component con trong **một page** cần dùng chung state (VD toolbar bật/tắt, nội dung đọc) → dùng React context đặt cạnh page (xem mục Quản lý state), không truyền props qua nhiều tầng, không đưa lên zustand.
 - Đăng ký page: thêm đường dẫn vào `PATHS` (`shared/common/config/paths.ts`), rồi khai route + mục menu trong `NAV_MODULES` (`app/admin/router/modules.tsx`, kèm `roles`; trang chi tiết đặt `hideInMenu`). Không viết đường dẫn trần trong code.

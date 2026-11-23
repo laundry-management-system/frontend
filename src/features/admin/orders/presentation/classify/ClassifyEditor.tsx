@@ -11,7 +11,6 @@ import {
   Group,
   Image,
   Loader,
-  SegmentedControl,
   Stack,
   Text,
   Title,
@@ -21,7 +20,7 @@ import { useMediaQuery } from '@mantine/hooks'
 import { useEffect, useMemo, useState } from 'react'
 import { LuCalendarClock, LuCamera, LuPlus } from 'react-icons/lu'
 import { useBlocker } from 'react-router-dom'
-import { useActiveServices, type Service } from '@/features/admin/services'
+import { priceFor, useActiveServices, type Service } from '@/features/admin/services'
 import { useShopSettings } from '@/features/admin/settings'
 import { toApiError } from '@/shared/common/api/apiError'
 import { formatDateTime, formatPhone } from '@/shared/common/lib/format'
@@ -30,14 +29,9 @@ import { notify } from '@/shared/common/lib/notify'
 import { ConfirmModal, EntityCode, InfoLabel } from '@/shared/admin/ui'
 import { useOrderDraft } from '../../application/useOrderDraft'
 import { useSaveClassification } from '../../application/mutations/useSaveClassification'
-import { computeTotals, lineExpressSurcharge } from '../../domain/pricing'
+import { computeTotals } from '../../domain/pricing'
 import { isV3, splitImages, validateLine } from '../../domain/rules'
-import {
-  ORDER_TYPE_LABEL,
-  type OrderDetail,
-  type OrderLine,
-  type OrderType,
-} from '../../domain/types'
+import { type OrderDetail, type OrderLine } from '../../domain/types'
 import { ClassifyServiceList } from './ClassifyServiceList'
 import { ItemLineEditor } from './ItemLineEditor'
 import { RescheduleModal } from '../modals/RescheduleModal'
@@ -57,22 +51,19 @@ const emptyLine = (): OrderLine => ({
 
 const dateTime = (iso: string) => formatDateTime(iso).slice(0, 16)
 
-/** Dòng gợi ý từ dịch vụ (đơn v3): giá và tối thiểu theo bảng giá hiện hành, chốt khi lưu. */
-const withServicePrice = (line: OrderLine, s: Service): OrderLine => ({
+/** Dòng gợi ý từ dịch vụ (đơn v3): tối thiểu theo bảng giá hiện hành, chốt khi lưu. */
+const withServicePrice = (line: OrderLine, s: Service, unitPrice: number): OrderLine => ({
   ...line,
   itemType: s.name,
   serviceId: s.id,
   unit: s.unit ?? 'PIECE',
-  unitPrice: s.price,
+  unitPrice,
   minQuantity: s.minQuantity,
 })
 
 /** So sánh để biết có thay đổi chưa lưu (ảnh tính riêng vì File không serialize được). */
-const snapshot = (orderType: OrderType, lines: OrderLine[]) =>
-  JSON.stringify({
-    orderType,
-    lines: lines.map((l) => ({ ...l, localImages: l.localImages.length })),
-  })
+const snapshot = (lines: OrderLine[]) =>
+  JSON.stringify(lines.map((l) => ({ ...l, localImages: l.localImages.length })))
 
 interface ClassifyEditorProps {
   order: OrderDetail
@@ -103,6 +94,11 @@ function ClassifyEditorBody({
     () => new Map<number, Service>(services.map((s) => [s.id, s])),
     [services],
   )
+  // Như BE: dịch vụ khách chọn lúc nhận theo giá đã chụp, dịch vụ thêm theo giá hình thức hiện hành
+  const unitPriceOf = (s: Service) =>
+    order.requestedServices.find((r) => r.id === s.id)?.unitPrice ??
+    (order.washModeId != null ? priceFor(s, order.washModeId) : null) ??
+    0
   const [initial] = useState(() => {
     const draft = draftStore.load(order.id)
     // Đơn v3: giá luôn theo bảng giá hiện hành (BE chốt lúc lưu); bỏ dòng không còn dịch vụ hợp lệ
@@ -111,32 +107,26 @@ function ClassifyEditorBody({
       v3
         ? lines.flatMap((l) => {
             const s = serviceMap.get(l.serviceId)
-            return s ? [withServicePrice(l, s)] : []
+            return s ? [withServicePrice(l, s, unitPriceOf(s))] : []
           })
         : lines
     const suggested = order.requestedServices.flatMap((r) => {
       const s = serviceMap.get(r.id)
-      return s ? [withServicePrice(emptyLine(), s)] : []
+      return s ? [withServicePrice(emptyLine(), s, unitPriceOf(s))] : []
     })
     const base = {
-      orderType: order.orderType,
       lines: order.items.length ? priced(order.items) : v3 ? suggested : [emptyLine()],
     }
     const fromDraft = draft && {
-      // Loại đơn v3 cố định từ lúc tạo
-      orderType: v3 ? order.orderType : draft.orderType,
       lines: priced(draft.lines.map((l) => ({ ...l, localImages: [] }))),
     }
     return { base, start: fromDraft ?? base, draftSavedAt: draft?.savedAt ?? null }
   })
   const inactiveRequested = order.requestedServices.filter((r) => !serviceMap.has(r.id))
   const settingsFee = useShopSettings().data?.whitesFee ?? 0
-  const [orderType, setOrderType] = useState(initial.start.orderType)
   const [lines, setLines] = useState<OrderLine[]>(initial.start.lines)
   const [bagImages, setBagImages] = useState<File[]>([])
-  const [savedSnapshot, setSavedSnapshot] = useState(() =>
-    snapshot(initial.base.orderType, initial.base.lines),
-  )
+  const [savedSnapshot, setSavedSnapshot] = useState(() => snapshot(initial.base.lines))
   const [submitted, setSubmitted] = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
 
@@ -149,11 +139,11 @@ function ClassifyEditorBody({
     lines.some((l) => serviceMap.get(l.serviceId)?.whitesApplicable)
       ? settingsFee
       : 0
-  const totals = computeTotals(lines, orderType, serviceMap, 0, whitesFee)
+  const totals = computeTotals(lines, 0, whitesFee)
   const lineErrors = lines.map(validateLine)
   const hasErrors = lineErrors.some((e) => Object.keys(e).length > 0)
 
-  const dirty = snapshot(orderType, lines) !== savedSnapshot || bagImages.length > 0
+  const dirty = snapshot(lines) !== savedSnapshot || bagImages.length > 0
 
   // Rời trang khi còn thay đổi chưa lưu
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
@@ -168,11 +158,23 @@ function ClassifyEditorBody({
 
   const updateLine = (i: number, patch: Partial<OrderLine>) =>
     setLines((prev) => prev.map((l, j) => (j === i ? { ...l, ...patch } : l)))
+  const removeLine = (i: number) => setLines((prev) => prev.filter((_, j) => j !== i))
+  const addLine = () => setLines((prev) => [...prev, emptyLine()])
+  const openReschedule = () => setRescheduling(true)
+  const closeReschedule = () => setRescheduling(false)
+  const stayOnPage = () => blocker.reset?.()
+  const leavePage = () => blocker.proceed?.()
+  const handleBagImage = (f: File | null) => {
+    if (!f) return
+    const { ok, rejected } = splitImages([f])
+    if (rejected) notify.error('Chỉ nhận ảnh PNG/JPG, tối đa 5MB')
+    setBagImages(ok)
+  }
   const toggleService = (s: Service) =>
     setLines((prev) =>
       prev.some((l) => l.serviceId === s.id)
         ? prev.filter((l) => l.serviceId !== s.id)
-        : [...prev, withServicePrice(emptyLine(), s)],
+        : [...prev, withServicePrice(emptyLine(), s, unitPriceOf(s))],
     )
   const updateServiceLine = (serviceId: number, patch: Partial<OrderLine>) =>
     setLines((prev) => prev.map((l) => (l.serviceId === serviceId ? { ...l, ...patch } : l)))
@@ -180,13 +182,12 @@ function ClassifyEditorBody({
 
   const saveDraft = () => {
     const ok = draftStore.save(order.id, {
-      orderType,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- bỏ ảnh khỏi nháp
       lines: lines.map(({ localImages, ...rest }) => rest),
       savedAt: new Date().toISOString(),
     })
     if (!ok) return notify.error('Trình duyệt không cho lưu nháp')
-    setSavedSnapshot(snapshot(orderType, lines))
+    setSavedSnapshot(snapshot(lines))
     notify.success('Ảnh chưa được lưu kèm nháp', 'Đã lưu nháp trên máy này')
   }
 
@@ -198,13 +199,13 @@ function ClassifyEditorBody({
         orderId: order.id,
         items: lines.map((line) => ({
           line,
-          expressSurcharge: lineExpressSurcharge(orderType, serviceMap.get(line.serviceId)),
+          expressSurcharge: 0,
         })),
       },
       {
         onSuccess: ({ failedImages }) => {
           draftStore.clear(order.id)
-          setSavedSnapshot(snapshot(orderType, lines))
+          setSavedSnapshot(snapshot(lines))
           setBagImages([])
           notify.success('Đơn đã chuyển sang Đang xử lý', 'Đã lưu phân loại')
           if (failedImages)
@@ -254,16 +255,7 @@ function ClassifyEditorBody({
           Ảnh tổng thể túi đồ
         </InfoLabel>
       </Text>
-      <FileButton
-        accept="image/png,image/jpeg"
-        capture="environment"
-        onChange={(f) => {
-          if (!f) return
-          const { ok, rejected } = splitImages([f])
-          if (rejected) notify.error('Chỉ nhận ảnh PNG/JPG, tối đa 5MB')
-          setBagImages(ok)
-        }}
-      >
+      <FileButton accept="image/png,image/jpeg" capture="environment" onChange={handleBagImage}>
         {(props) => (
           <Button
             {...props}
@@ -284,7 +276,8 @@ function ClassifyEditorBody({
     <ClassifyServiceList
       services={services}
       requestedIds={requestedIds}
-      orderType={orderType}
+      washModeId={order.washModeId}
+      unitPriceOf={unitPriceOf}
       lines={lines}
       perLine={totals.perLine}
       errors={submitted ? lineErrors : lines.map(() => ({}))}
@@ -299,19 +292,14 @@ function ClassifyEditorBody({
           index={i}
           line={line}
           services={services}
-          orderType={orderType}
+          washModeId={order.washModeId}
           lineTotal={totals.perLine[i]}
           errors={submitted ? lineErrors[i] : {}}
           onChange={(patch) => updateLine(i, patch)}
-          onRemove={() => setLines((prev) => prev.filter((_, j) => j !== i))}
+          onRemove={() => removeLine(i)}
         />
       ))}
-      <Button
-        variant="secondary"
-        fullWidth
-        leftSection={<LuPlus size={16} />}
-        onClick={() => setLines((prev) => [...prev, emptyLine()])}
-      >
+      <Button variant="secondary" fullWidth leftSection={<LuPlus size={16} />} onClick={addLine}>
         Thêm dòng đồ
       </Button>
     </>
@@ -341,43 +329,24 @@ function ClassifyEditorBody({
             size="xs"
             variant="secondary"
             leftSection={<LuCalendarClock size={14} />}
-            onClick={() => setRescheduling(true)}
+            onClick={openReschedule}
           >
             Đổi
           </Button>
         </Group>
-        {v3 ? (
-          <Group justify="space-between">
-            <Text size="sm" fw={500}>
-              Loại đơn
-            </Text>
-            <Group gap={6}>
-              <Badge color={orderType === 'EXPRESS' ? 'warning' : 'teal'} variant="light">
-                {ORDER_TYPE_LABEL[orderType]}
+        <Group justify="space-between">
+          <Text size="sm" fw={500}>
+            Hình thức giặt
+          </Text>
+          <Group gap={6}>
+            <Text size="sm">{order.washModeName}</Text>
+            {v3 && order.washWhitesSeparately && (
+              <Badge color="gray" variant="light">
+                Đồ trắng
               </Badge>
-              {order.washWhitesSeparately && (
-                <Badge color="gray" variant="light">
-                  Đồ trắng
-                </Badge>
-              )}
-            </Group>
+            )}
           </Group>
-        ) : (
-          <Stack gap={6}>
-            <Text size="sm" fw={500}>
-              Loại đơn
-            </Text>
-            <SegmentedControl
-              fullWidth
-              value={orderType}
-              onChange={(v) => setOrderType(v as OrderType)}
-              data={(['NORMAL', 'EXPRESS'] as const).map((v) => ({
-                value: v,
-                label: ORDER_TYPE_LABEL[v],
-              }))}
-            />
-          </Stack>
-        )}
+        </Group>
       </Stack>
     </Card>
   )
@@ -430,19 +399,15 @@ function ClassifyEditorBody({
       </Grid>
 
       {rescheduling && (
-        <RescheduleModal
-          orderId={order.id}
-          currentDueAt={order.dueAt}
-          onClose={() => setRescheduling(false)}
-        />
+        <RescheduleModal orderId={order.id} currentDueAt={order.dueAt} onClose={closeReschedule} />
       )}
       <ConfirmModal
         opened={blocker.state === 'blocked'}
         kind="destructive"
         title="Bỏ thay đổi chưa lưu?"
         confirmLabel="Bỏ thay đổi"
-        onClose={() => blocker.reset?.()}
-        onConfirm={() => blocker.proceed?.()}
+        onClose={stayOnPage}
+        onConfirm={leavePage}
       >
         Các dòng đồ vừa nhập cho đơn này sẽ mất nếu rời trang.
       </ConfirmModal>

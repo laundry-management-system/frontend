@@ -1,73 +1,82 @@
-import { UNIT_LABEL, type PriceField, type Service, type ServiceFormValues } from './types.ts'
+import {
+  type PriceField,
+  type Service,
+  type ServiceFormValues,
+  type ServiceStatus,
+  type WashMode,
+} from './types.ts'
 
 export const SERVICE_NAME_MAX = 100
 
 // domain không import shared: tự định dạng tiền theo DS (185.000đ)
 const money = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)}đ`
 
-const unitLabel = (unit: Service['unit']) => (unit ? UNIT_LABEL[unit] : 'đơn vị')
-
-export function expressParts(
-  s: Pick<Service, 'expressSupported' | 'expressSurcharge' | 'expressHours' | 'unit'>,
-) {
-  if (!s.expressSupported) return null
-  return {
-    surcharge: `+${money(s.expressSurcharge ?? 0)}/${unitLabel(s.unit)}`,
-    hours: `${s.expressHours ?? '—'} giờ`,
-  }
-}
-
-/** Payload gửi BE; tắt giặt nhanh thì xóa phụ phí và thời gian (BE cũng xóa khi expressSupported=false). */
+/** Payload gửi BE; chỉ gửi hình thức đang bật (BE giữ nguyên liên kết tới hình thức đã ngừng). */
 export const toServicePayload = (values: ServiceFormValues) => ({
   name: values.name.trim(),
   unit: values.unit!,
-  currentPrice: Number(values.price),
-  standardHours: Number(values.standardHours),
-  expressSupported: values.expressSupported,
-  expressSurcharge: values.expressSupported ? Number(values.expressSurcharge) : null,
-  expressHours: values.expressSupported ? Number(values.expressHours) : null,
+  prices: values.prices
+    .filter((p) => p.enabled)
+    .map((p) => ({ washModeId: p.mode.id, price: Number(p.price) })),
   minQuantity: values.minQuantity === '' ? 0 : Number(values.minQuantity),
   whitesApplicable: values.whitesApplicable,
 })
 
-export const toFormValues = (s?: Service): ServiceFormValues => ({
+/** `activeModes` theo thứ tự BE trả (FR-034); mỗi hình thức đang hoạt động một dòng, bật nếu dịch vụ đã có giá. */
+export const toFormValues = (
+  s: Service | undefined,
+  activeModes: WashMode[],
+): ServiceFormValues => ({
   name: s?.name ?? '',
   unit: s?.unit ?? null,
-  price: s?.price ?? '',
-  standardHours: s?.standardHours ?? '',
-  expressSupported: s?.expressSupported ?? false,
-  expressSurcharge: s?.expressSurcharge ?? '',
-  expressHours: s?.expressHours ?? '',
+  prices: activeModes.map((mode) => {
+    const price = s ? priceFor(s, mode.id) : null
+    return { mode, enabled: price != null, price: price ?? '' }
+  }),
   minQuantity: s?.minQuantity ?? 0,
   whitesApplicable: s?.whitesApplicable ?? false,
   status: s?.status ?? 'ACTIVE',
 })
 
+/** PUT cần cả giá: gửi lại đúng dữ liệu hiện có, chỉ đổi trạng thái. */
+export const toStatusChangeDto = (s: Service, activeModes: WashMode[], status: ServiceStatus) => ({
+  ...toServicePayload(toFormValues(s, activeModes)),
+  status,
+})
+
 export interface TrackedChange {
   field: PriceField
+  modeName?: string
   oldValue: string | null
   newValue: string | null
 }
 
 const asText = (v: number | string | null) => (v == null ? null : String(v))
 
-/** Các trường sẽ ghi vào lịch sử giá nếu lưu form; tắt giặt nhanh làm phụ phí và thời gian giặt nhanh thành rỗng. */
+/** Các trường sẽ ghi vào lịch sử giá nếu lưu form: giá từng hình thức (tắt = bỏ liên kết) và trạng thái. */
 export function trackedChanges(
   initial: Service | undefined,
   values: ServiceFormValues,
 ): TrackedChange[] {
   if (!initial) return []
-  const next = toServicePayload(values)
-  const pairs: [PriceField, number | string | null, number | string | null][] = [
-    ['PRICE', initial.price, next.currentPrice],
-    ['EXPRESS_SURCHARGE', initial.expressSurcharge, next.expressSurcharge],
-    ['STANDARD_HOURS', initial.standardHours, next.standardHours],
-    ['EXPRESS_HOURS', initial.expressHours, next.expressHours],
-    ['STATUS', initial.status, values.status],
-  ]
-  return pairs
-    .filter(([, before, after]) => before !== after)
-    .map(([field, before, after]) => ({ field, oldValue: asText(before), newValue: asText(after) }))
+  const modeChanges = values.prices
+    .map((p) => ({
+      modeName: p.mode.name,
+      before: priceFor(initial, p.mode.id),
+      after: p.enabled ? Number(p.price) : null,
+    }))
+    .filter((c) => c.before !== null && c.before !== c.after) // giá mới thêm không cần lý do
+    .map((c) => ({
+      field: 'MODE_PRICE' as const,
+      modeName: c.modeName,
+      oldValue: asText(c.before),
+      newValue: asText(c.after),
+    }))
+  const status =
+    initial.status !== values.status
+      ? [{ field: 'STATUS' as const, oldValue: initial.status, newValue: values.status }]
+      : []
+  return [...modeChanges, ...status]
 }
 
 const percentFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
@@ -84,3 +93,12 @@ export function priceDelta(oldPrice: number, newPrice: number) {
     label: `${sign}${money(Math.abs(diff))}${percent ? ` · ${percent}` : ''}`,
   } as const
 }
+
+/** Đặt được = có giá cho hình thức mặc định (giá 0 vẫn hợp lệ). */
+export const isBookable = (
+  service: Pick<Service, 'prices'>,
+  defaultModeId: number | null | undefined,
+) => defaultModeId != null && service.prices.some((p) => p.washModeId === defaultModeId)
+
+export const priceFor = (service: Pick<Service, 'prices'>, modeId: number) =>
+  service.prices.find((p) => p.washModeId === modeId)?.price ?? null

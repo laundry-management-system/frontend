@@ -4,6 +4,8 @@ import type { PriceHistoryFilter } from '../domain/types'
 export const serviceKeys = {
   all: ['services'] as const,
   list: (params: ServiceListParams) => [...serviceKeys.all, 'list', params] as const,
+  washModes: () => [...serviceKeys.all, 'wash-modes'] as const,
+  washMode: (id: number) => [...serviceKeys.washModes(), id] as const,
   active: () => [...serviceKeys.all, 'active'] as const,
   // Nằm dưới `all` nên lưu dịch vụ là invalidate luôn lịch sử giá
   priceHistory: (filter: PriceHistoryFilter) =>

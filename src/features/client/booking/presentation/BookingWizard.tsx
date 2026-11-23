@@ -8,8 +8,10 @@ import {
   usePublicServiceAreas,
   usePublicServices,
   usePublicStore,
+  usePublicWashModes,
   type PublicService,
   type PublicServiceArea,
+  type PublicWashMode,
   type PublicStore,
 } from '@/features/client/public-site'
 import { useMyProfile } from '@/features/client/customer-account'
@@ -51,6 +53,7 @@ const STEP_HINT: Record<BookingStep, string> = {
 
 interface FlowProps {
   services: PublicService[]
+  modes: PublicWashMode[]
   areas: PublicServiceArea[]
   store: PublicStore
   settings: BookingSettings
@@ -75,9 +78,16 @@ function focusFirstInvalid(root: HTMLElement | null) {
 }
 
 /** Năm bước + tạm tính; unmount khi gửi thành công nên "Đặt đơn mới" mount lại với form trống và tự điền lại hồ sơ. */
-function BookingFlow({ services, areas, store, settings, mutation, onStale }: FlowProps) {
+function BookingFlow({ services, modes, areas, store, settings, mutation, onStale }: FlowProps) {
   const profile = useMyProfile().data
-  const { form, step, setStep } = useBookingForm({ profile, services, areas, settings, store })
+  const { form, step, setStep } = useBookingForm({
+    profile,
+    services,
+    modes,
+    areas,
+    settings,
+    store,
+  })
   const [alert, setAlert] = useState<SubmitAlert | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -88,7 +98,7 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
   }
 
   const next = () => {
-    const ctx = { services, areas, settings, store, now: Date.now() }
+    const ctx = { services, modes, areas, settings, store, now: Date.now() }
     const errors = schemaResolver(stepSchema(step, ctx), { sync: true })(form.getValues())
     form.setErrors(errors)
     if (Object.keys(errors).length > 0) setTimeout(() => focusFirstInvalid(formRef.current))
@@ -120,8 +130,7 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
       if (svc) {
         removed.add(Number(svc[1]))
         svcMessages.add(message)
-      }
-      else if (s === 5) unknown.push(message)
+      } else if (s === 5) unknown.push(message)
       else errors[toFormPath(key)] = message
       if (s < target) target = s
     }
@@ -134,7 +143,8 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
       notify.error([...svcMessages].join(' '))
       onStale()
     }
-    if ('pickupAreaId' in errors || 'deliveryAreaId' in errors) form.setValues({ pickupAreaId: null, deliveryAreaId: null })
+    if ('pickupAreaId' in errors || 'deliveryAreaId' in errors)
+      form.setValues({ pickupAreaId: null, deliveryAreaId: null })
     form.setErrors(errors)
     // Khóa lạ: chặn gửi nếu chỉ có chúng; kèm lỗi sửa được thì vẫn cho "Gửi lại" sau khi sửa.
     setAlert(
@@ -190,7 +200,7 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
                   {form.errors.items}
                 </p>
               )}
-              <StepServices services={services} settings={settings} />
+              <StepServices services={services} modes={modes} />
             </>
           )}
           {step === 2 && (
@@ -202,7 +212,7 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
               storePhone={store.phone}
             />
           )}
-          {step === 3 && <StepTime store={store} settings={settings} />}
+          {step === 3 && <StepTime store={store} settings={settings} modes={modes} />}
           {step === 4 && <StepContact />}
           {step === 5 && alert && (
             <SubmitErrorAlert
@@ -213,7 +223,7 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
             />
           )}
           {step === 5 && (
-            <StepReview services={services} areas={areas} onEdit={goTo} />
+            <StepReview services={services} modes={modes} areas={areas} onEdit={goTo} />
           )}
 
           {/* Quay lại luôn bên trái, nút chính (Tiếp tục / Gửi yêu cầu) luôn bên phải */}
@@ -248,7 +258,6 @@ function BookingFlow({ services, areas, store, settings, mutation, onStale }: Fl
             )}
           </div>
         </div>
-
       </form>
     </BookingFormProvider>
   )
@@ -259,16 +268,22 @@ export function BookingWizard() {
   const settings = useBookingSettings()
   const store = usePublicStore()
   const services = usePublicServices()
+  const modes = usePublicWashModes()
   const areas = usePublicServiceAreas()
   const mutation = useCreateBooking()
-  const queries = [settings, store, services, areas]
+  const queries = [settings, store, services, modes, areas]
   const phone = store.data?.phone ?? null
   const retry = () => queries.forEach((q) => q.isError && void q.refetch())
 
   let content
   if (mutation.isSuccess) {
     content = (
-      <BookingSuccess result={mutation.data} storePhone={phone} services={services.data ?? []} onNewBooking={mutation.reset} />
+      <BookingSuccess
+        result={mutation.data}
+        storePhone={phone}
+        services={services.data ?? []}
+        onNewBooking={mutation.reset}
+      />
     )
   } else if (queries.some((q) => q.isError)) {
     content = (
@@ -277,7 +292,7 @@ export function BookingWizard() {
         <CallButton phone={phone} />
       </div>
     )
-  } else if (!settings.data || !store.data || !services.data || !areas.data) {
+  } else if (!settings.data || !store.data || !services.data || !modes.data || !areas.data) {
     content = (
       <div className="flex justify-center py-16">
         <Loader color="var(--pub-primary)" aria-label="Đang tải" />
@@ -304,6 +319,7 @@ export function BookingWizard() {
     content = (
       <BookingFlow
         services={services.data}
+        modes={modes.data}
         areas={areas.data}
         store={store.data}
         settings={settings.data}
@@ -311,6 +327,7 @@ export function BookingWizard() {
         onStale={() => {
           void settings.refetch()
           void services.refetch()
+          void modes.refetch()
         }}
       />
     )

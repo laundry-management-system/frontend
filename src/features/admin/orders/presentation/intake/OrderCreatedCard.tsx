@@ -2,13 +2,11 @@ import { Badge, Button, Card, Group, Stack, Text, ThemeIcon, Title } from '@mant
 import { LuCircleCheck, LuPrinter } from 'react-icons/lu'
 import { formatDateTime, formatPhone } from '@/shared/common/lib/format'
 import { CopyableCode, EntityCode } from '@/shared/admin/ui'
-import { PLANNED_ORDER_LABEL } from '../../domain/intake'
-import type { OrderType } from '../../domain/types'
 
 export interface CreatedOrder {
   id: number
   orderCode: string
-  orderType: OrderType
+  washModeName: string | null
   dueAt: string
   washWhitesSeparately: boolean
 }
@@ -72,9 +70,11 @@ export function OrderCreatedCard({
               <Stack gap={4} align="flex-start">
                 <CopyableCode code={o.orderCode} size={many ? 'md' : 'display'} />
                 <Group gap={6}>
-                  <Badge color={o.orderType === 'EXPRESS' ? 'warning' : 'teal'} variant="light">
-                    {PLANNED_ORDER_LABEL[o.orderType]}
-                  </Badge>
+                  {o.washModeName && (
+                    <Text size="sm" fw={500}>
+                      {o.washModeName}
+                    </Text>
+                  )}
                   {o.washWhitesSeparately && (
                     <Badge color="gray" variant="light">
                       Đồ trắng

@@ -6,7 +6,7 @@ import { LuCheck, LuCircleCheck, LuCopy } from 'react-icons/lu'
 import { Link } from 'react-router-dom'
 import { PATHS } from '@/shared/common/config/paths'
 import { formatVnDateTime } from '../domain/appointment'
-import { TIER_LABEL } from '../domain/draft'
+import { pricedOf } from '../domain/draft'
 import type { BookingIntakeResult, BookingOrder, BookingService } from '../domain/types'
 import { ServiceSummaryList } from './ServiceSummaryList'
 import { InfoTip } from './InfoTip'
@@ -47,19 +47,19 @@ function OrderCard({
   const items = q.services.map((x) => ({
     key: x.serviceId,
     name: x.serviceName ?? `#${x.serviceId}`,
-    priced: services.find((y) => y.id === x.serviceId),
+    priced: pricedOf(
+      services.find((y) => y.id === x.serviceId),
+      q.washModeId,
+    ),
   }))
   return (
     <section className="bk-panel flex flex-col gap-4">
       <div className="flex flex-col gap-3">
         <h4 className="font-semibold">Dịch vụ</h4>
-        <dl>
-          <Row label="Hình thức giặt" value={TIER_LABEL[q.orderType]} />
-        </dl>
         <ServiceSummaryList
           items={items}
+          modeName={q.washModeName}
           whites={q.washWhitesSeparately}
-          express={q.orderType === 'EXPRESS'}
         />
       </div>
       <div className="flex flex-col gap-3 border-t border-(--pub-border) pt-4">
@@ -127,9 +127,6 @@ export function BookingSuccess({
                 )}
               </CopyButton>
             </div>
-            <p className="text-(length:--pub-text-sm) text-(--pub-ink-muted)">
-              Dùng mã này để tra cứu đơn.
-            </p>
           </div>
           {!result.created && (
             <p role="status" className="font-semibold">

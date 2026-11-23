@@ -11,12 +11,25 @@ const DIRECTION = {
 } as const
 
 /** So sánh giá cũ → giá mới trong hộp xác nhận đổi giá. */
-export function PriceChange({ oldPrice, newPrice }: { oldPrice: number; newPrice: number }) {
+export function PriceChange({
+  oldPrice,
+  newPrice,
+  modeName,
+}: {
+  oldPrice: number
+  newPrice: number
+  modeName?: string
+}) {
   const delta = priceDelta(oldPrice, newPrice)
   const { color, icon: Icon } = DIRECTION[delta.direction]
 
   return (
     <Paper withBorder radius="md" p="md">
+      {modeName && (
+        <Text size="sm" fw={600} mb="xs">
+          {modeName}
+        </Text>
+      )}
       <Group justify="space-between" align="flex-end" wrap="nowrap">
         <Stack gap={2}>
           <Text size="xs" c="dimmed">
