@@ -1,9 +1,10 @@
 import { Badge, Button, Group, Modal, Text } from '@mantine/core'
 import dayjs from 'dayjs'
-import { LuCloudOff, LuWallet } from 'react-icons/lu'
+import { LuCloudOff, LuDownload, LuWallet } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { ORDER_CHANNEL_LABEL, type OrderChannel } from '@/features/admin/orders'
 import { formatNumber } from '@/shared/common/lib/format'
+import { downloadCsv } from '@/shared/admin/lib/csv'
 import {
   CopyableCode,
   type DataTableColumn,
@@ -13,6 +14,8 @@ import {
   StatusBadge,
 } from '@/shared/admin/ui'
 import { useRevenuePayments } from '../application/useRevenuePayments'
+import { transactionCsvRows } from '../domain/csvRows'
+import { capRows, MAX_TABLE_ROWS } from '../domain/metrics'
 import type { DateRange, RevenuePayment } from '../domain/types'
 import { PATHS } from '@/shared/common/config/paths'
 
@@ -21,26 +24,20 @@ const METHOD_KEY = { CASH: 'cash', BANK_TRANSFER: 'qr' } as const
 interface RevenueDayModalProps {
   range: DateRange
   title: string
-  /** Số giao dịch của cột; nhiều hơn số dòng tải về nghĩa là API đã cắt bớt */
-  expectedCount?: number
   channel?: OrderChannel
   onClose: () => void
 }
 
 /** Các giao dịch được cộng vào doanh thu của một cột; tổng khớp với cột trên biểu đồ. */
-export function RevenueDayModal({
-  range,
-  title,
-  expectedCount,
-  channel,
-  onClose,
-}: RevenueDayModalProps) {
+export function RevenueDayModal({ range, title, channel, onClose }: RevenueDayModalProps) {
   const navigate = useNavigate()
   const { data, isLoading, isError, refetch } = useRevenuePayments(range, channel)
   const payments = data ?? []
   const total = payments.reduce((sum, p) => sum + p.amount, 0)
   const oneDay = range.from === range.to
-  const truncated = expectedCount !== undefined && expectedCount > payments.length
+  const { shown, truncated } = capRows(payments)
+  const exportCsv = () =>
+    downloadCsv(`giao-dich_${range.from}_${range.to}.csv`, transactionCsvRows(payments))
 
   const handleRetry = () => refetch()
   const rowKey = (p: RevenuePayment) => p.paymentId
@@ -108,7 +105,7 @@ export function RevenueDayModal({
     <Modal opened onClose={onClose} size="xl" title={title}>
       <DataTable
         columns={columns}
-        data={isError ? [] : payments}
+        data={isError ? [] : shown}
         rowKey={rowKey}
         rowProps={rowProps}
         loading={isLoading}
@@ -118,10 +115,18 @@ export function RevenueDayModal({
         <Group justify="space-between" mt="md">
           <Text c="dimmed" size="sm">
             {truncated
-              ? `Chỉ hiện ${formatNumber(payments.length)} / ${formatNumber(expectedCount)} giao dịch mới nhất`
+              ? `Chỉ hiển thị ${formatNumber(MAX_TABLE_ROWS)} dòng đầu, hãy thu hẹp kỳ hoặc xuất CSV`
               : `${formatNumber(payments.length)} giao dịch đã xác nhận`}
           </Text>
           <Group gap="xs">
+            <Button
+              variant="default"
+              size="xs"
+              leftSection={<LuDownload size={14} />}
+              onClick={exportCsv}
+            >
+              Xuất CSV
+            </Button>
             <Text fw={600}>Tổng</Text>
             <Money value={total} />
           </Group>

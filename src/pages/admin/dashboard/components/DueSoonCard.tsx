@@ -1,94 +1,55 @@
-import { Anchor, Button, Card, Group, Text, Title } from '@mantine/core'
+import { Anchor, Card, Group, Text, Title } from '@mantine/core'
 import dayjs from 'dayjs'
-import { LuCloudOff, LuListTodo } from 'react-icons/lu'
+import { LuListTodo } from 'react-icons/lu'
 import { Link, useNavigate } from 'react-router-dom'
-import { dueHint, isLate, type OrderListItem, useNow, useWorkOrders } from '@/features/admin/orders'
-import {
-  CopyableCode,
-  type DataTableColumn,
-  DataTable,
-  EmptyState,
-  StatusBadge,
-} from '@/shared/admin/ui'
+import type { OverviewReport } from '@/features/admin/reports'
+import { CopyableCode, type DataTableColumn, DataTable, EmptyState } from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 
-const PARAMS = { tab: 'ALL', q: '', page: 0, size: 5 } as const
+type Row = OverviewReport['live']['dueSoon'][number]
 
-export function DueSoonCard() {
+const rowKey = (o: Row) => o.orderId
+const COLUMNS: DataTableColumn<Row>[] = [
+  {
+    name: 'code',
+    label: 'Mã đơn',
+    width: 190,
+    render: (o) => <CopyableCode code={o.orderCode} />,
+  },
+  { name: 'customer', label: 'Khách', render: (o) => o.customerName },
+  {
+    name: 'dueAt',
+    label: 'Hẹn trả',
+    width: 110,
+    render: (o) => (
+      <Text style={{ whiteSpace: 'nowrap' }}>{dayjs(o.dueAt).format('DD/MM HH:mm')}</Text>
+    ),
+  },
+]
+
+const EMPTY = (
+  <EmptyState
+    icon={<LuListTodo size={32} />}
+    title="Không có đơn sắp đến hạn"
+    description="Đơn đến hạn trong 24 giờ tới sẽ hiện ở đây."
+  />
+)
+
+export function DueSoonCard({ rows }: { rows: Row[] }) {
   const navigate = useNavigate()
-  const now = useNow()
-  const { data, isLoading, isError, refetch } = useWorkOrders(PARAMS)
-  const openOrder = (o: OrderListItem) => navigate(PATHS.orderDetail(o.id))
-  const handleRetry = () => refetch()
-  const rowKey = (o: OrderListItem) => o.id
-  const rowProps = (o: OrderListItem) => ({
-    onClick: () => openOrder(o),
+  const rowProps = (o: Row) => ({
+    onClick: () => navigate(PATHS.orderDetail(o.orderId)),
     style: { cursor: 'pointer' },
   })
-
-  const columns: DataTableColumn<OrderListItem>[] = [
-    {
-      name: 'code',
-      label: 'Mã đơn',
-      width: 190,
-      render: (o) => <CopyableCode code={o.orderCode} />,
-    },
-    { name: 'customer', label: 'Khách', render: (o) => o.customerName },
-    {
-      name: 'dueAt',
-      label: 'Hẹn trả',
-      width: 110,
-      render: (o) => (
-        <Text style={{ whiteSpace: 'nowrap' }}>{dayjs(o.dueAt).format('DD/MM HH:mm')}</Text>
-      ),
-    },
-    {
-      name: 'flag',
-      label: '',
-      width: 100,
-      align: 'right',
-      render: (o) =>
-        isLate(o, now) ? (
-          <StatusBadge group="flag" statusKey="late" size="sm" />
-        ) : (
-          <Text size="sm" c="dimmed">
-            {dueHint(o, now)}
-          </Text>
-        ),
-    },
-  ]
-
-  const empty = isError ? (
-    <EmptyState
-      icon={<LuCloudOff size={32} />}
-      title="Không tải được danh sách"
-      description="Vui lòng kiểm tra kết nối rồi thử lại."
-      action={<Button onClick={handleRetry}>Thử lại</Button>}
-    />
-  ) : (
-    <EmptyState
-      icon={<LuListTodo size={32} />}
-      title="Không còn đơn nào cần làm"
-      description="Đơn sắp đến hạn sẽ hiện ở đây."
-    />
-  )
-
   return (
     <Card>
       <Group justify="space-between" mb="sm">
-        <Title order={5}>Đơn sắp đến hạn / trễ</Title>
-        <Anchor component={Link} to={PATHS.workList} size="sm">
+        <Title order={5}>Đơn sắp đến hạn 24 giờ tới (hiện tại)</Title>
+        <Anchor component={Link} to={PATHS.orders} size="sm">
           Xem tất cả
         </Anchor>
       </Group>
-      <DataTable
-        columns={columns}
-        data={isError ? [] : (data?.content ?? [])}
-        rowKey={rowKey}
-        rowProps={rowProps}
-        loading={isLoading}
-        empty={empty}
-      />
+      <DataTable columns={COLUMNS} data={rows} rowKey={rowKey} rowProps={rowProps} empty={EMPTY} />
     </Card>
   )
 }

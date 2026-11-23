@@ -7,7 +7,7 @@ type Tone = 'neutral' | 'danger' | 'warning'
 
 interface KpiCardProps {
   icon: ReactNode
-  label: string
+  label: ReactNode
   value: ReactNode
   /** Luôn có một dòng để các thẻ cao bằng nhau */
   note: ReactNode

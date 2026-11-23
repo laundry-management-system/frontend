@@ -37,30 +37,44 @@ const reasonField = z
   .min(1, 'Vui lòng nhập lý do')
   .max(500, 'Lý do tối đa 500 ký tự')
 
-/** ONLINE: lý do gửi khách bắt buộc, lý do nội bộ tùy chọn; OFFLINE: lý do bắt buộc. */
+const reasonCodeField = z.string().min(1, 'Chọn lý do hủy')
+
+/** `OTHER` thì `reason` (ghi chú) bắt buộc; mã khác BE bỏ qua ghi chú. */
+const requireNoteForOther = (v: { reasonCode: string; reason: string }, ctx: z.RefinementCtx) => {
+  if (v.reasonCode === 'OTHER' && !v.reason.trim())
+    ctx.addIssue({ code: 'custom', path: ['reason'], message: 'Nhập lý do hủy khác' })
+}
+
+/** ONLINE: lý do gửi khách bắt buộc. */
 export const cancelOrderSchema = (paid: boolean, online = false) =>
   z
     .object({
-      reason: online ? z.string().trim().max(500, 'Lý do tối đa 500 ký tự') : reasonField,
+      reasonCode: reasonCodeField,
+      reason: z.string().trim().max(500, 'Lý do tối đa 500 ký tự'),
       customerReason: online ? reasonField : z.string(),
       refunded: z.boolean(),
     })
+    .superRefine(requireNoteForOther)
     .refine((v) => !paid || v.refunded, {
       path: ['refunded'],
       message: 'Xác nhận đã hoàn tiền cho khách',
     })
 
 export interface CancelOrderValues {
+  reasonCode: string
   reason: string
   customerReason: string
   refunded: boolean
 }
 
-/** Từ chối đơn online: lý do gửi khách bắt buộc, lý do nội bộ tùy chọn. */
-export const rejectOrderSchema = z.object({
-  customerReason: reasonField,
-  reason: z.string().trim().max(500, 'Lý do tối đa 500 ký tự'),
-})
+/** Từ chối đơn online: lý do gửi khách bắt buộc. */
+export const rejectOrderSchema = z
+  .object({
+    reasonCode: reasonCodeField,
+    customerReason: reasonField,
+    reason: z.string().trim().max(500, 'Lý do tối đa 500 ký tự'),
+  })
+  .superRefine(requireNoteForOther)
 
 export const rejectClaimSchema = z.object({
   reason: z

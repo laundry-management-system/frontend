@@ -1,4 +1,5 @@
-import { type ServiceRow, serviceShare } from '@/features/admin/reports'
+import { capRows, type ServiceRow, serviceShare } from '@/features/admin/reports'
+import { CapNotice } from './CapNotice'
 import { UNIT_LABEL } from '@/features/admin/services'
 import { formatNumber } from '@/shared/common/lib/format'
 import { type DataTableColumn, DataTable, EmptyState, Money } from '@/shared/admin/ui'
@@ -52,5 +53,11 @@ interface ServiceTableProps {
 }
 
 export function ServiceTable({ rows }: ServiceTableProps) {
-  return <DataTable columns={COLUMNS} data={serviceShare(rows)} rowKey={rowKey} empty={EMPTY} />
+  const { shown, truncated } = capRows(rows)
+  return (
+    <>
+      <DataTable columns={COLUMNS} data={serviceShare(shown)} rowKey={rowKey} empty={EMPTY} />
+      <CapNotice truncated={truncated} />
+    </>
+  )
 }

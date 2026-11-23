@@ -29,10 +29,8 @@ export const shiftsApi = {
       toShiftRow,
     ),
 
-  summary: async (range: { from: string; to: string }) =>
-    toShiftSummary(
-      (await httpClient.get<ShiftSummaryDto>('/shifts/summary', { params: range })).data,
-    ),
+  summary: async () =>
+    toShiftSummary((await httpClient.get<ShiftSummaryDto>('/shifts/summary')).data),
 
   get: async (id: number) =>
     toShiftDetail((await httpClient.get<ShiftDetailDto>(`/shifts/${id}`)).data),

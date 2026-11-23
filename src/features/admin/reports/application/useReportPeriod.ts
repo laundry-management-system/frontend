@@ -1,14 +1,21 @@
 import dayjs from 'dayjs'
 import type { OrderChannel } from '@/features/admin/orders'
 import { useSearchParams } from 'react-router-dom'
-import { parsePeriod, type ReportPeriod, validatePeriod } from '@/features/admin/reports'
+import { parsePeriod, validatePeriod } from '../domain/report'
+import { presetRange, type ReportPreset } from '../domain/presets'
+import type { ReportPeriod } from '../domain/types'
 
-/** Kỳ báo cáo giữ trên URL (`from`, `to`, `mode`, `channel`) để tải lại / gửi link vẫn đúng kỳ. */
-export function useReportPeriod() {
+/** Kỳ báo cáo giữ trên URL (`from`, `to`, `mode`, `channel`); thiếu thì dùng kỳ nhanh `defaultPreset`. */
+export function useReportPeriod(defaultPreset: ReportPreset = 'thisMonth') {
   const [searchParams, setSearchParams] = useSearchParams()
   const today = dayjs().format('YYYY-MM-DD')
+  const fallback = presetRange(defaultPreset, today)
   const period = parsePeriod(
-    { from: searchParams.get('from'), to: searchParams.get('to'), mode: searchParams.get('mode') },
+    {
+      from: searchParams.get('from') || fallback.from,
+      to: searchParams.get('to') || fallback.to,
+      mode: searchParams.get('mode'),
+    },
     today,
   )
   const error = validatePeriod(period, today)

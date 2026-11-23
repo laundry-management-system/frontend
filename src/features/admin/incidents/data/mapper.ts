@@ -83,6 +83,4 @@ export const toIncidentStats = (dto: IncidentStatsDto): IncidentStats => ({
   approved: dto.approved,
   rejected: dto.rejected,
   all: dto.all,
-  paidCash: num(dto.paidCash),
-  paidTransfer: num(dto.paidTransfer),
 })

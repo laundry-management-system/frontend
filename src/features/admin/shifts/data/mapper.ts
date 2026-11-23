@@ -51,11 +51,7 @@ export const toShiftRow = (dto: ShiftRowDto): ShiftRow => ({
   transferDifference: money(dto.transferDifference),
 })
 
-export const toShiftSummary = (dto: ShiftSummaryDto): ShiftSummary => ({
-  ...dto,
-  differenceTotal: Number(dto.differenceTotal),
-  handInTotal: Number(dto.handInTotal),
-})
+export const toShiftSummary = (dto: ShiftSummaryDto): ShiftSummary => dto
 
 export const toShiftTransaction = (dto: ShiftTransactionDto): ShiftTransaction => ({
   ...dto,

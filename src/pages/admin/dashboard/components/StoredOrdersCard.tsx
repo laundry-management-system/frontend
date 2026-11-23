@@ -1,11 +1,14 @@
-import { Button, Card, Group, Title } from '@mantine/core'
-import { LuCloudOff, LuPackageCheck } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
-import { type StoredOrder, useOverdueOrders } from '@/features/admin/orders'
+import { Anchor, Card, Group, Title } from '@mantine/core'
+import { LuPackageCheck } from 'react-icons/lu'
+import { Link, useNavigate } from 'react-router-dom'
+import type { OverviewReport } from '@/features/admin/reports'
 import { CopyableCode, type DataTableColumn, DataTable, EmptyState } from '@/shared/admin/ui'
 import { PATHS } from '@/shared/common/config/paths'
 
-const COLUMNS: DataTableColumn<StoredOrder>[] = [
+type Row = OverviewReport['live']['stored'][number]
+
+const rowKey = (o: Row) => o.orderId
+const COLUMNS: DataTableColumn<Row>[] = [
   { name: 'code', label: 'Mã đơn', width: 190, render: (o) => <CopyableCode code={o.orderCode} /> },
   { name: 'customer', label: 'Khách', render: (o) => o.customerName },
   {
@@ -13,60 +16,33 @@ const COLUMNS: DataTableColumn<StoredOrder>[] = [
     label: 'Tồn',
     align: 'center',
     width: 80,
-    render: (o) => `${o.daysInStorage} ngày`,
-  },
-  {
-    name: 'notify',
-    label: 'Đã nhắc',
-    align: 'center',
-    width: 100,
-    render: (o) => `${o.notifyCount} lần`,
+    render: (o) => `${o.daysWaiting} ngày`,
   },
 ]
 
-export function StoredOrdersCard() {
+const EMPTY = (
+  <EmptyState
+    icon={<LuPackageCheck size={32} />}
+    title="Không có đồ tồn"
+    description="Đơn hoàn thành lâu mà khách chưa lấy sẽ hiện ở đây."
+  />
+)
+
+export function StoredOrdersCard({ rows }: { rows: Row[] }) {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = useOverdueOrders()
-  const openOrder = (o: StoredOrder) => navigate(PATHS.orderDetail(o.orderId))
-  const openAll = () => navigate(PATHS.ordersStored)
-  const handleRetry = () => refetch()
-  const rowKey = (o: StoredOrder) => o.orderId
-  const rowProps = (o: StoredOrder) => ({
-    onClick: () => openOrder(o),
+  const rowProps = (o: Row) => ({
+    onClick: () => navigate(PATHS.orderDetail(o.orderId)),
     style: { cursor: 'pointer' },
   })
-
-  const empty = isError ? (
-    <EmptyState
-      icon={<LuCloudOff size={32} />}
-      title="Không tải được đồ tồn"
-      description="Vui lòng kiểm tra kết nối rồi thử lại."
-      action={<Button onClick={handleRetry}>Thử lại</Button>}
-    />
-  ) : (
-    <EmptyState
-      icon={<LuPackageCheck size={32} />}
-      title="Không có đồ tồn"
-      description="Đơn hoàn thành lâu mà khách chưa lấy sẽ hiện ở đây."
-    />
-  )
-
   return (
     <Card>
       <Group justify="space-between" mb="sm">
-        <Title order={5}>Đồ tồn cần nhắc</Title>
-        <Button variant="subtle" size="xs" onClick={openAll}>
+        <Title order={5}>Đồ tồn cần nhắc (hiện tại)</Title>
+        <Anchor component={Link} to={PATHS.ordersStored} size="sm">
           Xem tất cả
-        </Button>
+        </Anchor>
       </Group>
-      <DataTable
-        columns={COLUMNS}
-        data={isError ? [] : (data?.orders ?? []).slice(0, 5)}
-        rowKey={rowKey}
-        rowProps={rowProps}
-        loading={isLoading}
-        empty={empty}
-      />
+      <DataTable columns={COLUMNS} data={rows} rowKey={rowKey} rowProps={rowProps} empty={EMPTY} />
     </Card>
   )
 }
